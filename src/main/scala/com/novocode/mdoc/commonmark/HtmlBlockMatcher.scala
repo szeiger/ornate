@@ -22,7 +22,7 @@ class HtmlBlockMatcher(elName: String) {
 }
 
 class SpecialImageMatcher(protocols: Set[String]) {
-  class Result(val protocol: String, image: Image) {
+  class Result(val protocol: String, val image: Image) {
     def dest = image.getDestination
     def attributes: Map[String, String] =
       dest.substring(protocol.length + 1).split(',').filter(_.nonEmpty).flatMap { s =>

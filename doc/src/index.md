@@ -16,10 +16,6 @@ Paragraph Text
 
 ## Contents {#contents_id} ##
 
-<toctree maxlevel="2" />
-
-<toctree />
-
 ![](toctree:maxlevel=2)
 
 ![foo](toctree: "bar")
@@ -29,5 +25,7 @@ Paragraph Text
 ## Foo
 
 ## Foo
+
+[Here's the intro page](doc:introduction)
 
 End of document

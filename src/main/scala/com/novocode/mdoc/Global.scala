@@ -64,10 +64,15 @@ class Global(startDir: File) {
   private[this] val cachedExtensions = new mutable.HashMap[String, Option[AnyRef]]
 
   def getCachedExtensionObject(ext: String): Option[AnyRef] = cachedExtensions.getOrElseUpdate(ext, {
-    val cls = aliasToExtension(ext)
-    try Some(Class.forName(cls).getMethod("create").invoke(null))
-    catch { case ex: Exception =>
-      logger.error(s"Error instantiating extension class $cls -- disabling extension", ex)
+    val className = aliasToExtension(ext)
+    val cls = Class.forName(className)
+    try {
+      if(classOf[ExtensionFactory].isAssignableFrom(cls)) // MDoc extension
+        Some(cls.newInstance().asInstanceOf[ExtensionFactory].apply(this))
+      else // CommonMark extension
+        Some(cls.getMethod("create").invoke(null))
+    } catch { case ex: Exception =>
+      logger.error(s"Error instantiating extension class $className -- disabling extension", ex)
       None
     }
   })

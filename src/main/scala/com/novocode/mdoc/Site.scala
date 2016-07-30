@@ -3,6 +3,7 @@ package com.novocode.mdoc
 import java.net.URI
 import java.nio.file.Path
 
+import com.novocode.mdoc.commonmark.PageProcessor
 import com.typesafe.config.Config
 import org.commonmark.node._
 import better.files._
@@ -21,6 +22,9 @@ class Page(val uri: URI, val doc: Node, val config: Config, val sections: Vector
   def title: Option[String] =
     if(config.hasPath("title")) Some(config.getString("title"))
     else sections.headOption.map(_.title)
+
+  def processors: Seq[PageProcessor] =
+    extensions.collect { case e: Extension => e.pageProcessors }.flatten
 }
 
 class Section(val id: String, val title: String, val heading: Heading, val children: Vector[Section]) {

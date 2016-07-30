@@ -55,10 +55,13 @@ object PageParser {
     if(logger.isDebugEnabled)
       logger.debug("Page extensions: " + extensions.map {
         case (a, None) => s"($a)"
-        case (a, Some(o: ParserExtension with HtmlRendererExtension)) => s"$a[p,h]"
-        case (a, Some(o: HtmlRendererExtension)) => s"$a[h]"
-        case (a, Some(o: ParserExtension)) => s"$a[p]"
-        case (a, Some(_)) => a
+        case (a, Some(o)) =>
+          val types = Seq(
+            if(o.isInstanceOf[Extension]) Some("e") else None,
+            if(o.isInstanceOf[ParserExtension]) Some("p") else None,
+            if(o.isInstanceOf[HtmlRendererExtension]) Some("h") else None
+          ).flatten
+          if(types.isEmpty) a else types.mkString(s"$a[", ",", "]")
       }.mkString(", "))
 
     val parserExtensions = extensions.collect { case (_, Some(e: ParserExtension)) => e }.asJava
