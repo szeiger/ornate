@@ -8,7 +8,14 @@ import com.typesafe.config.Config
 import org.commonmark.node._
 import better.files._
 
-class Site(val pages: Vector[Page], val toc: Toc)
+class Site(val pages: Vector[Page], val toc: Toc) {
+  private[this] val pageMap: Map[String, Page] = pages.map(p => (p.uri.getPath, p)).toMap
+
+  def getPageFor(uri: URI): Option[Page] = uri.getScheme match {
+    case "doc" => pageMap.get(uri.getPath)
+    case _ => None
+  }
+}
 
 class Page(val uri: URI, val doc: Node, val config: Config, val sections: Vector[Section],
            val extensions: Vector[AnyRef]) {
@@ -22,9 +29,6 @@ class Page(val uri: URI, val doc: Node, val config: Config, val sections: Vector
   def title: Option[String] =
     if(config.hasPath("title")) Some(config.getString("title"))
     else sections.headOption.map(_.title)
-
-  def processors: Seq[PageProcessor] =
-    extensions.collect { case e: Extension => e.pageProcessors }.flatten
 }
 
 class Section(val id: String, val title: String, val heading: Heading, val children: Vector[Section]) {

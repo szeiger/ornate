@@ -44,6 +44,8 @@ class Global(startDir: File) {
 
   lazy val tocMaxLevel: Int = config.getInt("global.tocMaxLevel")
 
+  lazy val tocMergeFirst: Boolean = config.getBoolean("global.tocMergeFirst")
+
   def parsePageConfig(hocon: String): Config =
     ConfigFactory.parseString(hocon).withFallback(config).resolve()
 
@@ -67,8 +69,8 @@ class Global(startDir: File) {
     val className = aliasToExtension(ext)
     val cls = Class.forName(className)
     try {
-      if(classOf[ExtensionFactory].isAssignableFrom(cls)) // MDoc extension
-        Some(cls.newInstance().asInstanceOf[ExtensionFactory].apply(this))
+      if(classOf[Extension].isAssignableFrom(cls))
+        Some(cls.newInstance().asInstanceOf[Extension])
       else // CommonMark extension
         Some(cls.getMethod("create").invoke(null))
     } catch { case ex: Exception =>
@@ -80,8 +82,10 @@ class Global(startDir: File) {
   private[this] val aliasToTheme: Map[String, String] =
     config.getObject("global.themeAliases").unwrapped().asScala.toMap.mapValues(_.toString).withDefault(identity)
 
-  def createTheme(site: Site): Theme = {
-    val cl = aliasToTheme(config.getString("global.theme"))
+  lazy val themes: Vector[String] = config.getStringList("global.themes").asScala.toVector
+
+  def createTheme(name: String, site: Site): Theme = {
+    val cl = aliasToTheme(name)
     logger.debug(s"Creating theme from class $cl")
     Class.forName(cl).getConstructor(classOf[Site], classOf[Global]).newInstance(site, this).asInstanceOf[Theme]
   }

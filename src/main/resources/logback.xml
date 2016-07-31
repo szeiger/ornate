@@ -7,8 +7,10 @@
     <root level="${log.root:-debug}">
         <appender-ref ref="STDOUT" />
     </root>
-    <logger name="com.novocode.mdoc.Toc"        level="${log.main:-debug}" />
-    <logger name="com.novocode.mdoc.Global"     level="${log.main:-debug}" />
-    <logger name="com.novocode.mdoc.PageParser" level="${log.main:-debug}" />
-    <logger name="com.novocode.mdoc.theme.default.html.Theme" level="${log.main:-debug}" />
+    <logger name="com.novocode.mdoc.Toc"                              level="${log.main:-debug}" />
+    <logger name="com.novocode.mdoc.Global"                           level="${log.main:-debug}" />
+    <logger name="com.novocode.mdoc.PageParser"                       level="${log.main:-debug}" />
+    <logger name="com.novocode.mdoc.commonmark.SpecialImageProcessor" level="${log.main:-debug}" />
+    <logger name="com.novocode.mdoc.commonmark.SpecialLinkProcessor"  level="${log.main:-debug}" />
+    <logger name="com.novocode.mdoc.theme.default.html.Theme"         level="${log.main:-debug}" />
 </configuration>
