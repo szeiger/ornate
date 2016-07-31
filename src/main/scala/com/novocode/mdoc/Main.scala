@@ -11,16 +11,14 @@ object Main extends App {
   val pages = sources.map { f => PageParser.parse(global, f) }.toVector
   val toc = Toc(global, pages)
   val site = new Site(pages, toc)
-  val processors = Seq(
-    new SpecialImageProcessor(global),
-    new SpecialLinkProcessor(global, site)
-  )
+  val sip = new SpecialImageProcessor(global)
+  val slp = new SpecialLinkProcessor(global, site)
+  val theme = global.createTheme(site)
+  val themepp = theme.pageProcessors(global, site)
   pages.foreach { p =>
-    val pps = processors ++ p.extensions.collect { case e: Extension => e.pageProcessors(global, site) }.flatten
-    pps.foreach(_.apply(p))
+    val pagepp = p.extensions.collect { case e: Extension => e.pageProcessors(global, site) }.flatten
+    val pp = (sip +: pagepp ++: themepp) :+ slp
+    pp.foreach(_.apply(p))
   }
-  global.themes.foreach { name =>
-    val theme = global.createTheme(name, site)
-    theme.render
-  }
+  theme.render
 }

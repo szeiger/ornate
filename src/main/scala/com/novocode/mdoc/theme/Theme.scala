@@ -4,7 +4,7 @@ import com.novocode.mdoc._
 import com.novocode.mdoc.commonmark.NodeExtensionMethods._
 
 import better.files._
-import com.novocode.mdoc.commonmark.{TocBlock, SimpleHtmlNodeRenderer}
+import com.novocode.mdoc.commonmark.{PageProcessor, TocBlock, SimpleHtmlNodeRenderer}
 import org.commonmark.html.HtmlRenderer
 import org.commonmark.html.HtmlRenderer.HtmlRendererExtension
 import org.commonmark.html.renderer.{NodeRendererContext, NodeRenderer}
@@ -18,6 +18,7 @@ import scala.io.Codec
 
 abstract class Theme(site: Site, global: Global) {
   def render: Unit
+  def pageProcessors(global: Global, site: Site): Seq[PageProcessor] = Nil
 }
 
 /** Base class for Twirl HTML themes */

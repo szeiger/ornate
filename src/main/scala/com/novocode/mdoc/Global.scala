@@ -82,10 +82,8 @@ class Global(startDir: File) {
   private[this] val aliasToTheme: Map[String, String] =
     config.getObject("global.themeAliases").unwrapped().asScala.toMap.mapValues(_.toString).withDefault(identity)
 
-  lazy val themes: Vector[String] = config.getStringList("global.themes").asScala.toVector
-
-  def createTheme(name: String, site: Site): Theme = {
-    val cl = aliasToTheme(name)
+  def createTheme(site: Site): Theme = {
+    val cl = aliasToTheme(config.getString("global.theme"))
     logger.debug(s"Creating theme from class $cl")
     Class.forName(cl).getConstructor(classOf[Site], classOf[Global]).newInstance(site, this).asInstanceOf[Theme]
   }
