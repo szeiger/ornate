@@ -10,6 +10,8 @@ scalaVersion := "2.11.8"
 
 scalacOptions ++= Seq("-deprecation", "-unchecked")
 
+testOptions += Tests.Argument(TestFrameworks.JUnit, "-q", "-v", "-s", "-a")
+
 val commonMarkVersion = "0.5.1"
 
 libraryDependencies ++= Seq(

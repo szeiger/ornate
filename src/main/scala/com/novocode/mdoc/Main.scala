@@ -1,7 +1,7 @@
 package com.novocode.mdoc
 
 import better.files._
-import com.novocode.mdoc.commonmark.{SpecialLinkProcessor, SpecialImageProcessor}
+import com.novocode.mdoc.commonmark.{ExpandTocProcessor, SpecialLinkProcessor, SpecialImageProcessor}
 
 object Main extends App {
   val startDir = "doc"
@@ -12,13 +12,14 @@ object Main extends App {
   val toc = Toc(global, pages)
   val site = new Site(pages, toc)
   val sip = new SpecialImageProcessor(global)
-  val slp = new SpecialLinkProcessor(global, site)
+  val etp = new ExpandTocProcessor(site)
   val theme = global.createTheme(site)
   val themepp = theme.pageProcessors(global, site)
   pages.foreach { p =>
     val pagepp = p.extensions.collect { case e: Extension => e.pageProcessors(global, site) }.flatten
-    val pp = (sip +: pagepp ++: themepp) :+ slp
-    pp.foreach(_.apply(p))
+    (sip +: pagepp).foreach(_(p))
   }
+  pages.foreach(etp)
+  pages.foreach(p => themepp.foreach(_(p)))
   theme.render
 }

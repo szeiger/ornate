@@ -50,7 +50,7 @@ object Toc {
       } yield {
         val title2 =
           if(title ne null) title
-          else page.sections.headOption.map(_.title).getOrElse {
+          else page.section.findFirstHeading.map(_.title).getOrElse {
             logger.warn(s"No TOC title defined for page $link")
             link
           }
@@ -71,10 +71,17 @@ object Toc {
       toc.foreach { entry =>
         logger.info("[Page] "+entry.title)
         def logSection(s: Section, prefix: String): Unit = {
-          logger.info(s"$prefix[${s.level}] ${s.title} #${s.id}")
+          s match {
+            case s: HeadingSection =>
+              logger.info(s"$prefix[${s.level}] ${s.title} #${s.id}")
+            case s: PageSection =>
+              logger.info(s"$prefix[${s.level}] ${s.title.getOrElse("")}")
+            case _ =>
+              logger.info(s"$prefix[${s.level}]")
+          }
           s.children.foreach(ch => logSection(ch, "  "+prefix))
         }
-        entry.page.sections.foreach(s => logSection(s, "  "))
+        logSection(entry.page.section, "  ")
       }
     }
     new Toc(toc)

@@ -28,13 +28,12 @@ class NodeExtensionMethods(private val node: Node) extends AnyVal {
   }
 
   def replaceWith(n: Node): Node = {
-    node.getParent.appendChild(n)
-    n.insertBefore(node)
+    node.insertBefore(n)
     node.unlink()
     n
   }
 }
 
 object NodeExtensionMethods {
-  implicit def nodeToNodeExtensionMethods(n: Node) = new NodeExtensionMethods(n)
+  implicit def nodeToNodeExtensionMethods(n: Node): NodeExtensionMethods = new NodeExtensionMethods(n)
 }

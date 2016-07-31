@@ -67,8 +67,8 @@ class Global(startDir: File) {
 
   def getCachedExtensionObject(ext: String): Option[AnyRef] = cachedExtensions.getOrElseUpdate(ext, {
     val className = aliasToExtension(ext)
-    val cls = Class.forName(className)
     try {
+      val cls = Class.forName(className)
       if(classOf[Extension].isAssignableFrom(cls))
         Some(cls.newInstance().asInstanceOf[Extension])
       else // CommonMark extension

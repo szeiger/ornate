@@ -17,7 +17,7 @@ class Site(val pages: Vector[Page], val toc: Toc) {
   }
 }
 
-class Page(val uri: URI, val doc: Node, val config: Config, val sections: Vector[Section],
+class Page(val uri: URI, val doc: Node, val config: Config, val section: PageSection,
            val extensions: Vector[AnyRef]) {
   override def toString: String = s"Page($uri)"
 
@@ -25,14 +25,26 @@ class Page(val uri: URI, val doc: Node, val config: Config, val sections: Vector
 
   def targetFile(base: File, ext: String = ""): File =
     (pathElements.init :+ (pathElements.last + ext)).foldLeft(base) { case (f, s) => f / s }
-
-  def title: Option[String] =
-    if(config.hasPath("title")) Some(config.getString("title"))
-    else sections.headOption.map(_.title)
 }
 
-class Section(val id: String, val title: String, val heading: Heading, val children: Vector[Section]) {
-  val level: Int = heading.getLevel
+sealed abstract class Section {
+  def children: Vector[Section]
+  def level: Int
+  final def findFirstHeading: Option[HeadingSection] = {
+    val it = allHeadings
+    if(it.hasNext) Some(it.next) else None
+  }
+  def allHeadings: Iterator[HeadingSection] =
+    children.iterator.flatMap(_.allHeadings)
+}
 
-  override def toString = s"Section($id, $level, $title)"
+final case class HeadingSection(id: String, level: Int, title: String, children: Vector[Section])(val heading: Heading) extends Section {
+  override def allHeadings: Iterator[HeadingSection] =
+    Iterator(this) ++ super.allHeadings
+}
+
+final case class UntitledSection(level: Int, children: Vector[Section]) extends Section
+
+final case class PageSection(title: Option[String], children: Vector[Section]) extends Section {
+  def level = 0
 }

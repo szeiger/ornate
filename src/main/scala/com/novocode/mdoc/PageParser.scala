@@ -17,8 +17,10 @@ import org.commonmark.parser.Parser
 import better.files._
 import org.slf4j.LoggerFactory
 
+import scala.annotation.tailrec
 import scala.collection.JavaConverters._
 import scala.collection.mutable
+import scala.collection.mutable.ArrayBuffer
 import scala.io.Codec
 
 object PageParser {
@@ -30,7 +32,7 @@ object PageParser {
       val path = (segments.init :+ segments.last.replaceAll("\\.[Mm][Dd]$", "")).mkString("/", "/", "")
       global.docRootURI.resolve(path)
     }
-    logger.debug(s"Parsing source file $f as $uri")
+    logger.info(s"Parsing $f as $uri")
     val text = f.contentAsString(Codec.UTF8)
     val lines = text.lines
     val (front, content) = if(lines.hasNext && lines.next.trim == "---") {
@@ -68,19 +70,22 @@ object PageParser {
     val parser = Parser.builder().extensions(parserExtensions).build()
     val doc = parser.parse(content)
 
-    new Page(uri, doc, config, computePageSections(uri, doc), extensions.collect { case (_, Some(o)) => o })
+    val sections = computeSections(uri, doc)
+    val title =
+      if(config.hasPath("title")) Some(config.getString("title"))
+      else UntitledSection(0, sections).findFirstHeading.map(_.title)
+    new Page(uri, doc, config, PageSection(title, sections), extensions.collect { case (_, Some(o)) => o })
   }
 
-  private def computePageSections(uri: URI, doc: Node): Vector[Section] = {
-    def create(headings: List[(Heading, String, String)]): List[Section] = headings match {
-      case Nil => Nil
-      case h :: hs =>
-        val (lower, rest) = hs.span(_._1.getLevel > h._1.getLevel)
-        new Section(h._2, h._3, h._1, create(lower).toVector) :: create(rest)
-    }
+  private def computeSections(uri: URI, doc: Node): Vector[Section] = {
     val headings = doc.compute(new HeadingAccumulator).map {
       case h: AttributedHeading => (h, h.id)
-      case h => (h, null)
+      case h =>
+        val a = new AttributedHeading
+        a.setLevel(h.getLevel)
+        h.replaceWith(a)
+        h.children.foreach(a.appendChild)
+        (a, null)
     }
     val used = new mutable.HashSet[String]()
     def newID(id: String): String = {
@@ -94,7 +99,8 @@ object PageParser {
       case (h, null) => (h, null)
       case (h, id) if used.contains(id) =>
         val id2 = newID(id)
-        logger.warn(s"Renaming duplicate section ID #$id in document $uri to #$id2")
+        logger.warn(s"Renaming duplicate section ID #$id in $uri to #$id2")
+        h.id = id2
         (h, id2)
       case (h, id) =>
         used += id
@@ -105,6 +111,35 @@ object PageParser {
       val id2 = if(id eq null) newID(Util.createIdentifier(title)) else id
       (h, id2, title)
     }
-    create(withFullIDsAndTitles).toVector
+
+    @tailrec
+    def lift(level: Int, s: Section): Section =
+      if(s.level <= level) s
+      else lift(level, UntitledSection(s.level-1, Vector(s)))
+
+    def mergeEmpty(ss: Vector[Section]): Vector[Section] = if(ss.isEmpty) ss else {
+      val b = new ArrayBuffer[Section]
+      ss.foreach {
+        case s: UntitledSection if b.nonEmpty =>
+          b.last match {
+            case s2: UntitledSection =>
+              b.remove(b.length-1)
+              b += new UntitledSection(s2.level, mergeEmpty(s2.children ++ s.children))
+            case _ => b += s
+          }
+        case s => b += s
+      }
+      b.toVector
+    }
+
+    def create(level: Int, headings: List[(Heading, String, String)]): List[Section] = headings match {
+      case Nil => Nil
+      case h :: hs =>
+        val (lower, rest) = hs.span(_._1.getLevel > h._1.getLevel)
+        val children = mergeEmpty(create(level+1, lower).toVector)
+        lift(level, new HeadingSection(h._2, h._1.getLevel, h._3, children)(h._1)) :: create(level, rest)
+    }
+
+    mergeEmpty(create(1, withFullIDsAndTitles).toVector)
   }
 }

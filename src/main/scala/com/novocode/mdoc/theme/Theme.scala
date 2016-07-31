@@ -1,10 +1,12 @@
 package com.novocode.mdoc.theme
 
+import java.util.Collections
+
 import com.novocode.mdoc._
 import com.novocode.mdoc.commonmark.NodeExtensionMethods._
 
 import better.files._
-import com.novocode.mdoc.commonmark.{PageProcessor, TocBlock, SimpleHtmlNodeRenderer}
+import com.novocode.mdoc.commonmark._
 import org.commonmark.html.HtmlRenderer
 import org.commonmark.html.HtmlRenderer.HtmlRendererExtension
 import org.commonmark.html.renderer.{NodeRendererContext, NodeRenderer}
@@ -21,32 +23,44 @@ abstract class Theme(site: Site, global: Global) {
   def pageProcessors(global: Global, site: Site): Seq[PageProcessor] = Nil
 }
 
-/** Base class for Twirl HTML themes */
+/** Base class for Twirl-based HTML themes */
 class HtmlTheme(site: Site, global: Global) extends Theme(site: Site, global: Global) { self =>
   import HtmlTheme._
   val logger = LoggerFactory.getLogger(getClass)
+  val suffix = ".html"
 
-  val tocRenderer = SimpleHtmlNodeRenderer { (n: TocBlock, c: NodeRendererContext) =>
-    c.getHtmlWriter.text("[TOC HERE]")
+  val attributedHeadingRenderer = SimpleHtmlNodeRenderer { (n: AttributedHeading, c: NodeRendererContext) =>
+    val html = c.getHtmlWriter
+    val htag = s"h${n.getLevel}"
+    html.line
+    val attrs = c.extendAttributes(n, Collections.emptyMap[String, String])
+    if(n.id ne null) attrs.put("id", n.id)
+    html.tag(htag, attrs)
+    n.children.toVector.foreach(c.render)
+    html.tag('/' + htag)
+    html.line
   }
+
+  override def pageProcessors(global: Global, site: Site): Seq[PageProcessor] =
+    Seq(new SpecialLinkProcessor(site, suffix))
 
   def render: Unit = {
     site.pages.foreach { p =>
-      val file = p.targetFile(global.targetDir, ".html")
+      val file = p.targetFile(global.targetDir, suffix)
       val templateName = p.config.getString("template")
       logger.debug(s"Rendering page ${p.uri} to file $file with template ${templateName}")
       val template = getTemplate(templateName)
       val rendererExtensions = p.extensions.collect { case e: HtmlRendererExtension => e }.asJava
-      val _renderer = HtmlRenderer.builder().nodeRendererFactory(tocRenderer).extensions(rendererExtensions).build()
+      val _renderer = HtmlRenderer.builder().nodeRendererFactory(attributedHeadingRenderer).extensions(rendererExtensions).build()
       val pm: PageModel = new PageModel {
         def renderer = _renderer
         def theme = self
-        val title = HtmlFormat.escape(p.title.getOrElse(""))
+        val title = HtmlFormat.escape(p.section.title.getOrElse(""))
         val content = HtmlFormat.raw(renderer.render(p.doc))
       }
       val formatted = template.render(pm).body.trim
       file.parent.createDirectories()
-      file.write(formatted)(codec = Codec.UTF8)
+      file.write(formatted+'\n')(codec = Codec.UTF8)
     }
   }
 
@@ -63,7 +77,7 @@ class HtmlTheme(site: Site, global: Global) extends Theme(site: Site, global: Gl
 class Dump(site: Site, global: Global) extends Theme(site: Site, global: Global) {
   def render: Unit = {
     site.pages.foreach { p =>
-      println(p)
+      println("---------- Page: "+p.uri)
       p.doc.dumpDoc()
     }
   }
