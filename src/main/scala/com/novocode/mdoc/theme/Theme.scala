@@ -18,13 +18,12 @@ import scala.collection.JavaConverters._
 import scala.collection.mutable
 import scala.io.Codec
 
-abstract class Theme(site: Site, global: Global) {
-  def render: Unit
-  def pageProcessors(global: Global, site: Site): Seq[PageProcessor] = Nil
+abstract class Theme {
+  def render(site: Site): Unit
 }
 
 /** Base class for Twirl-based HTML themes */
-class HtmlTheme(site: Site, global: Global) extends Theme(site: Site, global: Global) { self =>
+class HtmlTheme(global: Global) extends Theme { self =>
   import HtmlTheme._
   val logger = LoggerFactory.getLogger(getClass)
   val suffix = ".html"
@@ -41,17 +40,16 @@ class HtmlTheme(site: Site, global: Global) extends Theme(site: Site, global: Gl
     html.line
   }
 
-  override def pageProcessors(global: Global, site: Site): Seq[PageProcessor] =
-    Seq(new SpecialLinkProcessor(site, suffix))
-
-  def render: Unit = {
+  def render(site: Site): Unit = {
+    val slp = new SpecialLinkProcessor(site, suffix)
     site.pages.foreach { p =>
-      val file = p.targetFile(global.targetDir, suffix)
+      slp(p)
+      val file = p.targetFile(global.config.targetDir, suffix)
       val templateName = p.config.getString("template")
       logger.debug(s"Rendering page ${p.uri} to file $file with template ${templateName}")
       val template = getTemplate(templateName)
-      val rendererExtensions = p.extensions.collect { case e: HtmlRendererExtension => e }.asJava
-      val _renderer = HtmlRenderer.builder().nodeRendererFactory(attributedHeadingRenderer).extensions(rendererExtensions).build()
+      val _renderer = HtmlRenderer.builder()
+        .nodeRendererFactory(attributedHeadingRenderer).extensions(p.extensions.htmlRenderer.asJava).build()
       val pm: PageModel = new PageModel {
         def renderer = _renderer
         def theme = self
@@ -74,8 +72,8 @@ class HtmlTheme(site: Site, global: Global) extends Theme(site: Site, global: Gl
 }
 
 /** A theme that prints the document structure to stdout */
-class Dump(site: Site, global: Global) extends Theme(site: Site, global: Global) {
-  def render: Unit = {
+class Dump(global: Global) extends Theme {
+  def render(site: Site): Unit = {
     site.pages.foreach { p =>
       println("---------- Page: "+p.uri)
       p.doc.dumpDoc()

@@ -5,6 +5,8 @@ import java.net.URI
 import java.util.Locale
 
 object Util {
+  val docRootURI = new URI("doc", null, "/", null)
+
   def createIdentifier(text: String) = {
     val s = text.toLowerCase(Locale.ENGLISH).replaceAll("\\s+", "-").filter {
       case '_' | '-' | '.' => true

@@ -1,15 +1,16 @@
 <configuration>
     <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
         <encoder>
-            <pattern>*** \(%logger{30}\)%green(%X{debugId}) %msg%n</pattern>
+            <pattern>%highlight([%1.-1level]) %20.20logger{20}: %msg%n</pattern>
         </encoder>
     </appender>
     <root level="${log.root:-debug}">
         <appender-ref ref="STDOUT" />
     </root>
-    <logger name="com.novocode.mdoc.Toc"                              level="warn" />
     <logger name="com.novocode.mdoc.Global"                           level="info" />
+    <logger name="com.novocode.mdoc.GlobalConfig"                     level="info" />
     <logger name="com.novocode.mdoc.PageParser"                       level="info" />
+    <logger name="com.novocode.mdoc.TocParser"                        level="warn" />
     <logger name="com.novocode.mdoc.commonmark.SpecialImageProcessor" level="debug" />
     <logger name="com.novocode.mdoc.commonmark.SpecialLinkProcessor"  level="info" />
     <logger name="com.novocode.mdoc.commonmark.ExpandTocProcessor"    level="info" />

@@ -9,12 +9,10 @@ import java.net.URI
 import com.typesafe.config.{ConfigObject, ConfigValue}
 import org.slf4j.LoggerFactory
 
-class Toc(val entries: Vector[Toc.Entry])
-
-object Toc {
+object TocParser {
   val logger = LoggerFactory.getLogger(getClass.getName.dropRight(1))
 
-  def apply(global: Global, pages: Vector[Page]): Toc = {
+  def parse(config: GlobalConfig, pages: Vector[Page]): Vector[TocEntry] = {
     val pagesByURI = pages.map(p => (p.uri.toString, p)).toMap
 
     def parseURI(link: String): Option[URI] = {
@@ -22,7 +20,7 @@ object Toc {
         logger.warn("Missing URL in TOC entry")
         None
       } else {
-        try Some(global.docRootURI.resolve(link))
+        try Some(Util.docRootURI.resolve(link))
         catch { case ex: Exception =>
           logger.warn(s"Error parsing TOC URL: $link", ex)
           None
@@ -30,7 +28,7 @@ object Toc {
       }
     }
 
-    def parseTocEntry(v: ConfigValue): Option[Entry] = {
+    def parseTocEntry(v: ConfigValue): Option[TocEntry] = {
       logger.debug(s"Parsing TOC entry: $v")
       val (link, title) = v match {
         case v: ConfigObject =>
@@ -54,18 +52,18 @@ object Toc {
             logger.warn(s"No TOC title defined for page $link")
             link
           }
-        Entry(page, title2)
+        TocEntry(page, title2)
       }
     }
 
-    val toc =
-      if(global.config.hasPath("global.toc")) {
-        logger.debug("Parsing TOC")
-        global.config.getList("global.toc").asScala.toVector.flatMap(parseTocEntry)
-      } else {
-        logger.debug("No TOC defined")
+    val toc = config.toc match {
+      case Some(v) =>
+        logger.info("Parsing TOC")
+        v.flatMap(parseTocEntry)
+      case None =>
+        logger.info("No TOC defined")
         Vector.empty
-      }
+    }
 
     if(logger.isInfoEnabled) {
       toc.foreach { entry =>
@@ -84,8 +82,6 @@ object Toc {
         logSection(entry.page.section, "  ")
       }
     }
-    new Toc(toc)
+    toc
   }
-
-  case class Entry(val page: Page, val title: String)
 }

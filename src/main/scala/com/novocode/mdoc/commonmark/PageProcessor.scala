@@ -12,7 +12,7 @@ abstract class PageProcessor extends (Page => Unit) {
   val logger = LoggerFactory.getLogger(getClass)
 }
 
-class SpecialImageProcessor(global: Global) extends PageProcessor {
+class SpecialImageProcessor(config: GlobalConfig) extends PageProcessor {
   val SpecialObjectMatcher = new SpecialImageParagraphMatcher(Set("toctree"))
 
   def apply(p: Page): Unit = p.doc.accept(new AbstractVisitor {
@@ -20,9 +20,9 @@ class SpecialImageProcessor(global: Global) extends PageProcessor {
       case SpecialObjectMatcher(r) => r.protocol match {
         case "toctree" =>
           val t = new TocBlock(
-            r.attributes.get("maxlevel").map(_.toInt).getOrElse(global.tocMaxLevel),
+            r.attributes.get("maxlevel").map(_.toInt).getOrElse(config.tocMaxLevel),
             r.title,
-            r.attributes.get("mergefirst").map(_.toBoolean).getOrElse(global.tocMergeFirst),
+            r.attributes.get("mergefirst").map(_.toBoolean).getOrElse(config.tocMergeFirst),
             r.attributes.get("local").map(_.toBoolean).getOrElse(false))
           n.replaceWith(t)
           r.image.children.foreach(t.appendChild)
@@ -84,7 +84,7 @@ class AutoIdentifiersProcessor(site: Site) extends PageProcessor {
   }
 }
 
-class ExpandTocProcessor(site: Site) extends PageProcessor {
+class ExpandTocProcessor(toc: Vector[TocEntry]) extends PageProcessor {
   case class TocItem(text: Option[String], target: Option[String], children: Vector[TocItem]) {
     def toNode: ListItem = {
       val li = new ListItem
@@ -152,13 +152,13 @@ class ExpandTocProcessor(site: Site) extends PageProcessor {
         case n: TocBlock =>
           val items: Vector[TocItem] =
             if(n.local) {
-              val title = site.toc.entries.find(_.page eq p) match {
+              val title = toc.find(_.page eq p) match {
                 case Some(e) => Option(e.title)
                 case None => p.section.title
               }
               sectionToc(p.section, p, title, n.maxLevel).toVector.flatMap(_.children)
             } else {
-              val items = site.toc.entries.flatMap(e => sectionToc(e.page.section, e.page, Option(e.title), n.maxLevel))
+              val items = toc.flatMap(e => sectionToc(e.page.section, e.page, Option(e.title), n.maxLevel))
               if(n.mergeFirst) mergePages(items) else items
             }
           if(items.nonEmpty) {

@@ -8,7 +8,7 @@ import com.typesafe.config.Config
 import org.commonmark.node._
 import better.files._
 
-class Site(val pages: Vector[Page], val toc: Toc) {
+class Site(val pages: Vector[Page], val toc: Vector[TocEntry]) {
   private[this] val pageMap: Map[String, Page] = pages.map(p => (p.uri.getPath, p)).toMap
 
   def getPageFor(uri: URI): Option[Page] = uri.getScheme match {
@@ -18,7 +18,7 @@ class Site(val pages: Vector[Page], val toc: Toc) {
 }
 
 class Page(val uri: URI, val doc: Node, val config: Config, val section: PageSection,
-           val extensions: Vector[AnyRef]) {
+           val extensions: Extensions) {
   override def toString: String = s"Page($uri)"
 
   val pathElements: Vector[String] = uri.getPath.split('/').filter(_.nonEmpty).to[Vector]
@@ -48,3 +48,5 @@ final case class UntitledSection(level: Int, children: Vector[Section]) extends 
 final case class PageSection(title: Option[String], children: Vector[Section]) extends Section {
   def level = 0
 }
+
+case class TocEntry(val page: Page, val title: String)

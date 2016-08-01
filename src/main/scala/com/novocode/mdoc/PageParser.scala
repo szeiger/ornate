@@ -26,14 +26,29 @@ import scala.io.Codec
 object PageParser {
   val logger = LoggerFactory.getLogger(getClass.getName.dropRight(1))
 
-  def parse(global: Global, f: File): Page = {
+  def parseSources(global: Global): Vector[Page] = {
+    val sources = global.config.sourceDir.collectChildren(_.name.endsWith("md"))
+    sources.flatMap { f =>
+      try Some(parseSource(global, f))
+      catch { case ex: Exception =>
+        logger.error(s"Error parsing $f -- skipping file", ex)
+        None
+      }
+    }.toVector
+  }
+
+  private def parseSource(global: Global, f: File): Page = {
     val uri = {
-      val segments = global.sourceDir.relativize(f).iterator().asScala.toVector.map(s => URLEncoder.encode(s.toString, "UTF-8"))
+      val segments = global.config.sourceDir.relativize(f).iterator().asScala.toVector.map(s => URLEncoder.encode(s.toString, "UTF-8"))
       val path = (segments.init :+ segments.last.replaceAll("\\.[Mm][Dd]$", "")).mkString("/", "/", "")
-      global.docRootURI.resolve(path)
+      Util.docRootURI.resolve(path)
     }
     logger.info(s"Parsing $f as $uri")
     val text = f.contentAsString(Codec.UTF8)
+    parse(global, uri, text)
+  }
+
+  def parse(global: Global, uri: URI, text: String): Page = {
     val lines = text.lines
     val (front, content) = if(lines.hasNext && lines.next.trim == "---") {
       var foundEnd = false
@@ -43,38 +58,24 @@ object PageParser {
       }.mkString("", "\n", "\n")
       val rest = lines.mkString("", "\n", "\n")
       if(!foundEnd) {
-        logger.warn(s"Top marker for front matter found in $f but no bottom marker, assuming it is all content")
+        logger.warn(s"Page $uri: Found top marker for front matter but no bottom marker, assuming it is all content")
         ("", text)
       } else (front, rest)
     } else ("", text)
 
-    val config = if(front.nonEmpty) global.parsePageConfig(front) else global.config
+    val config = if(front.nonEmpty) global.config.parsePageConfig(front) else global.config.config
 
-    val extensions =
-      global.normalizeExtensions(config.getStringList("extensions").asScala)
-        .map(a => (a, global.getCachedExtensionObject(a)))
+    val extensions = global.getExtensions(config.getStringList("extensions").asScala)
+    if(logger.isDebugEnabled) logger.debug("Page extensions: " + extensions)
 
-    if(logger.isDebugEnabled)
-      logger.debug("Page extensions: " + extensions.map {
-        case (a, None) => s"($a)"
-        case (a, Some(o)) =>
-          val types = Seq(
-            if(o.isInstanceOf[Extension]) Some("e") else None,
-            if(o.isInstanceOf[ParserExtension]) Some("p") else None,
-            if(o.isInstanceOf[HtmlRendererExtension]) Some("h") else None
-          ).flatten
-          if(types.isEmpty) a else types.mkString(s"$a[", ",", "]")
-      }.mkString(", "))
-
-    val parserExtensions = extensions.collect { case (_, Some(e: ParserExtension)) => e }.asJava
-    val parser = Parser.builder().extensions(parserExtensions).build()
+    val parser = Parser.builder().extensions(extensions.parser.asJava).build()
     val doc = parser.parse(content)
 
     val sections = computeSections(uri, doc)
     val title =
       if(config.hasPath("title")) Some(config.getString("title"))
       else UntitledSection(0, sections).findFirstHeading.map(_.title)
-    new Page(uri, doc, config, PageSection(title, sections), extensions.collect { case (_, Some(o)) => o })
+    new Page(uri, doc, config, PageSection(title, sections), extensions)
   }
 
   private def computeSections(uri: URI, doc: Node): Vector[Section] = {
