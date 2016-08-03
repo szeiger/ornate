@@ -7,8 +7,7 @@
     <root level="${log.root:-debug}">
         <appender-ref ref="STDOUT" />
     </root>
-    <logger name="com.novocode.mdoc.Global"                           level="info" />
-    <logger name="com.novocode.mdoc.GlobalConfig"                     level="info" />
+    <logger name="com.novocode.mdoc.config.Global"                    level="info" />
     <logger name="com.novocode.mdoc.PageParser"                       level="info" />
     <logger name="com.novocode.mdoc.TocParser"                        level="warn" />
     <logger name="com.novocode.mdoc.commonmark.SpecialImageProcessor" level="debug" />

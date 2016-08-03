@@ -4,6 +4,8 @@ import java.net.{URLEncoder, URI}
 
 import com.novocode.mdoc.commonmark.{AttributedHeading, HeadingAccumulator, TextAccumulator}
 import com.novocode.mdoc.commonmark.NodeExtensionMethods._
+import com.novocode.mdoc.config.{ReferenceConfig, Global}
+import com.typesafe.config.Config
 
 import org.commonmark.ext.autolink.AutolinkExtension
 import org.commonmark.ext.gfm.strikethrough.StrikethroughExtension
@@ -27,7 +29,7 @@ object PageParser {
   val logger = LoggerFactory.getLogger(getClass.getName.dropRight(1))
 
   def parseSources(global: Global): Vector[Page] = {
-    val sources = global.config.sourceDir.collectChildren(_.name.endsWith("md"))
+    val sources = global.userConfig.sourceDir.collectChildren(_.name.endsWith("md"))
     sources.flatMap { f =>
       try Some(parseSource(global, f))
       catch { case ex: Exception =>
@@ -39,16 +41,16 @@ object PageParser {
 
   private def parseSource(global: Global, f: File): Page = {
     val uri = {
-      val segments = global.config.sourceDir.relativize(f).iterator().asScala.toVector.map(s => URLEncoder.encode(s.toString, "UTF-8"))
+      val segments = global.userConfig.sourceDir.relativize(f).iterator().asScala.toVector.map(s => URLEncoder.encode(s.toString, "UTF-8"))
       val path = (segments.init :+ segments.last.replaceAll("\\.[Mm][Dd]$", "")).mkString("/", "/", "")
       Util.docRootURI.resolve(path)
     }
     logger.info(s"Parsing $f as $uri")
     val text = f.contentAsString(Codec.UTF8)
-    parse(global, uri, text)
+    parseWithFrontMatter(global.userConfig, uri, text, false)
   }
 
-  def parse(global: Global, uri: URI, text: String): Page = {
+  def parseWithFrontMatter(globalConfig: ReferenceConfig, uri: URI, text: String, synthetic: Boolean): Page = {
     val lines = text.lines
     val (front, content) = if(lines.hasNext && lines.next.trim == "---") {
       var foundEnd = false
@@ -63,9 +65,13 @@ object PageParser {
       } else (front, rest)
     } else ("", text)
 
-    val config = if(front.nonEmpty) global.config.parsePageConfig(front) else global.config.config
+    val pageConfig = if(front.nonEmpty) globalConfig.parsePageConfig(front) else globalConfig.raw
 
-    val extensions = global.getExtensions(config.getStringList("extensions").asScala)
+    parseContent(globalConfig, uri, content, pageConfig, synthetic)
+  }
+
+  def parseContent(appConfig: ReferenceConfig, uri: URI, content: String, pageConfig: Config, synthetic: Boolean): Page = {
+    val extensions = appConfig.getExtensions(pageConfig.getStringList("extensions").asScala)
     if(logger.isDebugEnabled) logger.debug("Page extensions: " + extensions)
 
     val parser = Parser.builder().extensions(extensions.parser.asJava).build()
@@ -73,9 +79,9 @@ object PageParser {
 
     val sections = computeSections(uri, doc)
     val title =
-      if(config.hasPath("title")) Some(config.getString("title"))
+      if(pageConfig.hasPath("title")) Some(pageConfig.getString("title"))
       else UntitledSection(0, sections).findFirstHeading.map(_.title)
-    new Page(uri, doc, config, PageSection(title, sections), extensions)
+    new Page(uri, doc, pageConfig, PageSection(title, sections), extensions, synthetic)
   }
 
   private def computeSections(uri: URI, doc: Node): Vector[Section] = {

@@ -20,4 +20,8 @@ Subtitle
 
 ![foo](toctree: "bar")
 
+## Pages
+
+![](toctree:maxlevel=0,mergefirst=false)
+
 End of document

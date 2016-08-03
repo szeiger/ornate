@@ -2,6 +2,8 @@ package com.novocode.mdoc
 
 import java.util.Locale
 
+import com.novocode.mdoc.config.UserConfig
+
 import scala.collection.JavaConverters._
 
 import java.net.URI
@@ -12,7 +14,7 @@ import org.slf4j.LoggerFactory
 object TocParser {
   val logger = LoggerFactory.getLogger(getClass.getName.dropRight(1))
 
-  def parse(config: GlobalConfig, pages: Vector[Page]): Vector[TocEntry] = {
+  def parse(config: UserConfig, pages: Vector[Page]): Vector[TocEntry] = {
     val pagesByURI = pages.map(p => (p.uri.toString, p)).toMap
 
     def parseURI(link: String): Option[URI] = {

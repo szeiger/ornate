@@ -2,18 +2,22 @@ package com.novocode.mdoc
 
 import better.files._
 import com.novocode.mdoc.commonmark.{ExpandTocProcessor, SpecialImageProcessor}
+import com.novocode.mdoc.config.Global
 
 object Main extends App {
   val startDir = file"doc"
-  val config = new GlobalConfig(startDir, startDir / "mdoc.conf")
-  val global = new Global(config)
+  val global = new Global(startDir, startDir / "mdoc.conf")
   val theme = global.createTheme
 
-  val pages = PageParser.parseSources(global)
-  val toc = TocParser.parse(config, pages)
+  val userPages = PageParser.parseSources(global)
+  val themePageURIs = theme.syntheticPageURIs
+  val themePages = theme.synthesizePages(themePageURIs)
+  val pages = userPages ++ themePages
+
+  val toc = TocParser.parse(global.userConfig, pages)
   val site = new Site(pages, toc)
 
-  val sip = new SpecialImageProcessor(config)
+  val sip = new SpecialImageProcessor(global.userConfig)
   pages.foreach { p =>
     val pagepp = p.extensions.mdoc.flatMap(_.pageProcessors(global, site))
     (sip +: pagepp).foreach(_(p))

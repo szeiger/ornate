@@ -4,6 +4,7 @@ import java.net.URI
 
 import com.novocode.mdoc._
 import NodeExtensionMethods._
+import com.novocode.mdoc.config.UserConfig
 
 import org.commonmark.node._
 import org.slf4j.LoggerFactory
@@ -12,7 +13,7 @@ abstract class PageProcessor extends (Page => Unit) {
   val logger = LoggerFactory.getLogger(getClass)
 }
 
-class SpecialImageProcessor(config: GlobalConfig) extends PageProcessor {
+class SpecialImageProcessor(config: UserConfig) extends PageProcessor {
   val SpecialObjectMatcher = new SpecialImageParagraphMatcher(Set("toctree"))
 
   def apply(p: Page): Unit = p.doc.accept(new AbstractVisitor {

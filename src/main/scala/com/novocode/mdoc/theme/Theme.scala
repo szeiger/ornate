@@ -1,5 +1,6 @@
 package com.novocode.mdoc.theme
 
+import java.net.URI
 import java.util.Collections
 
 import com.novocode.mdoc._
@@ -7,6 +8,7 @@ import com.novocode.mdoc.commonmark.NodeExtensionMethods._
 
 import better.files._
 import com.novocode.mdoc.commonmark._
+import com.novocode.mdoc.config.Global
 import org.commonmark.html.HtmlRenderer
 import org.commonmark.html.HtmlRenderer.HtmlRendererExtension
 import org.commonmark.html.renderer.{NodeRendererContext, NodeRenderer}
@@ -18,12 +20,23 @@ import scala.collection.JavaConverters._
 import scala.collection.mutable
 import scala.io.Codec
 
-abstract class Theme {
+abstract class Theme(global: Global) {
   def render(site: Site): Unit
+
+  def synthesizePages(uris: Vector[(String, URI)]): Vector[Page] = Vector.empty
+
+  def syntheticPageURIs: Vector[(String, URI)] = {
+    if(global.userConfig.themeConfig.hasPath("global.pages")) {
+      val co = global.userConfig.themeConfig.getObject("global.pages")
+      co.entrySet().asScala.iterator.filter(_.getValue.unwrapped ne null).map(e =>
+        (e.getKey, Util.docRootURI.resolve(e.getValue.unwrapped.asInstanceOf[String]))
+      ).toVector
+    } else Vector.empty
+  }
 }
 
 /** Base class for Twirl-based HTML themes */
-class HtmlTheme(global: Global) extends Theme { self =>
+class HtmlTheme(global: Global) extends Theme(global) { self =>
   import HtmlTheme._
   val logger = LoggerFactory.getLogger(getClass)
   val suffix = ".html"
@@ -40,11 +53,12 @@ class HtmlTheme(global: Global) extends Theme { self =>
     html.line
   }
 
+
   def render(site: Site): Unit = {
     val slp = new SpecialLinkProcessor(site, suffix)
     site.pages.foreach { p =>
       slp(p)
-      val file = p.targetFile(global.config.targetDir, suffix)
+      val file = p.targetFile(global.userConfig.targetDir, suffix)
       val templateName = p.config.getString("template")
       logger.debug(s"Rendering page ${p.uri} to file $file with template ${templateName}")
       val template = getTemplate(templateName)
@@ -72,7 +86,7 @@ class HtmlTheme(global: Global) extends Theme { self =>
 }
 
 /** A theme that prints the document structure to stdout */
-class Dump(global: Global) extends Theme {
+class Dump(global: Global) extends Theme(global) {
   def render(site: Site): Unit = {
     site.pages.foreach { p =>
       println("---------- Page: "+p.uri)

@@ -18,7 +18,7 @@ class Site(val pages: Vector[Page], val toc: Vector[TocEntry]) {
 }
 
 class Page(val uri: URI, val doc: Node, val config: Config, val section: PageSection,
-           val extensions: Extensions) {
+           val extensions: Extensions, val synthetic: Boolean) {
   override def toString: String = s"Page($uri)"
 
   val pathElements: Vector[String] = uri.getPath.split('/').filter(_.nonEmpty).to[Vector]
