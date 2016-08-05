@@ -9,6 +9,8 @@ import com.novocode.mdoc.config.UserConfig
 import org.commonmark.node._
 import org.slf4j.LoggerFactory
 
+import scala.collection.mutable.ArrayBuffer
+
 abstract class PageProcessor extends (Page => Unit) {
   val logger = LoggerFactory.getLogger(getClass)
 }
@@ -117,6 +119,7 @@ class ExpandTocProcessor(toc: Vector[TocEntry]) extends PageProcessor {
     }
   }
 
+  /** Turn a `Section` recursively into a `TocItem` tree */
   def sectionToc(s: Section, p: Page, pTitle: Option[String], maxLevel: Int): Option[TocItem] = {
     if(s.level > maxLevel) None else {
       val (title, target) = s match {
@@ -135,7 +138,21 @@ class ExpandTocProcessor(toc: Vector[TocEntry]) extends PageProcessor {
     }
   }
 
-  def mergePages(items: Vector[TocItem]): Vector[TocItem] = items.flatMap { pageItem =>
+  /** Remove items without a title and move their children into the preceding item */
+  def mergeHierarchies(items: Vector[TocItem]): Vector[TocItem] = {
+    val b = new ArrayBuffer[TocItem](items.length)
+    items.foreach { item =>
+      if(b.isEmpty || item.text.nonEmpty || item.target.nonEmpty) b += item
+      else {
+        val prev = b.remove(b.length-1)
+        b += prev.copy(children = mergeHierarchies(prev.children ++ item.children))
+      }
+    }
+    b.toVector
+  }
+
+  /** Merge top-level `TocItem` for the page itself with the first element of the page */
+  def mergePages(items: Vector[TocItem]): Vector[TocItem] = mergeHierarchies(items.flatMap { pageItem =>
     def rewriteFirstIn(items: Vector[TocItem]): Vector[TocItem] = {
       if(items.isEmpty) items // should never happen
       else {
@@ -146,7 +163,7 @@ class ExpandTocProcessor(toc: Vector[TocEntry]) extends PageProcessor {
       }
     }
     rewriteFirstIn(pageItem.children)
-  }
+  })
 
   def apply(p: Page): Unit = {
     p.doc.accept(new AbstractVisitor {
