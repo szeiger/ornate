@@ -9,6 +9,8 @@ Title     {#title_id foo=bar}
 
 ### Level 3
 
+[Intro link](introduction.md)
+
 Subtitle
 --------
 

@@ -52,16 +52,17 @@ class SpecialLinkProcessor(site: Site, suffix: String) extends PageProcessor {
           n.setDestination(dest)
         } else {
           val uri = p.uri.resolve(n.getDestination)
-          uri.getScheme match {
-            case "doc" =>
-              site.getPageFor(uri) match {
-                case Some(t) =>
-                  logger.debug(s"Page ${p.uri}: Resolved link ${n.getDestination} to page ${t.uri}")
-                case None =>
-                  logger.error(s"Page ${p.uri}: No page found for link ${n.getDestination}")
-              }
-              n.setDestination(Util.relativeDocURI(p.uri, uri, suffix).toString)
-            case _ =>
+          if(uri.getScheme == Util.siteRootURI.getScheme) {
+            site.getPageFor(uri) match {
+              case Some(t) =>
+                logger.debug(s"Page ${p.uri}: Resolved link ${n.getDestination} to page ${t.uri}")
+                val turi = t.uriWithSuffix(suffix)
+                val turi2 = new URI(turi.getScheme, turi.getAuthority, turi.getPath, uri.getQuery, uri.getFragment)
+                n.setDestination(Util.relativeSiteURI(p.uri, turi2).toString)
+              case None =>
+                logger.error(s"Page ${p.uri}: No page found for link ${n.getDestination}")
+                n.setDestination(Util.relativeSiteURI(p.uri, uri).toString)
+            }
           }
         }
         super.visit(n)

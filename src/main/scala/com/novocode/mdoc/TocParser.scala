@@ -22,7 +22,7 @@ object TocParser {
         logger.warn("Missing URL in TOC entry")
         None
       } else {
-        try Some(Util.docRootURI.resolve(link))
+        try Some(Util.siteRootURI.resolve(link))
         catch { case ex: Exception =>
           logger.warn(s"Error parsing TOC URL: $link", ex)
           None

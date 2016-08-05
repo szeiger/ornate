@@ -29,7 +29,7 @@ abstract class Theme(global: Global) {
     if(global.userConfig.themeConfig.hasPath("global.pages")) {
       val co = global.userConfig.themeConfig.getObject("global.pages")
       co.entrySet().asScala.iterator.filter(_.getValue.unwrapped ne null).map(e =>
-        (e.getKey, Util.docRootURI.resolve(e.getValue.unwrapped.asInstanceOf[String]))
+        (e.getKey, Util.siteRootURI.resolve(e.getValue.unwrapped.asInstanceOf[String]))
       ).toVector
     } else Vector.empty
   }

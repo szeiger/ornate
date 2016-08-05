@@ -5,7 +5,7 @@ import java.net.URI
 import java.util.Locale
 
 object Util {
-  val docRootURI = new URI("doc", null, "/", null)
+  val siteRootURI = new URI("site", null, "/", null)
 
   def createIdentifier(text: String) = {
     val s = text.toLowerCase(Locale.ENGLISH).replaceAll("\\s+", "-").filter {
@@ -16,9 +16,20 @@ object Util {
     if(s.nonEmpty) s else "section"
   }
 
-  /** Create a relative link from one page to another. Both URIs must be absolute "doc:" URIs
+  def replaceSuffix(u: URI, suffix: String, newSuffix: String): URI =
+    if(suffix.isEmpty && newSuffix.isEmpty) u
+    else {
+      val p = u.getPath
+      val p2 =
+        if(p.toLowerCase(Locale.ENGLISH).endsWith(suffix.toLowerCase(Locale.ENGLISH)))
+          p.substring(0, p.length-suffix.length)
+        else p
+      new URI(u.getScheme, u.getAuthority, p2 + newSuffix, u.getQuery, u.getFragment)
+    }
+
+  /** Create a relative link from one page to another. Both URIs must be absolute "site:" URIs
     * without "." or ".." path segments, ending in file names (i.e. no tailing "/"). */
-  def relativeDocURI(from: URI, to: URI, suffix: String = ""): URI = {
+  def relativeSiteURI(from: URI, to: URI): URI = {
     @tailrec def differentTail(f: List[String], t: List[String]): (List[String], List[String]) =
       if(f.isEmpty || t.isEmpty || f.head != t.head) (f, t)
       else differentTail(f.tail, t.tail)
@@ -33,7 +44,7 @@ object Util {
       new URI(null, null, null, to.getQuery, to.getFragment)
     else {
       val relPath = ((fromTail.map(_ => "..") ::: toTail) :+ toPage).mkString("/")
-      new URI(null, null, relPath + suffix, to.getQuery, to.getFragment)
+      new URI(null, null, relPath, to.getQuery, to.getFragment)
     }
   }
 }

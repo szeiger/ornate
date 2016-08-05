@@ -29,9 +29,9 @@ object PageParser {
   val logger = LoggerFactory.getLogger(getClass.getName.dropRight(1))
 
   def parseSources(global: Global): Vector[Page] = {
-    val sources = global.userConfig.sourceDir.collectChildren(_.name.endsWith("md"))
+    val sources = global.userConfig.sourceDir.collectChildren(_.name.endsWith(".md"))
     sources.flatMap { f =>
-      try Some(parseSource(global, f))
+      try Some(parseSource(global, f, ".md"))
       catch { case ex: Exception =>
         logger.error(s"Error parsing $f -- skipping file", ex)
         None
@@ -39,18 +39,18 @@ object PageParser {
     }.toVector
   }
 
-  private def parseSource(global: Global, f: File): Page = {
+  private def parseSource(global: Global, f: File, suffix: String): Page = {
     val uri = {
       val segments = global.userConfig.sourceDir.relativize(f).iterator().asScala.toVector.map(s => URLEncoder.encode(s.toString, "UTF-8"))
-      val path = (segments.init :+ segments.last.replaceAll("\\.[Mm][Dd]$", "")).mkString("/", "/", "")
-      Util.docRootURI.resolve(path)
+      val path = segments.mkString("/", "/", "")
+      Util.siteRootURI.resolve(path)
     }
     logger.info(s"Parsing $f as $uri")
     val text = f.contentAsString(Codec.UTF8)
-    parseWithFrontMatter(global.userConfig, uri, text, false)
+    parseWithFrontMatter(global.userConfig, uri, suffix, text, false)
   }
 
-  def parseWithFrontMatter(globalConfig: ReferenceConfig, uri: URI, text: String, synthetic: Boolean): Page = {
+  def parseWithFrontMatter(globalConfig: ReferenceConfig, uri: URI, suffix: String, text: String, synthetic: Boolean): Page = {
     val lines = text.lines
     val (front, content) = if(lines.hasNext && lines.next.trim == "---") {
       var foundEnd = false
@@ -67,10 +67,10 @@ object PageParser {
 
     val pageConfig = if(front.nonEmpty) globalConfig.parsePageConfig(front) else globalConfig.raw
 
-    parseContent(globalConfig, uri, content, pageConfig, synthetic)
+    parseContent(globalConfig, uri, suffix, content, pageConfig, synthetic)
   }
 
-  def parseContent(appConfig: ReferenceConfig, uri: URI, content: String, pageConfig: Config, synthetic: Boolean): Page = {
+  def parseContent(appConfig: ReferenceConfig, uri: URI, suffix: String, content: String, pageConfig: Config, synthetic: Boolean): Page = {
     val extensions = appConfig.getExtensions(pageConfig.getStringList("extensions").asScala)
     if(logger.isDebugEnabled) logger.debug("Page extensions: " + extensions)
 
@@ -81,7 +81,7 @@ object PageParser {
     val title =
       if(pageConfig.hasPath("title")) Some(pageConfig.getString("title"))
       else UntitledSection(0, sections).findFirstHeading.map(_.title)
-    new Page(uri, doc, pageConfig, PageSection(title, sections), extensions, synthetic)
+    new Page(uri, suffix, doc, pageConfig, PageSection(title, sections), extensions, synthetic)
   }
 
   private def computeSections(uri: URI, doc: Node): Vector[Section] = {

@@ -2,6 +2,7 @@ package com.novocode.mdoc
 
 import java.net.URI
 import java.nio.file.Path
+import java.util.Locale
 
 import com.novocode.mdoc.commonmark.PageProcessor
 import com.typesafe.config.Config
@@ -11,20 +12,21 @@ import better.files._
 class Site(val pages: Vector[Page], val toc: Vector[TocEntry]) {
   private[this] val pageMap: Map[String, Page] = pages.map(p => (p.uri.getPath, p)).toMap
 
-  def getPageFor(uri: URI): Option[Page] = uri.getScheme match {
-    case "doc" => pageMap.get(uri.getPath)
-    case _ => None
-  }
+  def getPageFor(uri: URI): Option[Page] =
+    if(uri.getScheme == Util.siteRootURI.getScheme) pageMap.get(uri.getPath)
+    else None
 }
 
-class Page(val uri: URI, val doc: Node, val config: Config, val section: PageSection,
+class Page(val uri: URI, val suffix: String, val doc: Node, val config: Config, val section: PageSection,
            val extensions: Extensions, val synthetic: Boolean) {
   override def toString: String = s"Page($uri)"
 
-  val pathElements: Vector[String] = uri.getPath.split('/').filter(_.nonEmpty).to[Vector]
+  def uriWithSuffix(ext: String): URI = Util.replaceSuffix(uri, suffix, ext)
 
-  def targetFile(base: File, ext: String = ""): File =
-    (pathElements.init :+ (pathElements.last + ext)).foldLeft(base) { case (f, s) => f / s }
+  def targetFile(base: File, ext: String): File = {
+    val path = uriWithSuffix(ext).getPath.split('/').filter(_.nonEmpty).to[Vector]
+    path.foldLeft(base) { case (f, s) => f / s }
+  }
 }
 
 sealed abstract class Section {
