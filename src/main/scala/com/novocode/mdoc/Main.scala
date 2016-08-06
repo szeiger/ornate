@@ -7,11 +7,10 @@ import com.novocode.mdoc.config.Global
 object Main extends App {
   val startDir = file"doc"
   val global = new Global(startDir, startDir / "mdoc.conf")
-  val theme = global.createTheme
 
   val userPages = PageParser.parseSources(global)
-  val themePageURIs = theme.syntheticPageURIs
-  val themePages = theme.synthesizePages(themePageURIs)
+  val themePageURIs = global.theme.syntheticPageURIs
+  val themePages = global.theme.synthesizePages(themePageURIs)
   val pages = userPages ++ themePages
 
   val toc = TocParser.parse(global.userConfig, pages)
@@ -26,5 +25,5 @@ object Main extends App {
   val etp = new ExpandTocProcessor(toc)
   pages.foreach(etp)
 
-  theme.render(site)
+  global.theme.render(site)
 }

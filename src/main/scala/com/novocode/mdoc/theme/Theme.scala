@@ -9,10 +9,11 @@ import com.novocode.mdoc.commonmark.NodeExtensionMethods._
 import better.files._
 import com.novocode.mdoc.commonmark._
 import com.novocode.mdoc.config.Global
+import com.novocode.mdoc.highlight.HighlightTarget
 import org.commonmark.html.HtmlRenderer
 import org.commonmark.html.HtmlRenderer.HtmlRendererExtension
 import org.commonmark.html.renderer.{NodeRendererContext, NodeRenderer}
-import org.commonmark.node.HtmlBlock
+import org.commonmark.node._
 import play.twirl.api.{Html, Template1, HtmlFormat}
 
 import scala.collection.JavaConverters._
@@ -25,8 +26,8 @@ abstract class Theme(global: Global) {
   def synthesizePages(uris: Vector[(String, URI)]): Vector[Page] = Vector.empty
 
   def syntheticPageURIs: Vector[(String, URI)] = {
-    if(global.userConfig.themeConfig.hasPath("global.pages")) {
-      val co = global.userConfig.themeConfig.getObject("global.pages")
+    if(global.userConfig.theme.config.hasPath("global.pages")) {
+      val co = global.userConfig.theme.config.getObject("global.pages")
       co.entrySet().asScala.iterator.filter(_.getValue.unwrapped ne null).map(e =>
         (e.getKey, Util.siteRootURI.resolve(e.getValue.unwrapped.asInstanceOf[String]))
       ).toVector
@@ -51,6 +52,42 @@ class HtmlTheme(global: Global) extends Theme(global) with Logging { self =>
     html.line
   }
 
+  def renderCode(n: Node, raw: String, lang: Option[String], c: NodeRendererContext, block: Boolean): Unit = {
+    val attrs = new mutable.HashMap[String, String]
+    lang match {
+      case Some(s) => attrs += "class" -> s"language-${s}"
+      case None =>
+    }
+    val html = c.getHtmlWriter
+    if(block) {
+      html.line
+      html.tag("pre")
+    }
+    html.tag("code", c.extendAttributes(n, attrs.asJava))
+    html.raw(raw)
+    html.tag("/code")
+    if(block) {
+      html.tag("/pre")
+      html.line
+    }
+  }
+
+  def fencedCodeBlockRenderer(page: Page) = SimpleHtmlNodeRenderer { (n: FencedCodeBlock, c: NodeRendererContext) =>
+    val info = if(n.getInfo eq null) Vector.empty else n.getInfo.split(' ').filter(_.nonEmpty).toVector
+    val lang = info.headOption
+    val hlr = global.highlighter.highlightTextAsHTML(n.getLiteral, lang, HighlightTarget.FencedCodeBlock, page)
+    renderCode(n, hlr.html.toString, lang.orElse(hlr.language), c, true)
+  }
+
+  def indentedCodeBlockRenderer(page: Page) = SimpleHtmlNodeRenderer { (n: IndentedCodeBlock, c: NodeRendererContext) =>
+    val hlr = global.highlighter.highlightTextAsHTML(n.getLiteral, None, HighlightTarget.IndentedCodeBlock, page)
+    renderCode(n, hlr.html.toString, hlr.language, c, true)
+  }
+
+  def inlineCodeRenderer(page: Page) = SimpleHtmlNodeRenderer { (n: Code, c: NodeRendererContext) =>
+    val hlr = global.highlighter.highlightTextAsHTML(n.getLiteral, None, HighlightTarget.InlineCode, page)
+    renderCode(n, hlr.html.toString, hlr.language, c, false)
+  }
 
   def render(site: Site): Unit = {
     val slp = new SpecialLinkProcessor(site, suffix)
@@ -61,7 +98,11 @@ class HtmlTheme(global: Global) extends Theme(global) with Logging { self =>
       logger.debug(s"Rendering page ${p.uri} to file $file with template ${templateName}")
       val template = getTemplate(templateName)
       val _renderer = HtmlRenderer.builder()
-        .nodeRendererFactory(attributedHeadingRenderer).extensions(p.extensions.htmlRenderer.asJava).build()
+        .nodeRendererFactory(attributedHeadingRenderer)
+        .nodeRendererFactory(fencedCodeBlockRenderer(p))
+        .nodeRendererFactory(indentedCodeBlockRenderer(p))
+        .nodeRendererFactory(inlineCodeRenderer(p))
+        .extensions(p.extensions.htmlRenderer.asJava).build()
       val pm: PageModel = new PageModel {
         def renderer = _renderer
         def theme = self

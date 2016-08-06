@@ -12,10 +12,11 @@ scalacOptions ++= Seq("-deprecation", "-unchecked")
 
 testOptions += Tests.Argument(TestFrameworks.JUnit, "-q", "-v", "-s", "-a")
 
-val commonMarkVersion = "0.5.1"
+fork in Test := true
+
+val commonMarkVersion = "0.6.0"
 
 libraryDependencies ++= Seq(
-  "com.novocode" % "junit-interface" % "0.11" % "test",
   "com.atlassian.commonmark" % "commonmark" % commonMarkVersion,
   "com.atlassian.commonmark" % "commonmark-ext-gfm-tables" % commonMarkVersion,
   "com.atlassian.commonmark" % "commonmark-ext-gfm-strikethrough" % commonMarkVersion,
@@ -24,5 +25,8 @@ libraryDependencies ++= Seq(
   "org.slf4j" % "slf4j-api" % "1.7.18",
   "ch.qos.logback" % "logback-classic" % "1.1.6",
   "com.github.pathikrit" %% "better-files" % "2.16.0",
-  "org.scala-lang.modules" %% "scala-xml" % "1.0.5"
+  //"org.scala-lang.modules" %% "scala-xml" % "1.0.5",
+  "org.webjars" % "webjars-locator-core" % "0.31",
+  "org.webjars.npm" % "highlight.js" % "9.3.0",
+  "com.novocode" % "junit-interface" % "0.11" % "test"
 )

@@ -2,6 +2,7 @@ package com.novocode.mdoc.config
 
 import java.net.URI
 
+import com.novocode.mdoc.highlight.{NoHighlighter, Highlighter}
 import com.novocode.mdoc.{Logging, Extension, Extensions}
 import com.novocode.mdoc.theme.Theme
 import org.commonmark.html.HtmlRenderer.HtmlRendererExtension
@@ -45,10 +46,20 @@ class Global(startDir: File, confFile: File) extends Logging {
     }
   })
 
-  def createTheme: Theme = {
-    val cl = userConfig.themeClass
+  lazy val theme: Theme = {
+    val cl = userConfig.theme.className
     logger.debug(s"Creating theme from class $cl")
     Class.forName(cl).getConstructor(classOf[Global]).newInstance(this).asInstanceOf[Theme]
+  }
+
+  lazy val highlighter: Highlighter = {
+    val cl = userConfig.highlight.className
+    logger.debug(s"Creating highlighter from class $cl")
+    try Class.forName(cl).getConstructor(classOf[Global], classOf[ConfiguredObject]).newInstance(this, userConfig.highlight).asInstanceOf[Highlighter]
+    catch { case ex: Exception =>
+      logger.error(s"Error instantiating highlighter class $cl -- disabling highlighting", ex)
+      new NoHighlighter(this, null)
+    }
   }
 }
 
@@ -71,6 +82,14 @@ class ReferenceConfig(val raw: Config, global: Global) {
 
   def parsePageConfig(hocon: String): Config =
     ConfigFactory.parseString(hocon).withFallback(raw).resolve()
+
+  protected[this] def configuredObject(prefix: String): ConfiguredObject = {
+    val alias = raw.getString(s"global.$prefix")
+    val aliasToClass =
+      raw.getObject(s"global.${prefix}Aliases").unwrapped().asScala.toMap.mapValues(_.toString).withDefault(identity)
+    val cl = aliasToClass(alias)
+    new ConfiguredObject(prefix, alias, cl, raw)
+  }
 }
 
 /** User configuration */
@@ -80,21 +99,18 @@ class UserConfig(raw: Config, startDir: File, global: Global) extends ReferenceC
   val tocMaxLevel: Int = raw.getInt("global.tocMaxLevel")
   val tocMergeFirst: Boolean = raw.getBoolean("global.tocMergeFirst")
 
-  private[this] val themeName = raw.getString("global.theme")
-
-  val themeClass = {
-    val aliasToTheme =
-      raw.getObject("global.themeAliases").unwrapped().asScala.toMap.mapValues(_.toString).withDefault(identity)
-    aliasToTheme(themeName)
-  }
-
-  val themeConfig: Config = {
-    val n = s"theme.$themeName"
-    if(raw.hasPath(n)) raw.getConfig(n)
-    else ConfigFactory.empty()
-  }
+  val theme = configuredObject("theme")
+  val highlight = configuredObject("highlight")
 
   val toc: Option[Vector[ConfigValue]] =
     if(raw.hasPath("global.toc")) Some(raw.getList("global.toc").asScala.toVector)
     else None
+}
+
+class ConfiguredObject(val prefix: String, val name: String, val className: String, rootConfig: Config) {
+  def getConfig(pageConfig: Config): Config = {
+    val n = s"$prefix.$name"
+    if(pageConfig.hasPath(n)) pageConfig.getConfig(n) else ConfigFactory.empty()
+  }
+  val config: Config = getConfig(rootConfig)
 }
