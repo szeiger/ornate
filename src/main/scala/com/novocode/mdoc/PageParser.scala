@@ -17,7 +17,6 @@ import org.commonmark.html.HtmlRenderer
 import org.commonmark.parser.Parser
 
 import better.files._
-import org.slf4j.LoggerFactory
 
 import scala.annotation.tailrec
 import scala.collection.JavaConverters._
@@ -25,9 +24,7 @@ import scala.collection.mutable
 import scala.collection.mutable.ArrayBuffer
 import scala.io.Codec
 
-object PageParser {
-  val logger = LoggerFactory.getLogger(getClass.getName.dropRight(1))
-
+object PageParser extends Logging {
   def parseSources(global: Global): Vector[Page] = {
     val sources = global.userConfig.sourceDir.collectChildren(_.name.endsWith(".md"))
     sources.flatMap { f =>

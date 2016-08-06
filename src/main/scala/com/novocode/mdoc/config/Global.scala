@@ -2,7 +2,7 @@ package com.novocode.mdoc.config
 
 import java.net.URI
 
-import com.novocode.mdoc.{Extension, Extensions}
+import com.novocode.mdoc.{Logging, Extension, Extensions}
 import com.novocode.mdoc.theme.Theme
 import org.commonmark.html.HtmlRenderer.HtmlRendererExtension
 import org.commonmark.parser.Parser.ParserExtension
@@ -10,14 +10,11 @@ import org.commonmark.parser.Parser.ParserExtension
 import scala.collection.JavaConverters._
 import better.files._
 import com.typesafe.config.{ConfigValue, ConfigFactory, Config}
-import org.slf4j.LoggerFactory
 
 import scala.collection.mutable
 import scala.collection.mutable.ListBuffer
 
-class Global(startDir: File, confFile: File) {
-  private[this] val logger = LoggerFactory.getLogger(getClass)
-
+class Global(startDir: File, confFile: File) extends Logging {
   val (referenceConfig: ReferenceConfig, userConfig: UserConfig) = {
     val ref = ConfigFactory.parseResources(getClass, "/mdoc-reference.conf")
     val refC = new ReferenceConfig(ref.resolve(), this)

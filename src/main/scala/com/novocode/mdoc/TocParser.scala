@@ -9,11 +9,8 @@ import scala.collection.JavaConverters._
 import java.net.URI
 
 import com.typesafe.config.{ConfigObject, ConfigValue}
-import org.slf4j.LoggerFactory
 
-object TocParser {
-  val logger = LoggerFactory.getLogger(getClass.getName.dropRight(1))
-
+object TocParser extends Logging {
   def parse(config: UserConfig, pages: Vector[Page]): Vector[TocEntry] = {
     val pagesByURI = pages.map(p => (p.uri.toString, p)).toMap
 

@@ -7,13 +7,10 @@ import NodeExtensionMethods._
 import com.novocode.mdoc.config.UserConfig
 
 import org.commonmark.node._
-import org.slf4j.LoggerFactory
 
 import scala.collection.mutable.ArrayBuffer
 
-abstract class PageProcessor extends (Page => Unit) {
-  val logger = LoggerFactory.getLogger(getClass)
-}
+abstract class PageProcessor extends (Page => Unit) with Logging
 
 class SpecialImageProcessor(config: UserConfig) extends PageProcessor {
   val SpecialObjectMatcher = new SpecialImageParagraphMatcher(Set("toctree"))

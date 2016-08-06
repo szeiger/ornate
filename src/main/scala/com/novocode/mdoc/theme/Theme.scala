@@ -13,7 +13,6 @@ import org.commonmark.html.HtmlRenderer
 import org.commonmark.html.HtmlRenderer.HtmlRendererExtension
 import org.commonmark.html.renderer.{NodeRendererContext, NodeRenderer}
 import org.commonmark.node.HtmlBlock
-import org.slf4j.LoggerFactory
 import play.twirl.api.{Html, Template1, HtmlFormat}
 
 import scala.collection.JavaConverters._
@@ -36,9 +35,8 @@ abstract class Theme(global: Global) {
 }
 
 /** Base class for Twirl-based HTML themes */
-class HtmlTheme(global: Global) extends Theme(global) { self =>
+class HtmlTheme(global: Global) extends Theme(global) with Logging { self =>
   import HtmlTheme._
-  val logger = LoggerFactory.getLogger(getClass)
   val suffix = ".html"
 
   val attributedHeadingRenderer = SimpleHtmlNodeRenderer { (n: AttributedHeading, c: NodeRendererContext) =>
