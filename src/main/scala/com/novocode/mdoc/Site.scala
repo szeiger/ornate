@@ -1,13 +1,9 @@
 package com.novocode.mdoc
 
 import java.net.URI
-import java.nio.file.Path
-import java.util.Locale
 
-import com.novocode.mdoc.commonmark.PageProcessor
 import com.typesafe.config.Config
 import org.commonmark.node._
-import better.files._
 
 class Site(val pages: Vector[Page], val toc: Vector[TocEntry]) {
   private[this] val pageMap: Map[String, Page] = pages.map(p => (p.uri.getPath, p)).toMap
@@ -22,11 +18,6 @@ class Page(val uri: URI, val suffix: String, val doc: Node, val config: Config, 
   override def toString: String = s"Page($uri)"
 
   def uriWithSuffix(ext: String): URI = Util.replaceSuffix(uri, suffix, ext)
-
-  def targetFile(base: File, ext: String): File = {
-    val path = uriWithSuffix(ext).getPath.split('/').filter(_.nonEmpty).to[Vector]
-    path.foldLeft(base) { case (f, s) => f / s }
-  }
 }
 
 sealed abstract class Section {

@@ -1,8 +1,10 @@
 package com.novocode.mdoc
 
 import scala.annotation.tailrec
-import java.net.URI
+import scala.collection.JavaConverters._
+import java.net.{URLEncoder, URI}
 import java.util.Locale
+import better.files._
 
 object Util {
   val siteRootURI = new URI("site", null, "/", null)
@@ -46,5 +48,10 @@ object Util {
       val relPath = ((fromTail.map(_ => "..") ::: toTail) :+ toPage).mkString("/")
       new URI(null, null, relPath, to.getQuery, to.getFragment)
     }
+  }
+
+  def sourceFileURI(baseDir: File, file: File): URI = {
+    val segments = baseDir.relativize(file).iterator().asScala.toVector.map(s => URLEncoder.encode(s.toString, "UTF-8"))
+    siteRootURI.resolve(segments.mkString("/", "/", ""))
   }
 }

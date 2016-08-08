@@ -1,19 +1,13 @@
 package com.novocode.mdoc
 
-import java.net.{URLEncoder, URI}
+import java.net.URI
 
 import com.novocode.mdoc.commonmark.{AttributedHeading, HeadingAccumulator, TextAccumulator}
 import com.novocode.mdoc.commonmark.NodeExtensionMethods._
 import com.novocode.mdoc.config.{ReferenceConfig, Global}
 import com.typesafe.config.Config
 
-import org.commonmark.ext.autolink.AutolinkExtension
-import org.commonmark.ext.gfm.strikethrough.StrikethroughExtension
-import org.commonmark.ext.gfm.tables.TablesExtension
-import org.commonmark.html.HtmlRenderer.HtmlRendererExtension
 import org.commonmark.node.{Node, Heading}
-import org.commonmark.parser.Parser.ParserExtension
-import org.commonmark.html.HtmlRenderer
 import org.commonmark.parser.Parser
 
 import better.files._
@@ -26,25 +20,14 @@ import scala.io.Codec
 
 object PageParser extends Logging {
   def parseSources(global: Global): Vector[Page] = {
-    val sources = global.userConfig.sourceDir.collectChildren(_.name.endsWith(".md"))
-    sources.flatMap { f =>
-      try Some(parseSource(global, f, ".md"))
+    global.findSources.flatMap { case (f, suffix, uri) =>
+      logger.info(s"Parsing $f as $uri")
+      try Some(parseWithFrontMatter(global.userConfig, uri, suffix, f.contentAsString(Codec.UTF8), false))
       catch { case ex: Exception =>
         logger.error(s"Error parsing $f -- skipping file", ex)
         None
       }
-    }.toVector
-  }
-
-  private def parseSource(global: Global, f: File, suffix: String): Page = {
-    val uri = {
-      val segments = global.userConfig.sourceDir.relativize(f).iterator().asScala.toVector.map(s => URLEncoder.encode(s.toString, "UTF-8"))
-      val path = segments.mkString("/", "/", "")
-      Util.siteRootURI.resolve(path)
     }
-    logger.info(s"Parsing $f as $uri")
-    val text = f.contentAsString(Codec.UTF8)
-    parseWithFrontMatter(global.userConfig, uri, suffix, text, false)
   }
 
   def parseWithFrontMatter(globalConfig: ReferenceConfig, uri: URI, suffix: String, text: String, synthetic: Boolean): Page = {
