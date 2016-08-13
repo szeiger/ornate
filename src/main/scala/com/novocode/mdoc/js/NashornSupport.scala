@@ -21,20 +21,19 @@ trait NashornSupport { this: Logging =>
     /*, "--global-per-engine"*/).asInstanceOf[NashornScriptEngine]
   val locator = new WebJarAssetLocator()
   val mainModule = new Modules(engine) {
-    val PATHSPEC = """/node_modules/([^/]*)(?:(/.*))?""".r
-    override def resolve(path: String): Option[String] = path match {
-      case s @ PATHSPEC(module, pOpt) =>
-        val p = if((pOpt eq null) || pOpt.isEmpty) "" else pOpt.drop(1)
-        logger.debug(s"Looking for WebJar asset: $module:/$p")
+    override def resolve(path: Vector[String]): Option[String] = path match {
+      case Vector("node_modules", module, pElems @ _*) =>
+        val p = pElems.mkString("/")
+        logger.debug(s"Looking for WebJar asset: $module/$p")
         val a = loadAsset(module, p)
-        if(p.toLowerCase.endsWith(".js")) a.map(js => s"//# sourceURL=/$module/$p\n$js")
+        if(p.toLowerCase.endsWith(".js")) a.map(js => s"//# sourceURL=$module/$p\n$js")
         else a
       case s =>
         logger.debug(s"Unmatched path in require(): $s")
         None
     }
-    override def resolveNative(path: String): Option[AnyRef] = path match {
-      case "/node_modules/console" =>
+    override def resolveCore(path: String): Option[AnyRef] = path match {
+      case "console" =>
         logger.debug("Creating native module: console")
         Some(createConsole(logger))
       case _ => None
@@ -44,10 +43,10 @@ trait NashornSupport { this: Logging =>
   def loadAsset(webjar: String, exactPath: String): Option[String] = {
     val path = locator.getFullPathExact(webjar, exactPath)
     if(path eq null) {
-      //logger.debug(s"WebJar asset not found: $webjar:/$exactPath")
+      logger.debug(s"WebJar asset not found: $webjar/$exactPath")
       None
     } else {
-      logger.debug(s"Loading WebJar asset: $webjar:/$exactPath")
+      logger.debug(s"Loading WebJar asset: $webjar/$exactPath")
       val in = getClass.getClassLoader.getResourceAsStream(path)
       try Some(in.content(Codec.UTF8).mkString) finally in.close()
     }

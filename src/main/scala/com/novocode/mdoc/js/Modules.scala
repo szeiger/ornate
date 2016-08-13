@@ -34,18 +34,18 @@ import jdk.nashorn.internal.runtime.{ScriptObject, ECMAException}
 
 class Modules(engine: NashornScriptEngine) extends Logging {
   import Modules._
-  private val cache = new mutable.HashMap[String, Option[Module]]
+  private val cache = new mutable.HashMap[Vector[String], Module]
 
   private var _main: Module =
-    new Module(Folder(None, "/"), "<main>", engine.getBindings(ScriptContext.ENGINE_SCOPE), None).initialized
+    new Module(Vector("main"), engine.getBindings(ScriptContext.ENGINE_SCOPE), None).initialized
   lazy val main: Module = _main
 
-  def resolve(path: String): Option[String] = None
-  def resolveNative(path: String): Option[AnyRef] = None
+  def resolve(path: Vector[String]): Option[String] = None
+  def resolveCore(name: String): Option[AnyRef] = None
 
-  class Module(folder: Folder, filename: String, protected val global: Bindings, parent: Option[Module]) extends SimpleBindings with RequireFunction { self =>
-    protected val module = new SimpleBindings
-    protected var exports: AnyRef = engine.eval("new Object()").asInstanceOf[ScriptObjectMirror]
+  class Module(val modulePath: Vector[String], private val global: Bindings, parent: Option[Module]) extends SimpleBindings with RequireFunction { self =>
+    private val module = new SimpleBindings
+    private var exports: AnyRef = engine.eval("new Object()").asInstanceOf[ScriptObjectMirror]
     private[this] val children = new JArrayList[Bindings]
     put("main", (if(_main eq null) this else _main).module)
     global.put("require", this)
@@ -54,8 +54,8 @@ class Modules(engine: NashornScriptEngine) extends Logging {
     global.put("exports", exports)
     module.put("exports", exports)
     module.put("children", children)
-    module.put("filename", filename)
-    module.put("id", filename)
+    module.put("filename", modulePath.lastOption.getOrElse(null))
+    module.put("id", module.get("filename"))
     module.put("loaded", false)
     module.put("parent", parent.map(_.module).getOrElse(null))
 
@@ -68,30 +68,26 @@ class Modules(engine: NashornScriptEngine) extends Logging {
 
     private[Modules] def initialized: this.type = { module.put("loaded", true); this }
 
-    def require(module: String): AnyRef = try {
-      logger.debug(s"require('$module')")
-      val found = (for {
-        (folders, fname) <- splitPath(module)
-        filenames = Vector(fname, fname + ".js", fname + ".json")
-        found <-
-          if(module.startsWith("/")  || module.startsWith("../")  || module.startsWith("./"))
-            attemptToLoadStartingFromFolder(folder, folders, filenames)
-          else {
-            val folders2 = if(folders.startsWith("node_modules")) folders else "node_modules" +: folders
-            val candidates = Iterator.iterate[Option[Folder]](Some(folder))(_.flatMap(_.parent)).takeWhile(_.isDefined).map(_.get).toVector
-            // try the root folder first before moving up from the current folder:
-            val cand2 = if(candidates.length < 2) candidates else candidates.last +: candidates.init.reverse
-            candidates.map(attemptToLoadStartingFromFolder(_, folders2, filenames)).find(_.isDefined).flatten
-          }
-      } yield found).getOrElse(fail(module, s"Module not found: $module"))
-      children.add(found.module)
-      if(logger.isDebugEnabled) logger.debug(s"require('$module'): Exported " + (found.exports match {
-        case s: ScriptObjectMirror => s"symbols: "+s.keySet().asScala.mkString(", ")
-        case null                  => s"null"
-        case o                     => s"object (${o.getClass.getName}): $o"
-      }))
-      found.exports
-    } catch { case ex: Exception => fail(module, s"Error loading module: $module", ex) }
+    def require(module: String): AnyRef = {
+      val exports = try {
+        logger.debug(s"require('$module')")
+        loadCoreModule(module).orElse {
+          if(module.startsWith("/")  || module.startsWith("../")  || module.startsWith("./")) {
+            val abs = resolvePath(modulePath.init, module.split('/'))
+            abs.flatMap(loadAsFile _).orElse(abs.flatMap(loadAsDirectory _))
+          } else None
+        }.orElse(loadNodeModules(module.split('/'), modulePath.init)).map { f =>
+          children.add(f.module)
+          if(logger.isDebugEnabled) logger.debug(s"require('$module'): Exported " + (f.exports match {
+            case s: ScriptObjectMirror => s"symbols: "+s.keySet().asScala.mkString(", ")
+            case null                  => s"null"
+            case o                     => s"object (${o.getClass.getName}): $o"
+          }))
+          f.exports
+        }
+      } catch { case ex: Exception => fail(module, s"Error loading module: $module", ex) }
+      exports.getOrElse(fail(module, s"Module not found: $module"))
+    }
 
     private[this] def fail(module: String, msg: String, parent: Throwable = null): Nothing = {
       logger.warn(s"require('$module'): Error: $msg", parent)
@@ -100,67 +96,47 @@ class Modules(engine: NashornScriptEngine) extends Logging {
       throw new ECMAException(error, null)
     }
 
-    private[this] def attemptToLoadStartingFromFolder(from: Folder, folders: Vector[String], filenames: Vector[String]) =
-      from.resolvePath(folders).flatMap(attemptToLoadFromThisFolder(_, filenames))
+    private[this] def loadAsFile(path: Vector[String]): Option[Module] =
+      loadJSModule(path).orElse {
+        val (init, last) = (path.init, path.last)
+        loadJSModule(init :+ (last + ".js")).orElse(loadJSONModule(init :+ (last + ".json")))
+      }
 
-    private[this] def attemptToLoadFromThisFolder(from: Folder, filenames: Vector[String]) =
-      filenames.iterator.map(loadModule(from, _)).find(_.isDefined).flatten
+    private[this] def loadAsDirectory(path: Vector[String]): Option[Module] =
+      resolve(path :+ "package.json").flatMap { s =>
+        Option(parseJson(s).get("main").asInstanceOf[String]).flatMap(m => resolvePath(path, m.split('/')).flatMap(loadAsFile _))
+      }.orElse(loadJSModule(path :+ "index.js")).orElse(loadJSONModule(path :+ "index.json"))
 
-    private[this] def loadModule(parent: Folder, name: String): Option[Module] = {
-      val fullPath = parent.path + name
-      cache.getOrElseUpdate(fullPath,
-        loadNativeModule(parent, fullPath, name)
-          .orElse(loadModuleDirectly(parent, fullPath, name))
-          .orElse(loadModuleThroughPackageJson(parent / name))
-          .orElse(loadModuleThroughIndexJs(parent / name)))
-    }
+    private[this] def loadNodeModules(path: Iterable[String], start: Vector[String]): Option[Module] =
+      start.inits.filterNot(_.endsWith("node_modules")).map(_ :+ "node_modules").map { d =>
+        loadAsFile(d ++ path).orElse(loadAsDirectory(d ++ path))
+      }.find(_.isDefined).flatten
 
-    private[this] def loadNativeModule(parent: Folder, fullPath: String, name: String) =
-      resolveNative(parent.path + name).flatMap(compileAndCacheNative(parent, fullPath, _))
+    private[this] def loadJSModule(path: Vector[String]): Option[Module] =
+      cached(path)(p => resolve(p).map { code =>
+        val m = new Module(p, new SimpleBindings(new JHashMap(engine.getBindings(ScriptContext.ENGINE_SCOPE))), Some(this))
+        engine.eval(code, m.global)
+        m.exports = m.module.get("exports")
+        m.initialized
+      })
 
-    private[this] def loadModuleDirectly(parent: Folder, fullPath: String, name: String) =
-      resolve(parent.path + name).flatMap(compileAndCache(parent, fullPath, _))
-
-    private[this] def loadModuleThroughPackageJson(parent: Folder) = for {
-      packageJson <- resolve(parent.path + "package.json")
-      mainFile <- Option(parseJson(packageJson).get("main").asInstanceOf[String])
-      (path, filename) <- splitPath(mainFile)
-      folder <- parent.resolvePath(path)
-      code <- resolve(folder.path + filename)
-      m <- compileAndCache(folder, folder.path + filename, code)
-    } yield m
-
-    private[this] def loadModuleThroughIndexJs(parent: Folder) =
-      resolve(parent.path + "index.js").flatMap(compileAndCache(parent, parent.path + "index.js", _))
-
-    private[this] def compileAndCache(parent: Folder, fullPath: String, code: String) = cache.getOrElseUpdate(fullPath, {
-      val p = fullPath.toLowerCase()
-      if(p.endsWith(".js")) Some(new JavaScriptModule(parent, fullPath, code, this))
-      else if(p.endsWith(".json")) Some(new JSONModule(parent, fullPath, code, this))
-      else None
+    private[this] def loadJSONModule(path: Vector[String]) = cached(path)(p => resolve(p).map { code =>
+      val m = new Module(p, new SimpleBindings, Some(this))
+      m.exports = parseJson(code)
+      m.initialized
     })
 
-    private[this] def compileAndCacheNative(parent: Folder, fullPath: String, exp: AnyRef) =
-      cache.getOrElseUpdate(fullPath, Some(new NativeModule(parent, fullPath, exp, this)))
+    private[this] def loadCoreModule(name: String) = cached(Vector(name))(p => resolveCore(name).map { exp =>
+      val m = new Module(p, new SimpleBindings, Some(this))
+      m.exports = exp
+      m.initialized
+    })
   }
 
-  private class JavaScriptModule(parent: Folder, fullPath: String, code: String, parentMod: Module)
-  extends Module(parent, fullPath, new SimpleBindings(new JHashMap(engine.getBindings(ScriptContext.ENGINE_SCOPE))), Some(parentMod)) {
-    engine.eval(code, global)
-    exports = module.get("exports")
-    initialized
-  }
-
-  private class JSONModule(parent: Folder, fullPath: String, code: String, parentMod: Module)
-  extends Module(parent, fullPath, new SimpleBindings, Some(parentMod)) {
-    exports = parseJson(code)
-    initialized
-  }
-
-  private class NativeModule(parent: Folder, fullPath: String, exp: AnyRef, parentMod: Module)
-    extends Module(parent, fullPath, new SimpleBindings, Some(parentMod)) {
-    exports = exp
-    initialized
+  private def cached(path: Vector[String])(f: Vector[String] => Option[Module]) = cache.get(path).orElse {
+    val mo = f(path)
+    mo.foreach(cache.put(path, _))
+    mo
   }
 
   private def parseJson(json: String) =
@@ -174,19 +150,10 @@ object Modules {
     f.get(o)
   }
 
-  private def splitPath(path: String): Option[(Vector[String], String)] = if(path eq null) None else {
-    val v = path.split("[\\\\/]").toVector
-    if(v.length == 0) None else Some((v.init, v.last))
-  }
-}
-
-case class Folder(parent: Option[Folder], path: String) {
-  def / (name: String): Folder = Folder(Some(this), s"$path$name/")
-  def resolvePath(path: Vector[String]) = path.foldLeft(Option(this)) {
-    case (_, "") => throw new IllegalArgumentException
-    case (z, ".") => z
-    case (z, "..") => z.flatMap(_.parent)
-    case (z, n) => z.map(_ / n)
+  private def resolvePath(base: Vector[String], rel: Iterable[String]): Option[Vector[String]] = rel.foldLeft(Option(base)) {
+    case (z, ("" | ".")) => z
+    case (z, "..") => z.flatMap(zz => if(zz.length > 0) Some(zz.dropRight(1)) else None)
+    case (z, n) => z.map(_ :+ n)
   }
 }
 
