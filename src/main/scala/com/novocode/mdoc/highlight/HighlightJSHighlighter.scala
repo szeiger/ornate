@@ -1,5 +1,6 @@
 package com.novocode.mdoc.highlight
 
+import com.novocode.mdoc.js.{JSMap, NashornSupport}
 import com.novocode.mdoc.{Logging, Page}
 import com.novocode.mdoc.config.{ConfiguredObject, Global}
 import play.twirl.api.HtmlFormat
@@ -12,7 +13,7 @@ class HighlightJSHighlighter(global: Global, conf: ConfiguredObject) extends Hig
   val noHighlight = new NoHighlighter(global, null)
 
   logger.debug("Loading highlight.js...")
-  val hljs = requireAsset("highlight.js", "lib/highlight.js")
+  val hljs = mainModule.require("highlight.js/lib/highlight.js")
   val supportedLanguages = listAssets("highlight.js", "lib/languages/").map(_.replaceAll("\\.js$", ""))
   logger.debug("Supported languages: "+supportedLanguages.mkString(", "))
 
@@ -24,7 +25,7 @@ class HighlightJSHighlighter(global: Global, conf: ConfiguredObject) extends Hig
       tried ++= toLoad // even if loading fails, so we don't retry every time
       val legal = toLoad.filter(supportedLanguages.contains)
       logger.debug(s"Loading language support for ${legal.mkString(", ")}...")
-      for(l <- legal) call[Unit](hljs, "registerLanguage", l, requireAsset("highlight.js", s"lib/languages/$l.js"))
+      for(l <- legal) call[Unit](hljs, "registerLanguage", l, mainModule.require(s"highlight.js/lib/languages/$l.js"))
       val (found, notFound) = toLoad.partition(l => call[String](hljs, "getLanguage", l) ne null)
       loaded ++= found
       if(notFound.nonEmpty) logger.warn("Unsupported languages: "+notFound.mkString(", "))
