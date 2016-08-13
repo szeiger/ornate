@@ -15,6 +15,17 @@ class NashornTest {
         """exports.f = function() { console.log('global.foo = '+global.foo); };
           |exports.g = function() { console.log('foo = '+foo); };
         """.stripMargin)
+      case "test3:/index.js" => Some(
+        """exports.f = function() {
+          |  console.log('window = '+window); };
+          |  console.log('foo = '+window.getElementById('foo')); };
+          |};
+        """.stripMargin)
+      case "test4:/index.js" => Some(
+        """"use strict";
+          |exports = 42;
+        """.stripMargin
+      )
       case _ => super.loadAsset(webjar, exactPath)
     }
   }
@@ -26,10 +37,42 @@ class NashornTest {
     println(nashorn.call[JSMap](hl, "highlight", "scala", "\"<foo>\"").apply[String]("value"))
   }
 
-  /*@Test def testRequireMermaid: Unit = {
+  /*
+  @Test def testMermaid: Unit = {
     val nashorn = createNashorn
-    val mermaid = nashorn.mainModule.require("mermaid")
-  }*/
+    nashorn.engineBindings.put("console", nashorn.mainModule.require("console"))
+    nashorn.engine.eval("global.SVGElement = function() { throw 'not implemented'; };")
+    nashorn.engineBindings.put("mermaid", nashorn.mainModule.require("mermaid"))
+    nashorn.engine.eval(
+      """var mermaidAPI = mermaid.mermaidAPI;
+        |mermaidAPI.initialize({ startOnLoad: false });
+        |var graphDefinition = 'graph TB\na-->b';
+        |console.log('Rendering graph...');
+        |var cb = function(html) { console.log(html); }
+        |var res = mermaidAPI.render('id1',graphDefinition,cb);
+        |console.log('Result: '+res);
+        |console.log('Finished.');
+      """.stripMargin)
+  }
+
+  @Test def testDomino: Unit = {
+    val nashorn = createNashorn
+    nashorn.engine.eval(
+      """(function() {
+        |  var domino = require('domino');
+        |  global.window = domino.createWindow('<html></html>');
+        |  global.document = window.document;
+        |})();
+      """.stripMargin)
+    val test3 = nashorn.mainModule.require("test3")
+    nashorn.call[Unit](test3, "f")
+  }
+
+  @Test def testStrict: Unit = {
+    val nashorn = createNashorn
+    nashorn.mainModule.require("test4")
+  }
+  */
 
   @Test def testConsole: Unit = {
     val nashorn = createNashorn

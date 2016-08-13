@@ -60,17 +60,24 @@ class Modules(engine: NashornScriptEngine) extends Logging {
     module.put("parent", parent.map(_.module).getOrElse(null))
 
     engine.eval( // Patch Object.create to unwrap ScriptObjectMirror to ScriptObject
-      s"""(function() {
-      var su = Java.type('${classOf[Modules].getName}');
-      var c = Object.create;
-      Object.create = function(p, v) { return c(su.unwrap(p), v); };
-    })();""", global)
+      s"""//# sourceURL=Module.scala/eval1
+         |(function() {
+         |  var m = Java.type('${classOf[Modules].getName}');
+         |  var c = Object.create;
+         |  Object.create = function(p, v) {
+         |    var pu = m.unwrap(p);
+         |    //var vu = m.unwrapProps(v);
+         |    return c(pu, v);
+         |  };
+         |})();
+       """.stripMargin, global)
 
     private[Modules] def initialized: this.type = { module.put("loaded", true); this }
 
     def require(module: String): AnyRef = {
       val exports = try {
         logger.debug(s"require('$module')")
+        // Lookup algorithm based on https://nodejs.org/api/modules.html#modules_all_together
         loadCoreModule(module).orElse {
           if(module.startsWith("/")  || module.startsWith("../")  || module.startsWith("./")) {
             val abs = resolvePath(modulePath.init, module.split('/'))
@@ -90,7 +97,7 @@ class Modules(engine: NashornScriptEngine) extends Logging {
     }
 
     private[this] def fail(module: String, msg: String, parent: Throwable = null): Nothing = {
-      logger.warn(s"require('$module'): Error: $msg", parent)
+      logger.warn(s"require('$module'): $msg", parent)
       val error = engine.eval("Error").asInstanceOf[ScriptObjectMirror].newObject(msg).asInstanceOf[Bindings]
       error.put("code", "MODULE_NOT_FOUND");
       throw new ECMAException(error, null)
@@ -104,7 +111,10 @@ class Modules(engine: NashornScriptEngine) extends Logging {
 
     private[this] def loadAsDirectory(path: Vector[String]): Option[Module] =
       resolve(path :+ "package.json").flatMap { s =>
-        Option(parseJson(s).get("main").asInstanceOf[String]).flatMap(m => resolvePath(path, m.split('/')).flatMap(loadAsFile _))
+        Option(parseJson(s).get("main").asInstanceOf[String]).flatMap(m => resolvePath(path, m.split('/')).flatMap { p =>
+          // The documented algorithm only does loadAsFile but in practice some modules require loadAsDirectory
+          loadAsFile(p).orElse(loadAsDirectory(p))
+        })
       }.orElse(loadJSModule(path :+ "index.js")).orElse(loadJSONModule(path :+ "index.json"))
 
     private[this] def loadNodeModules(path: Iterable[String], start: Vector[String]): Option[Module] =
@@ -112,13 +122,12 @@ class Modules(engine: NashornScriptEngine) extends Logging {
         loadAsFile(d ++ path).orElse(loadAsDirectory(d ++ path))
       }.find(_.isDefined).flatten
 
-    private[this] def loadJSModule(path: Vector[String]): Option[Module] =
-      cached(path)(p => resolve(p).map { code =>
-        val m = new Module(p, new SimpleBindings(new JHashMap(engine.getBindings(ScriptContext.ENGINE_SCOPE))), Some(this))
-        engine.eval(code, m.global)
-        m.exports = m.module.get("exports")
-        m.initialized
-      })
+    private[this] def loadJSModule(path: Vector[String]) = cached(path)(p => resolve(p).map { code =>
+      val m = new Module(p, new SimpleBindings(new JHashMap(engine.getBindings(ScriptContext.ENGINE_SCOPE))), Some(this))
+      engine.eval(code, m.global)
+      m.exports = m.module.get("exports")
+      m.initialized
+    })
 
     private[this] def loadJSONModule(path: Vector[String]) = cached(path)(p => resolve(p).map { code =>
       val m = new Module(p, new SimpleBindings, Some(this))
@@ -144,10 +153,32 @@ class Modules(engine: NashornScriptEngine) extends Logging {
 }
 
 object Modules {
-  def unwrap(o: ScriptObjectMirror): AnyRef = if(o eq null) null else {
-    val f = classOf[ScriptObjectMirror].getDeclaredField("sobj")
-    f.setAccessible(true)
-    f.get(o)
+  def unwrap(o: AnyRef): AnyRef = o match {
+    case m: ScriptObjectMirror =>
+      val f = classOf[ScriptObjectMirror].getDeclaredField("sobj")
+      f.setAccessible(true)
+      f.get(m)
+    case o => o
+  }
+
+  def unwrapProps(o: AnyRef): AnyRef = o match {
+    case m: ScriptObjectMirror =>
+      m.entrySet().asScala.foreach { me =>
+        me.getValue match {
+          case p: ScriptObjectMirror =>
+            p.get("get") match {
+              case m: ScriptObjectMirror => p.setMember("get", unwrap(m))
+              case _ =>
+            }
+            p.get("set") match {
+              case m: ScriptObjectMirror => p.setMember("set", unwrap(m))
+              case _ =>
+            }
+          case _ =>
+        }
+      }
+      unwrap(m)
+    case o => o
   }
 
   private def resolvePath(base: Vector[String], rel: Iterable[String]): Option[Vector[String]] = rel.foldLeft(Option(base)) {

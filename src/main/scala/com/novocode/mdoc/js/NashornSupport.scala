@@ -24,9 +24,9 @@ trait NashornSupport { this: Logging =>
     override def resolve(path: Vector[String]): Option[String] = path match {
       case Vector("node_modules", module, pElems @ _*) =>
         val p = pElems.mkString("/")
-        logger.debug(s"Looking for WebJar asset: $module/$p")
+        //logger.debug(s"Looking for WebJar asset: $module/$p")
         val a = loadAsset(module, p)
-        if(p.toLowerCase.endsWith(".js")) a.map(js => s"//# sourceURL=$module/$p\n$js")
+        if(p.toLowerCase.endsWith(".js")) a.map(patchJavaScript(module, p, _))
         else a
       case s =>
         logger.debug(s"Unmatched path in require(): $s")
@@ -40,10 +40,15 @@ trait NashornSupport { this: Logging =>
     }
   }.main
 
+  def patchJavaScript(module: String, path: String, js: String): String = {
+    //val js2 = if(js.startsWith(""""use strict";""")) js.substring(13) else js
+    s"//# sourceURL=$module/$path\n$js"
+  }
+
   def loadAsset(webjar: String, exactPath: String): Option[String] = {
     val path = locator.getFullPathExact(webjar, exactPath)
     if(path eq null) {
-      logger.debug(s"WebJar asset not found: $webjar/$exactPath")
+      //logger.debug(s"WebJar asset not found: $webjar/$exactPath")
       None
     } else {
       logger.debug(s"Loading WebJar asset: $webjar/$exactPath")
