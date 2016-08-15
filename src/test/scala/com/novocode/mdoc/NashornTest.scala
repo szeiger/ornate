@@ -24,8 +24,17 @@ class NashornTest {
       case "test4:/index.js" => Some(
         """"use strict";
           |exports = 42;
-        """.stripMargin
-      )
+        """.stripMargin)
+      case "test5:/index.js" => Some(
+        """var a = require('test6');
+          |function b() {};
+          |b.prototype = Object.create(a.prototype, {});
+        """.stripMargin)
+      case "test6:/index.js" => Some(
+        """module.exports = a;
+          |function a() {};
+          |a.prototype = Object.create(Object.prototype, {});
+        """.stripMargin)
       case _ => super.loadAsset(webjar, exactPath)
     }
   }
@@ -34,6 +43,13 @@ class NashornTest {
     val nashorn = createNashorn
     val hl = nashorn.mainModule.require("highlight.js")
     println(nashorn.call[Vector[String]](hl, "listLanguages"))
+    println(nashorn.call[JSMap](hl, "highlight", "scala", "\"<foo>\"").apply[String]("value"))
+  }
+
+  @Test def testHighlightJS2: Unit = {
+    val nashorn = createNashorn
+    val hl = nashorn.mainModule.require("highlight.js/lib/highlight.js")
+    nashorn.call[Unit](hl, "registerLanguage", "scala", nashorn.mainModule.require(s"highlight.js/lib/languages/scala.js"))
     println(nashorn.call[JSMap](hl, "highlight", "scala", "\"<foo>\"").apply[String]("value"))
   }
 
@@ -71,6 +87,11 @@ class NashornTest {
   @Test def testStrict: Unit = {
     val nashorn = createNashorn
     nashorn.mainModule.require("test4")
+  }
+
+  @Test def testCrossModuleBindings: Unit = {
+    val nashorn = createNashorn
+    nashorn.mainModule.require("test5")
   }
   */
 

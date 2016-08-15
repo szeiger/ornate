@@ -17,8 +17,7 @@ import scala.io.Codec
 trait NashornSupport { this: Logging =>
   import NashornSupport._
 
-  val engine = new NashornScriptEngineFactory().getScriptEngine("--const-as-var"
-    /*, "--global-per-engine"*/).asInstanceOf[NashornScriptEngine]
+  val engine = new NashornScriptEngineFactory().getScriptEngine("--const-as-var").asInstanceOf[NashornScriptEngine]
   val locator = new WebJarAssetLocator()
   val mainModule = new Modules(engine) {
     override def resolve(path: Vector[String]): Option[String] = path match {
@@ -41,8 +40,8 @@ trait NashornSupport { this: Logging =>
   }.main
 
   def patchJavaScript(module: String, path: String, js: String): String = {
+    js
     //val js2 = if(js.startsWith(""""use strict";""")) js.substring(13) else js
-    s"//# sourceURL=$module/$path\n$js"
   }
 
   def loadAsset(webjar: String, exactPath: String): Option[String] = {

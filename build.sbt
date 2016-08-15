@@ -14,6 +14,8 @@ testOptions += Tests.Argument(TestFrameworks.JUnit, "-q", "-v", "-s", "-a")
 
 fork in Test := true
 
+parallelExecution in Test := false
+
 val commonMarkVersion = "0.6.0"
 
 libraryDependencies ++= Seq(
@@ -26,7 +28,6 @@ libraryDependencies ++= Seq(
   "ch.qos.logback" % "logback-classic" % "1.1.6",
   "com.github.pathikrit" %% "better-files" % "2.16.0",
   //"org.scala-lang.modules" %% "scala-xml" % "1.0.5",
-  //"com.coveo" % "nashorn-commonjs-modules" % "1.0.3",
   "org.webjars" % "webjars-locator-core" % "0.31",
   "org.webjars.npm" % "highlight.js" % "9.6.0",
   //"org.webjars.npm" % "domino" % "1.0.25",
