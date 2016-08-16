@@ -8,7 +8,6 @@ import com.novocode.mdoc.commonmark.NodeExtensionMethods._
 
 import better.files._
 import com.novocode.mdoc.config.Global
-import org.webjars.WebJarAssetLocator
 
 import scala.collection.JavaConverters._
 
@@ -33,8 +32,6 @@ abstract class Theme(global: Global) extends Logging {
     } else Vector.empty
   }
 
-  private[this] lazy val locator = new WebJarAssetLocator()
-
   /** Resolve a resource URI to a URL. Resource URIs can use use the following protocols:
     * file, site (static site resources), webjar (absolute WebJar resource), theme (relative
     * to theme class), classpath (relative to classpath root) */
@@ -43,7 +40,7 @@ abstract class Theme(global: Global) extends Logging {
     case "site" => global.userConfig.resourceDir.path.toUri.resolve(uri.getPath.replaceFirst("^/*", "")).toURL
     case "webjar" =>
       val parts = uri.getPath.split('/').filter(_.nonEmpty)
-      val path = locator.getFullPathExact(parts.head, parts.tail.mkString("/"))
+      val path = global.webJarLocator.getFullPathExact(parts.head, parts.tail.mkString("/"))
       if(path eq null) throw new FileNotFoundException("WebJar resource not found: "+uri)
       getClass.getClassLoader.getResource(path)
     case "theme" =>
@@ -65,12 +62,17 @@ abstract class Theme(global: Global) extends Logging {
   }
 }
 
-/** A theme that prints the document structure to stdout. */
-class Dump(global: Global) extends Theme(global) {
-  def render(site: Site): Unit = {
-    site.pages.foreach { p =>
-      println("---------- Page: "+p.uri)
-      p.doc.dumpDoc()
-    }
-  }
+trait Resources {
+  protected def mappings: Iterable[ResourceSpec]
+  protected def page: Page
+  protected def getURI(uri: URI, targetFile: String, keepLink: Boolean): URI
+
+  final def get(path: String, targetFile: String = null, keepLink: Boolean = false): URI =
+    Util.relativeSiteURI(page.uri, getURI(Util.themeRootURI.resolve(path), targetFile, keepLink))
+  final def require(path: String, targetFile: String = null, keepLink: Boolean = true): Unit =
+    get(path, targetFile, keepLink)
+  final def links: Iterable[URI] =
+    mappings.collect { case r: ResourceSpec if r.keepLink => Util.relativeSiteURI(page.uri, r.uri) }
 }
+
+case class ResourceSpec(sourceURI: URI, url: URL, uri: URI, keepLink: Boolean)

@@ -112,17 +112,16 @@ class HtmlTheme(global: Global) extends Theme(global) { self =>
     def mappings: Iterable[ResourceSpec] = buf
   }
 
-  class PageModelImpl(p: Page, val renderer: HtmlRenderer, val css: ThemeResources) extends PageModel {
+  class PageModelImpl(p: Page, val renderer: HtmlRenderer, val css: ThemeResources, val image: ThemeResources) extends PageModel {
     def theme = self
     val title = HtmlFormat.escape(p.section.title.getOrElse(""))
     val content = HtmlFormat.raw(renderer.render(p.doc))
     val js = new ThemeResources(p, "js")
-    val image = new ThemeResources(p, "image")
   }
 
   def render(site: Site): Unit = {
     val staticResources = global.findStaticResources
-    val slp = new SpecialLinkProcessor(site, suffix, staticResources.iterator.map(_._2.getPath).toSet)
+    val staticResourceURIs = staticResources.iterator.map(_._2.getPath).toSet
     val siteResources = new mutable.HashMap[URL, ResourceSpec]
 
     site.pages.foreach { p =>
@@ -130,16 +129,17 @@ class HtmlTheme(global: Global) extends Theme(global) { self =>
       try {
         val templateName = p.config.getString("template")
         logger.debug(s"Rendering page ${p.uri} to file $file with template ${templateName}")
-        slp(p)
-        val css = new ThemeResources(p, "css")
+        val imageRes = new ThemeResources(p, "image")
+        val cssRes = new ThemeResources(p, "css")
+        new SpecialLinkProcessor(imageRes, site, suffix, staticResourceURIs).apply(p)
         val template = getTemplate(templateName)
         val renderer = HtmlRenderer.builder()
           .nodeRendererFactory(attributedHeadingRenderer)
-          .nodeRendererFactory(fencedCodeBlockRenderer(p, css))
-          .nodeRendererFactory(indentedCodeBlockRenderer(p, css))
-          .nodeRendererFactory(inlineCodeRenderer(p, css))
+          .nodeRendererFactory(fencedCodeBlockRenderer(p, cssRes))
+          .nodeRendererFactory(indentedCodeBlockRenderer(p, cssRes))
+          .nodeRendererFactory(inlineCodeRenderer(p, cssRes))
           .extensions(p.extensions.htmlRenderer.asJava).build()
-        val pm = new PageModelImpl(p, renderer, css)
+        val pm = new PageModelImpl(p, renderer, cssRes, imageRes)
         val formatted = template.render(pm).body.trim
         siteResources ++= (pm.css.mappings ++ pm.js.mappings ++ pm.image.mappings).map(r => (r.url, r))
         file.parent.createDirectories()
@@ -195,19 +195,4 @@ object HtmlTheme {
     def js: Resources
     def image: Resources
   }
-
-  trait Resources {
-    protected def mappings: Iterable[ResourceSpec]
-    protected def page: Page
-    protected def getURI(uri: URI, targetFile: String, keepLink: Boolean): URI
-
-    final def get(path: String, targetFile: String = null, keepLink: Boolean = false): URI =
-      Util.relativeSiteURI(page.uri, getURI(new URI("theme:/").resolve(path), targetFile, keepLink))
-    final def require(path: String, targetFile: String = null, keepLink: Boolean = true): Unit =
-      get(path, targetFile, keepLink)
-    final def links: Iterable[URI] =
-      mappings.collect { case r: ResourceSpec if r.keepLink => Util.relativeSiteURI(page.uri, r.uri) }
-  }
-
-  case class ResourceSpec(sourceURI: URI, url: URL, uri: URI, keepLink: Boolean)
 }

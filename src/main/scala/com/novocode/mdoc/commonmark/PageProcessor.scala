@@ -41,46 +41,6 @@ class SpecialImageProcessor(config: UserConfig) extends PageProcessor {
   })
 }
 
-class SpecialLinkProcessor(site: Site, suffix: String, resourcePaths: Set[String]) extends PageProcessor {
-  def apply(p: Page): Unit = {
-    p.doc.accept(new AbstractVisitor {
-      def resolve(destination: String, tpe: String, allowPage: Boolean): String = {
-        if(destination.startsWith("abs:")) {
-          val dest = destination.substring(4)
-          logger.debug(s"Page ${p.uri}: Rewriting $tpe $destination to $dest")
-          dest
-        } else {
-          val uri = p.uri.resolve(destination)
-          if(uri.getScheme == Util.siteRootURI.getScheme) {
-            (if(allowPage) site.getPageFor(uri) else None) match {
-              case Some(t) =>
-                logger.debug(s"Page ${p.uri}: Resolved $tpe $destination to page ${t.uri}")
-                val turi = t.uriWithSuffix(suffix)
-                val turi2 = new URI(turi.getScheme, turi.getAuthority, turi.getPath, uri.getQuery, uri.getFragment)
-                Util.relativeSiteURI(p.uri, turi2).toString
-              case None =>
-                if(!resourcePaths.contains(uri.getPath)) {
-                  val what = if(allowPage) "page or resource" else "resource"
-                  logger.error(s"Page ${p.uri}: No $what found for $tpe $destination (resolved to $uri)")
-                }
-                Util.relativeSiteURI(p.uri, uri).toString
-            }
-          } else destination
-        }
-      }
-
-      override def visit(n: Link): Unit = {
-        n.setDestination(resolve(n.getDestination, "link", true))
-        super.visit(n)
-      }
-      override def visit(n: Image): Unit = {
-        n.setDestination(resolve(n.getDestination, "image", false))
-        super.visit(n)
-      }
-    })
-  }
-}
-
 class AutoIdentifiersProcessor(site: Site) extends PageProcessor {
   def apply(p: Page): Unit = {
     p.doc.accept(new AbstractVisitor {

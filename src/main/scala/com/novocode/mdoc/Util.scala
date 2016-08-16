@@ -8,6 +8,7 @@ import better.files._
 
 object Util {
   val siteRootURI = new URI("site", null, "/", null)
+  val themeRootURI = new URI("theme", null, "/", null)
 
   def createIdentifier(text: String) = {
     val s = text.toLowerCase(Locale.ENGLISH).replaceAll("\\s+", "-").filter {

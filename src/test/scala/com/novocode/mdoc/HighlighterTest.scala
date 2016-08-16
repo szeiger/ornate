@@ -35,9 +35,11 @@ class HighlighterTest {
 
   @Test def testHighlightJS: Unit = {
     val hl = new HighlightJSHighlighter(global, global.userConfig.highlight)
-    def check(p: Page, src: String, lang: Option[String], exp: String, expLang: Option[String]): Unit =
-      assertEquals(HighlightResult(HtmlFormat.raw(exp), expLang),
-        hl.highlightTextAsHTML(src, lang, HighlightTarget.FencedCodeBlock, p))
+    def check(p: Page, src: String, lang: Option[String], exp: String, expLang: Option[String]): Unit = {
+      val hlr = hl.highlightTextAsHTML(src, lang, HighlightTarget.FencedCodeBlock, p)
+      assertEquals(HtmlFormat.raw(exp), hlr.html)
+      assertEquals(expLang, hlr.language)
+    }
 
     check(p1,
       """val x = "<foo>"""", Some("scala"),

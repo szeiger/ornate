@@ -36,4 +36,6 @@ And an indented block:
 
 And this `val x = 42` is inline code.
 
-Target text
+Here's an image from highlight.js:
+
+![](webjar:/highlight.js/styles/brown-papersq.png)
