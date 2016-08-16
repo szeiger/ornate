@@ -40,14 +40,14 @@ abstract class Theme(global: Global) extends Logging {
     * to theme class), classpath (relative to classpath root) */
   def resolveResource(uri: URI): URL = uri.getScheme match {
     case "file" => uri.toURL
-    case "site" => global.userConfig.resourceDir.path.toUri.resolve(uri.getPath).toURL
+    case "site" => global.userConfig.resourceDir.path.toUri.resolve(uri.getPath.replaceFirst("^/*", "")).toURL
     case "webjar" =>
       val parts = uri.getPath.split('/').filter(_.nonEmpty)
       val path = locator.getFullPathExact(parts.head, parts.tail.mkString("/"))
       if(path eq null) throw new FileNotFoundException("WebJar resource not found: "+uri)
       getClass.getClassLoader.getResource(path)
     case "theme" =>
-      val url = getClass.getResource(uri.getPath.replaceAll("^/*", ""))
+      val url = getClass.getResource(uri.getPath.replaceFirst("^/*", ""))
       if(url eq null) throw new FileNotFoundException("Theme resource not found: "+uri)
       url
     case "classpath" =>
@@ -60,8 +60,8 @@ abstract class Theme(global: Global) extends Logging {
   /** Get a default relative path for a resource URI */
   def suggestRelativePath(uri: URI): String = uri.getScheme match {
     case "file" => uri.getPath.split('/').last
-    case "site" => global.userConfig.resourceDir.path.toUri.resolve(uri.getPath).getPath.replaceAll("^/*", "")
-    case _ => uri.getPath.replaceAll("^/*", "")
+    case "site" => global.userConfig.resourceDir.path.toUri.resolve(uri.getPath).getPath.replaceFirst("^/*", "")
+    case _ => uri.getPath.replaceFirst("^/*", "")
   }
 }
 

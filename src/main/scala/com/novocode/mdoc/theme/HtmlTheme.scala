@@ -87,24 +87,29 @@ class HtmlTheme(global: Global) extends Theme(global) { self =>
       val dir = global.userConfig.theme.config.getString(s"global.dirs.$tpe")
       Util.siteRootURI.resolve(if(dir.endsWith("/")) dir else dir + "/")
     }
-    private[this] val buf = new mutable.ArrayBuffer[(URL, URI, Boolean)]
-    private[this] val map = new mutable.HashMap[URL, URI]
+    private[this] val buf = new mutable.ArrayBuffer[ResourceSpec]
+    private[this] val map = new mutable.HashMap[URL, ResourceSpec]
 
     def getURI(sourceURI: URI, targetFile: String, keepLink: Boolean): URI = {
       try {
         val url = resolveResource(sourceURI)
         map.getOrElseUpdate(url, {
-          val tname = (if(targetFile eq null) suggestRelativePath(sourceURI) else targetFile).replaceAll("^/*", "")
-          val uri = baseURI.resolve(tname)
-          buf += ((url, uri, keepLink))
-          uri
-        })
+          val targetURI =
+            if(sourceURI.getScheme == "site") sourceURI // link to site resources at their original location
+            else {
+              val tname = (if(targetFile eq null) suggestRelativePath(sourceURI) else targetFile).replaceAll("^/*", "")
+              baseURI.resolve(tname)
+            }
+          val spec = ResourceSpec(sourceURI, url, targetURI, keepLink)
+          buf += spec
+          spec
+        }).uri
       } catch { case ex: Exception =>
         logger.error(s"Error resolving theme resource URI $sourceURI -- Skipping resource and using original link")
         sourceURI
       }
     }
-    def mappings: Iterable[(URL, URI, Boolean)] = buf
+    def mappings: Iterable[ResourceSpec] = buf
   }
 
   class PageModelImpl(p: Page, val renderer: HtmlRenderer, val css: ThemeResources) extends PageModel {
@@ -118,7 +123,7 @@ class HtmlTheme(global: Global) extends Theme(global) { self =>
   def render(site: Site): Unit = {
     val staticResources = global.findStaticResources
     val slp = new SpecialLinkProcessor(site, suffix, staticResources.iterator.map(_._2.getPath).toSet)
-    val siteResources = new mutable.HashMap[URL, URI]
+    val siteResources = new mutable.HashMap[URL, ResourceSpec]
 
     site.pages.foreach { p =>
       val file = targetFile(p.uriWithSuffix(suffix), global.userConfig.targetDir)
@@ -136,7 +141,7 @@ class HtmlTheme(global: Global) extends Theme(global) { self =>
           .extensions(p.extensions.htmlRenderer.asJava).build()
         val pm = new PageModelImpl(p, renderer, css)
         val formatted = template.render(pm).body.trim
-        siteResources ++= (pm.css.mappings ++ pm.js.mappings ++ pm.image.mappings).map { case (s, t, _) => (s, t) }
+        siteResources ++= (pm.css.mappings ++ pm.js.mappings ++ pm.image.mappings).map(r => (r.url, r))
         file.parent.createDirectories()
         file.write(formatted+'\n')(codec = Codec.UTF8)
       } catch { case ex: Exception =>
@@ -153,18 +158,18 @@ class HtmlTheme(global: Global) extends Theme(global) { self =>
       }
     }
 
-    siteResources.foreach { case (sourceURL, uri) =>
-      val file = targetFile(uri, global.userConfig.targetDir)
-      logger.debug(s"Copying theme resource $sourceURL to file $file")
+    siteResources.valuesIterator.filter(_.sourceURI.getScheme != "site").foreach { rs =>
+      val file = targetFile(rs.uri, global.userConfig.targetDir)
+      logger.debug(s"Copying theme resource ${rs.url} to file $file")
       try {
         file.parent.createDirectories()
-        val in = sourceURL.openStream()
+        val in = rs.url.openStream()
         try {
           val out = file.newOutputStream
           try in.pipeTo(out) finally out.close
         } finally in.close
       } catch { case ex: Exception =>
-        logger.error(s"Error copying theme resource $sourceURL to $file", ex)
+        logger.error(s"Error copying theme resource ${rs.url} to $file", ex)
       }
     }
   }
@@ -192,7 +197,7 @@ object HtmlTheme {
   }
 
   trait Resources {
-    protected def mappings: Iterable[(URL, URI, Boolean)]
+    protected def mappings: Iterable[ResourceSpec]
     protected def page: Page
     protected def getURI(uri: URI, targetFile: String, keepLink: Boolean): URI
 
@@ -201,6 +206,8 @@ object HtmlTheme {
     final def require(path: String, targetFile: String = null, keepLink: Boolean = true): Unit =
       get(path, targetFile, keepLink)
     final def links: Iterable[URI] =
-      mappings.collect { case (_, u, true) => Util.relativeSiteURI(page.uri, u) }
+      mappings.collect { case r: ResourceSpec if r.keepLink => Util.relativeSiteURI(page.uri, r.uri) }
   }
+
+  case class ResourceSpec(sourceURI: URI, url: URL, uri: URI, keepLink: Boolean)
 }
