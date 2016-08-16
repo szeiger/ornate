@@ -1,11 +1,12 @@
 @(p: com.novocode.mdoc.theme.HtmlTheme.PageModel)
-
 <!DOCTYPE html>
 <html>
   <head>
-      <title>@{p.title}</title>
+    <link rel="stylesheet" href="@{p.css.get("theme.css")}">
+    @for(href <- p.css.links) { <link rel="stylesheet" href="@href"> }
+    <title>@p.title</title>
   </head>
   <body>
-    @{p.content}
+    @p.content
   </body>
 </html>

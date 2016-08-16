@@ -1,5 +1,7 @@
 package com.novocode.mdoc.highlight
 
+import java.net.URI
+
 import com.novocode.mdoc.Page
 import com.novocode.mdoc.config.{ConfiguredObject, Global}
 import play.twirl.api.{HtmlFormat, Html}
@@ -10,7 +12,8 @@ trait Highlighter {
   def highlightTextAsHTML(text: String, lang: Option[String], target: HighlightTarget, page: Page): HighlightResult
 }
 
-case class HighlightResult(html: Html, language: Option[String])
+case class HighlightResult(html: Html, language: Option[String],
+                           css: Iterable[URI] = Seq.empty)
 
 class NoHighlighter(global: Global, conf: ConfiguredObject) extends Highlighter {
   def highlightTextAsHTML(text: String, lang: Option[String], target: HighlightTarget, page: Page): HighlightResult =

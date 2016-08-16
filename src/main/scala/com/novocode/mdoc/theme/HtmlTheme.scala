@@ -1,8 +1,9 @@
 package com.novocode.mdoc.theme
 
-import java.net.URI
+import java.net.{URL, URI}
 import java.util.Collections
 
+import better.files.File.OpenOptions
 import com.novocode.mdoc._
 import com.novocode.mdoc.commonmark.NodeExtensionMethods._
 
@@ -16,12 +17,13 @@ import org.commonmark.html.renderer.{NodeRendererContext, NodeRenderer}
 import org.commonmark.node._
 import play.twirl.api.{Html, Template1, HtmlFormat}
 
+import scala.StringBuilder
 import scala.collection.JavaConverters._
 import scala.collection.mutable
 import scala.io.Codec
 
 /** Base class for Twirl-based HTML themes */
-class HtmlTheme(global: Global) extends Theme(global) with Logging { self =>
+class HtmlTheme(global: Global) extends Theme(global) { self =>
   import HtmlTheme._
   val suffix = ".html"
 
@@ -60,47 +62,81 @@ class HtmlTheme(global: Global) extends Theme(global) with Logging { self =>
     }
   }
 
-  def fencedCodeBlockRenderer(page: Page) = SimpleHtmlNodeRenderer { (n: FencedCodeBlock, c: NodeRendererContext) =>
+  def fencedCodeBlockRenderer(page: Page, css: ThemeResources) = SimpleHtmlNodeRenderer { (n: FencedCodeBlock, c: NodeRendererContext) =>
     val info = if(n.getInfo eq null) Vector.empty else n.getInfo.split(' ').filter(_.nonEmpty).toVector
     val lang = info.headOption
     val hlr = global.highlighter.highlightTextAsHTML(n.getLiteral, lang, HighlightTarget.FencedCodeBlock, page)
+    hlr.css.foreach(u => css.getURI(u, null, u.getPath.endsWith(".css")))
     renderCode(n, hlr.html.toString, lang.orElse(hlr.language), c, true)
   }
 
-  def indentedCodeBlockRenderer(page: Page) = SimpleHtmlNodeRenderer { (n: IndentedCodeBlock, c: NodeRendererContext) =>
+  def indentedCodeBlockRenderer(page: Page, css: ThemeResources) = SimpleHtmlNodeRenderer { (n: IndentedCodeBlock, c: NodeRendererContext) =>
     val hlr = global.highlighter.highlightTextAsHTML(n.getLiteral, None, HighlightTarget.IndentedCodeBlock, page)
+    hlr.css.foreach(u => css.getURI(u, null, u.getPath.endsWith(".css")))
     renderCode(n, hlr.html.toString, hlr.language, c, true)
   }
 
-  def inlineCodeRenderer(page: Page) = SimpleHtmlNodeRenderer { (n: Code, c: NodeRendererContext) =>
+  def inlineCodeRenderer(page: Page, css: ThemeResources) = SimpleHtmlNodeRenderer { (n: Code, c: NodeRendererContext) =>
     val hlr = global.highlighter.highlightTextAsHTML(n.getLiteral, None, HighlightTarget.InlineCode, page)
+    hlr.css.foreach(u => css.getURI(u, null, u.getPath.endsWith(".css")))
     renderCode(n, hlr.html.toString, hlr.language, c, false)
+  }
+
+  class ThemeResources(val page: Page, tpe: String) extends Resources {
+    private[this] val baseURI = {
+      val dir = global.userConfig.theme.config.getString(s"global.dirs.$tpe")
+      Util.siteRootURI.resolve(if(dir.endsWith("/")) dir else dir + "/")
+    }
+    private[this] val buf = new mutable.ArrayBuffer[(URL, URI, Boolean)]
+    private[this] val map = new mutable.HashMap[URL, URI]
+
+    def getURI(sourceURI: URI, targetFile: String, keepLink: Boolean): URI = {
+      try {
+        val url = resolveResource(sourceURI)
+        map.getOrElseUpdate(url, {
+          val tname = (if(targetFile eq null) suggestRelativePath(sourceURI) else targetFile).replaceAll("^/*", "")
+          val uri = baseURI.resolve(tname)
+          buf += ((url, uri, keepLink))
+          uri
+        })
+      } catch { case ex: Exception =>
+        logger.error(s"Error resolving theme resource URI $sourceURI -- Skipping resource and using original link")
+        sourceURI
+      }
+    }
+    def mappings: Iterable[(URL, URI, Boolean)] = buf
+  }
+
+  class PageModelImpl(p: Page, val renderer: HtmlRenderer, val css: ThemeResources) extends PageModel {
+    def theme = self
+    val title = HtmlFormat.escape(p.section.title.getOrElse(""))
+    val content = HtmlFormat.raw(renderer.render(p.doc))
+    val js = new ThemeResources(p, "js")
+    val image = new ThemeResources(p, "image")
   }
 
   def render(site: Site): Unit = {
     val staticResources = global.findStaticResources
     val slp = new SpecialLinkProcessor(site, suffix, staticResources.iterator.map(_._2.getPath).toSet)
+    val siteResources = new mutable.HashMap[URL, URI]
 
     site.pages.foreach { p =>
-      slp(p)
       val file = targetFile(p.uriWithSuffix(suffix), global.userConfig.targetDir)
-      val templateName = p.config.getString("template")
-      logger.debug(s"Rendering page ${p.uri} to file $file with template ${templateName}")
       try {
+        val templateName = p.config.getString("template")
+        logger.debug(s"Rendering page ${p.uri} to file $file with template ${templateName}")
+        slp(p)
+        val css = new ThemeResources(p, "css")
         val template = getTemplate(templateName)
-        val _renderer = HtmlRenderer.builder()
+        val renderer = HtmlRenderer.builder()
           .nodeRendererFactory(attributedHeadingRenderer)
-          .nodeRendererFactory(fencedCodeBlockRenderer(p))
-          .nodeRendererFactory(indentedCodeBlockRenderer(p))
-          .nodeRendererFactory(inlineCodeRenderer(p))
+          .nodeRendererFactory(fencedCodeBlockRenderer(p, css))
+          .nodeRendererFactory(indentedCodeBlockRenderer(p, css))
+          .nodeRendererFactory(inlineCodeRenderer(p, css))
           .extensions(p.extensions.htmlRenderer.asJava).build()
-        val pm: PageModel = new PageModel {
-          def renderer = _renderer
-          def theme = self
-          val title = HtmlFormat.escape(p.section.title.getOrElse(""))
-          val content = HtmlFormat.raw(renderer.render(p.doc))
-        }
+        val pm = new PageModelImpl(p, renderer, css)
         val formatted = template.render(pm).body.trim
+        siteResources ++= (pm.css.mappings ++ pm.js.mappings ++ pm.image.mappings).map { case (s, t, _) => (s, t) }
         file.parent.createDirectories()
         file.write(formatted+'\n')(codec = Codec.UTF8)
       } catch { case ex: Exception =>
@@ -108,12 +144,27 @@ class HtmlTheme(global: Global) extends Theme(global) with Logging { self =>
       }
     }
 
-    staticResources.map { case (sourceFile, uri) =>
+    staticResources.foreach { case (sourceFile, uri) =>
       val file = targetFile(uri, global.userConfig.targetDir)
       logger.debug(s"Copying static resource $uri to file $file")
       try sourceFile.copyTo(file, overwrite = true)
       catch { case ex: Exception =>
         logger.error(s"Error copying static resource file $sourceFile to $file", ex)
+      }
+    }
+
+    siteResources.foreach { case (sourceURL, uri) =>
+      val file = targetFile(uri, global.userConfig.targetDir)
+      logger.debug(s"Copying theme resource $sourceURL to file $file")
+      try {
+        file.parent.createDirectories()
+        val in = sourceURL.openStream()
+        try {
+          val out = file.newOutputStream
+          try in.pipeTo(out) finally out.close
+        } finally in.close
+      } catch { case ex: Exception =>
+        logger.error(s"Error copying theme resource $sourceURL to $file", ex)
       }
     }
   }
@@ -135,5 +186,21 @@ object HtmlTheme {
     def theme: HtmlTheme
     def title: Html
     def content: Html
+    def css: Resources
+    def js: Resources
+    def image: Resources
+  }
+
+  trait Resources {
+    protected def mappings: Iterable[(URL, URI, Boolean)]
+    protected def page: Page
+    protected def getURI(uri: URI, targetFile: String, keepLink: Boolean): URI
+
+    final def get(path: String, targetFile: String = null, keepLink: Boolean = false): URI =
+      Util.relativeSiteURI(page.uri, getURI(new URI("theme:/").resolve(path), targetFile, keepLink))
+    final def require(path: String, targetFile: String = null, keepLink: Boolean = true): Unit =
+      get(path, targetFile, keepLink)
+    final def links: Iterable[URI] =
+      mappings.collect { case (_, u, true) => Util.relativeSiteURI(page.uri, u) }
   }
 }

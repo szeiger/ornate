@@ -1,6 +1,7 @@
 package com.novocode.mdoc.js
 
 import com.novocode.mdoc.Logging
+import org.slf4j.LoggerFactory
 
 import scala.collection.mutable
 import scala.collection.JavaConverters._
@@ -10,7 +11,8 @@ import javax.script.{Bindings, ScriptContext, SimpleBindings}
 import jdk.nashorn.api.scripting.{NashornScriptEngine, ScriptObjectMirror}
 import jdk.nashorn.internal.runtime.ECMAException
 
-class Modules(engine: NashornScriptEngine) extends Logging {
+class Modules(engine: NashornScriptEngine) {
+  val logger = LoggerFactory.getLogger(classOf[Modules])
   private val cache = new mutable.HashMap[Vector[String], Module]
 
   val main: JSModule = {

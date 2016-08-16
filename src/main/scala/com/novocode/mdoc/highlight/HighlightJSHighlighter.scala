@@ -1,5 +1,7 @@
 package com.novocode.mdoc.highlight
 
+import java.net.URI
+
 import com.novocode.mdoc.js.{JSMap, NashornSupport}
 import com.novocode.mdoc.{Logging, Page}
 import com.novocode.mdoc.config.{ConfiguredObject, Global}
@@ -53,6 +55,11 @@ class HighlightJSHighlighter(global: Global, conf: ConfiguredObject) extends Hig
           case i: java.util.Collection[_] => i.asScala.toVector.asInstanceOf[Vector[String]]
         }
     }
+    val css =
+      if(localConf.hasPath("styleResources")) {
+        val base = new URI("webjar:/highlight.js/styles/")
+        localConf.getStringList("styleResources").asScala.map(base.resolve _)
+      } else Nil
     if(langs.isEmpty) noHighlight.highlightTextAsHTML(text, lang, target, page)
     else {
       val legalLangs = requireLanguages(langs)
@@ -63,7 +70,7 @@ class HighlightJSHighlighter(global: Global, conf: ConfiguredObject) extends Hig
           case Vector(l) => call[JSMap](hljs, "highlight", l, text)
           case v => call[JSMap](hljs, "highlightAuto", text, engine.invokeFunction("Array", v: _*))
         }
-        HighlightResult(HtmlFormat.raw(o[String]("value")), Option(o[String]("language")))
+        HighlightResult(HtmlFormat.raw(o[String]("value")), Option(o[String]("language")), css)
       }
     }
   } catch { case ex: Exception =>
