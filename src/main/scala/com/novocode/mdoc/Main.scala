@@ -8,6 +8,7 @@ object Main extends App {
   val startDir = file"doc"
   val global = new Global(startDir, startDir / "mdoc.conf")
 
+  //#main
   val userPages = PageParser.parseSources(global)
   val themePageURIs = global.theme.syntheticPageURIs
   val themePages = global.theme.synthesizePages(themePageURIs)
@@ -26,4 +27,5 @@ object Main extends App {
   pages.foreach(etp)
 
   global.theme.render(site)
+  //#main
 }

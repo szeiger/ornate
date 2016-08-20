@@ -22,7 +22,7 @@ object PageParser extends Logging {
   def parseSources(global: Global): Vector[Page] = {
     global.findSources.flatMap { case (f, suffix, uri) =>
       logger.info(s"Parsing $f as $uri")
-      try Some(parseWithFrontMatter(global.userConfig, uri, suffix, f.contentAsString(Codec.UTF8), false))
+      try Some(parseWithFrontMatter(Some(f.uri), global.userConfig, uri, suffix, f.contentAsString(Codec.UTF8)))
       catch { case ex: Exception =>
         logger.error(s"Error parsing $f -- skipping file", ex)
         None
@@ -30,7 +30,7 @@ object PageParser extends Logging {
     }
   }
 
-  def parseWithFrontMatter(globalConfig: ReferenceConfig, uri: URI, suffix: String, text: String, synthetic: Boolean): Page = {
+  def parseWithFrontMatter(sourceFileURI: Option[URI], globalConfig: ReferenceConfig, uri: URI, suffix: String, text: String): Page = {
     val lines = text.lines
     val (front, content) = if(lines.hasNext && lines.next.trim == "---") {
       var foundEnd = false
@@ -47,10 +47,10 @@ object PageParser extends Logging {
 
     val pageConfig = if(front.nonEmpty) globalConfig.parsePageConfig(front) else globalConfig.raw
 
-    parseContent(globalConfig, uri, suffix, content, pageConfig, synthetic)
+    parseContent(sourceFileURI, globalConfig, uri, suffix, content, pageConfig)
   }
 
-  def parseContent(appConfig: ReferenceConfig, uri: URI, suffix: String, content: String, pageConfig: Config, synthetic: Boolean): Page = {
+  def parseContent(sourceFileURI: Option[URI], appConfig: ReferenceConfig, uri: URI, suffix: String, content: String, pageConfig: Config): Page = {
     val extensions = appConfig.getExtensions(pageConfig.getStringList("extensions").asScala)
     if(logger.isDebugEnabled) logger.debug("Page extensions: " + extensions)
 
@@ -61,7 +61,7 @@ object PageParser extends Logging {
     val title =
       if(pageConfig.hasPath("title")) Some(pageConfig.getString("title"))
       else UntitledSection(0, sections).findFirstHeading.map(_.title)
-    new Page(uri, suffix, doc, pageConfig, PageSection(title, sections), extensions, synthetic)
+    new Page(sourceFileURI, uri, suffix, doc, pageConfig, PageSection(title, sections), extensions)
   }
 
   private def computeSections(uri: URI, doc: Node): Vector[Section] = {

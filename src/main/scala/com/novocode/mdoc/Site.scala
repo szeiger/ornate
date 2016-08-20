@@ -13,8 +13,8 @@ class Site(val pages: Vector[Page], val toc: Vector[TocEntry]) {
     else None
 }
 
-class Page(val uri: URI, val suffix: String, val doc: Node, val config: Config, val section: PageSection,
-           val extensions: Extensions, val synthetic: Boolean) {
+class Page(val sourceFileURI: Option[URI], val uri: URI, val suffix: String, val doc: Node, val config: Config,
+           val section: PageSection, val extensions: Extensions) {
   override def toString: String = s"Page($uri)"
 
   def uriWithSuffix(ext: String): URI = Util.replaceSuffix(uri, suffix, ext)

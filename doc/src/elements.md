@@ -79,7 +79,16 @@ Multiple code blocks can be combined in a tabbed view:
   }
 ```
 
-This paragraph follows the code blocks.
+Using the `includeCode` extension, code blocks can also come from included files:
+
+```xml src=../../src/main/resources/logback.xml
+```
+
+...or parts of included files:
+
+```scala src=../../src/main/scala/com/novocode/mdoc/Main.scala#main
+  Snippet Placeholder -- only rendered when snippet processing fails
+```
 
 ## Block Quotes
 
