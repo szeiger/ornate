@@ -3,7 +3,7 @@ package com.novocode.mdoc
 import org.commonmark.html.HtmlRenderer.HtmlRendererExtension
 import org.commonmark.parser.Parser.ParserExtension
 
-import com.novocode.mdoc.commonmark.{AutoIdentifiersProcessor, PageProcessor}
+import com.novocode.mdoc.commonmark.PageProcessor
 import com.novocode.mdoc.config.Global
 
 trait Extension {
@@ -30,10 +30,4 @@ class Extensions(extensions: Vector[(String, Option[AnyRef])]) {
 
   def mdoc: Vector[Extension] =
     extensions.collect { case (_, Some(e: Extension)) => e }
-}
-
-/** Give all headings an ID so they can be linked to from the TOC and other places.
-  * Otherwise only explicitly attributed headings get an ID. */
-class AutoIdentifiersExtension extends Extension {
-  override def pageProcessors(global: Global, site: Site) = Seq(new AutoIdentifiersProcessor(site))
 }

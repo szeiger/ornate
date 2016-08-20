@@ -41,21 +41,6 @@ class SpecialImageProcessor(config: UserConfig) extends PageProcessor {
   })
 }
 
-class AutoIdentifiersProcessor(site: Site) extends PageProcessor {
-  def apply(p: Page): Unit = {
-    p.doc.accept(new AbstractVisitor {
-      override def visit(n: Heading): Unit = {
-        n match {
-          case n: AttributedHeading if n.id eq null =>
-            p.section.allHeadings.find(_.heading eq n).foreach { s => n.id = s.id }
-          case _ =>
-        }
-        super.visit(n)
-      }
-    })
-  }
-}
-
 class ExpandTocProcessor(toc: Vector[TocEntry]) extends PageProcessor {
   case class TocItem(text: Option[String], target: Option[String], children: Vector[TocItem]) {
     def toNode: ListItem = {

@@ -13,7 +13,8 @@ trait Highlighter {
 }
 
 case class HighlightResult(html: Html, language: Option[String],
-                           css: Iterable[URI] = Seq.empty)
+                           css: Iterable[URI] = Seq.empty,
+                           preClasses: Seq[String] = Seq.empty, preCodeClasses: Seq[String] = Seq.empty, codeClasses: Seq[String] = Seq.empty)
 
 class NoHighlighter(global: Global, conf: ConfiguredObject) extends Highlighter {
   def highlightTextAsHTML(text: String, lang: Option[String], target: HighlightTarget, page: Page): HighlightResult =

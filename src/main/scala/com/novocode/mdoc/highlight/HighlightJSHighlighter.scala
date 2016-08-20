@@ -12,8 +12,6 @@ import scala.collection.JavaConverters._
 
 /** A Highlighter based on highlight.js */
 class HighlightJSHighlighter(global: Global, conf: ConfiguredObject) extends Highlighter with NashornSupport with Logging {
-  val noHighlight = new NoHighlighter(global, null)
-
   logger.debug("Loading highlight.js...")
   val hljs = mainModule.require("highlight.js/lib/highlight.js")
   val supportedLanguages = listAssets("highlight.js", "lib/languages/").map(_.replaceAll("\\.js$", ""))
@@ -60,21 +58,25 @@ class HighlightJSHighlighter(global: Global, conf: ConfiguredObject) extends Hig
         val base = new URI("webjar:/highlight.js/styles/")
         localConf.getStringList("styleResources").asScala.map(base.resolve _)
       } else Nil
-    if(langs.isEmpty) noHighlight.highlightTextAsHTML(text, lang, target, page)
+    def textHighlight(text: String) =
+      HighlightResult(HtmlFormat.escape(text), None, css, preClasses = Seq("hljs"), codeClasses = Seq("hljs"))
+    if(langs.isEmpty) textHighlight(text)
     else {
       val legalLangs = requireLanguages(langs)
-      if(legalLangs.isEmpty) noHighlight.highlightTextAsHTML(text, lang, target, page)
+      if(legalLangs.isEmpty) textHighlight(text)
       else {
         logger.debug("Highlighting as language "+legalLangs.mkString("/"))
         val o = legalLangs match {
           case Vector(l) => call[JSMap](hljs, "highlight", l, text)
           case v => call[JSMap](hljs, "highlightAuto", text, engine.invokeFunction("Array", v: _*))
         }
-        HighlightResult(HtmlFormat.raw(o[String]("value")), Option(o[String]("language")), css)
+        HighlightResult(HtmlFormat.raw(o[String]("value")), Option(o[String]("language")), css,
+          preClasses = Seq("hljs"), codeClasses = Seq("hljs")
+        )
       }
     }
   } catch { case ex: Exception =>
     logger.error("Error running highlight.js", ex)
-    noHighlight.highlightTextAsHTML(text, lang, target, page)
+    new NoHighlighter(global, null).highlightTextAsHTML(text, lang, target, page)
   }
 }

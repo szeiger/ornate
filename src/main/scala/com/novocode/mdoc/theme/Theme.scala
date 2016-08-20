@@ -55,10 +55,15 @@ abstract class Theme(global: Global) extends Logging {
   }
 
   /** Get a default relative path for a resource URI */
-  def suggestRelativePath(uri: URI): String = uri.getScheme match {
-    case "file" => uri.getPath.split('/').last
-    case "site" => global.userConfig.resourceDir.path.toUri.resolve(uri.getPath).getPath.replaceFirst("^/*", "")
-    case _ => uri.getPath.replaceFirst("^/*", "")
+  def suggestRelativePath(uri: URI, tpe: String): String = {
+    val s = uri.getScheme match {
+      case "file" => uri.getPath.split('/').last
+      case "site" => global.userConfig.resourceDir.path.toUri.resolve(uri.getPath).getPath.replaceFirst("^/*", "")
+      case _ => uri.getPath.replaceFirst("^/*", "")
+    }
+    val prefix = tpe + "/"
+    if(s.startsWith(prefix) && s.length > prefix.length) s.substring(prefix.length)
+    else s
   }
 }
 

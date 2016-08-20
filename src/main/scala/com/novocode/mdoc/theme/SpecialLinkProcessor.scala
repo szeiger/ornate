@@ -6,6 +6,7 @@ import com.novocode.mdoc.commonmark.PageProcessor
 import com.novocode.mdoc.{Util, Page, Site}
 import org.commonmark.node.{Image, Link, AbstractVisitor}
 
+/** Resolve links and image targets to the proper destination. */
 class SpecialLinkProcessor(imageResources: Resources, site: Site, suffix: String, resourcePaths: Set[String]) extends PageProcessor {
   def apply(p: Page): Unit = {
     p.doc.accept(new AbstractVisitor {

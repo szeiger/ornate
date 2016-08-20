@@ -7,7 +7,7 @@ import org.commonmark.node.Heading
 import org.commonmark.parser._
 import org.commonmark.parser.block._
 
-import scala.collection.mutable.{StringBuilder, ListBuffer}
+import scala.collection.mutable.ListBuffer
 
 object HeaderAttributesExtension {
   def create: Extension = new HeaderAttributesExtension
@@ -17,7 +17,7 @@ class HeaderAttributesExtension extends Parser.ParserExtension {
   private val ATX_HEADING = "^#{1,6}(?: +|$)".r.pattern
   private val ATX_TRAILING = "(^| ) *#+ *$".r.pattern
   private val SETEXT_HEADING = "^(?:=+|-+) *$".r.pattern
-  private val ATTRIBUTED = """(.*)[^\\\\]\{\s*([^\\}]*)\}\s*""".r
+  private val ATTRIBUTED = """(.*)[^\\\\]?\{\s*([^\\}]*)\}\s*""".r
 
   def extend(parserBuilder: Parser.Builder) = parserBuilder.customBlockParserFactory(new Factory)
 
@@ -54,11 +54,7 @@ class HeaderAttributesExtension extends Parser.ParserExtension {
     override def parseInlines(inlineParser: InlineParser) = {
       content match {
         case ATTRIBUTED(c, a) =>
-          a.split("\\s+").foreach { s =>
-            if(s.startsWith("#")) {
-              if(block.id eq null) block.id = s.substring(1)
-            } else block.attrs += s
-          }
+          block.parseAttributes(a)
           inlineParser.parse(c.trim, block)
         case _ =>
           inlineParser.parse(content, block)
@@ -67,14 +63,6 @@ class HeaderAttributesExtension extends Parser.ParserExtension {
   }
 }
 
-class AttributedHeading extends Heading {
-  var id: String = null
-  val attrs: ListBuffer[String] = new ListBuffer
-
-  override protected def toStringAttributes = {
-    val b = new StringBuilder().append(s"level=$getLevel")
-    if(id ne null) b.append(" id="+id)
-    if(attrs.nonEmpty) b.append(attrs.mkString(" attrs=[", ", ", "]"))
-    b.toString
-  }
+class AttributedHeading extends Heading with Attributed {
+  override protected def toStringAttributes = s"level=$getLevel $attributedToString"
 }

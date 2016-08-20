@@ -1,7 +1,7 @@
 package com.novocode.mdoc
 
 import better.files._
-import com.novocode.mdoc.commonmark.{ExpandTocProcessor, SpecialImageProcessor}
+import com.novocode.mdoc.commonmark.{AttributeFencedCodeBlocksProcessor, ExpandTocProcessor, SpecialImageProcessor}
 import com.novocode.mdoc.config.Global
 
 object Main extends App {
@@ -19,7 +19,7 @@ object Main extends App {
   val sip = new SpecialImageProcessor(global.userConfig)
   pages.foreach { p =>
     val pagepp = p.extensions.mdoc.flatMap(_.pageProcessors(global, site))
-    (sip +: pagepp).foreach(_(p))
+    (AttributeFencedCodeBlocksProcessor +: sip +: pagepp).foreach(_(p))
   }
 
   val etp = new ExpandTocProcessor(toc)

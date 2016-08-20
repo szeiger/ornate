@@ -9,3 +9,4 @@ target/
 /\.classpath
 .history
 .DS_Store
+/tmp/

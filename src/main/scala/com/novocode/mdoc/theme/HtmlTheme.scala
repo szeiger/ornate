@@ -10,7 +10,7 @@ import com.novocode.mdoc.commonmark.NodeExtensionMethods._
 import better.files._
 import com.novocode.mdoc.commonmark._
 import com.novocode.mdoc.config.Global
-import com.novocode.mdoc.highlight.HighlightTarget
+import com.novocode.mdoc.highlight.{HighlightResult, HighlightTarget}
 import org.commonmark.html.HtmlRenderer
 import org.commonmark.html.HtmlRenderer.HtmlRendererExtension
 import org.commonmark.html.renderer.{NodeRendererContext, NodeRenderer}
@@ -27,59 +27,97 @@ class HtmlTheme(global: Global) extends Theme(global) { self =>
   import HtmlTheme._
   val suffix = ".html"
 
-  val attributedHeadingRenderer = SimpleHtmlNodeRenderer { (n: AttributedHeading, c: NodeRendererContext) =>
-    val html = c.getHtmlWriter
-    val htag = s"h${n.getLevel}"
-    html.line
-    val attrs = c.extendAttributes(n, Collections.emptyMap[String, String])
-    if(n.id ne null) attrs.put("id", n.id)
-    html.tag(htag, attrs)
-    n.children.toVector.foreach(c.render)
-    html.tag('/' + htag)
-    html.line
+  class PageContext(val page: Page) {
+    private[this] var last = -1
+    def newID(): String = {
+      last += 1
+      s"_id$last"
+    }
   }
 
   def targetFile(uri: URI, base: File): File =
     uri.getPath.split('/').filter(_.nonEmpty).foldLeft(base) { case (f, s) => f / s }
 
-  def renderCode(n: Node, raw: String, lang: Option[String], c: NodeRendererContext, block: Boolean): Unit = {
-    val attrs = new mutable.HashMap[String, String]
-    lang match {
-      case Some(s) => attrs += "class" -> s"language-${s}"
-      case None =>
-    }
-    val html = c.getHtmlWriter
-    if(block) {
-      html.line
-      html.tag("pre")
-    }
-    html.tag("code", c.extendAttributes(n, attrs.asJava))
-    html.raw(raw)
-    html.tag("/code")
-    if(block) {
-      html.tag("/pre")
-      html.line
+  /** Render a heading with an ID. It can be overridden in subclasses as needed. */
+  def renderAttributedHeading(n: AttributedHeading, c: NodeRendererContext): Unit = {
+    val htag = s"h${n.getLevel}"
+    val attrs = c.extendAttributes(n, Collections.emptyMap[String, String])
+    if(n.id ne null) attrs.put("id", n.id)
+    val classes = n.simpleAttrs.filter(_.startsWith(".")).map(_.drop(1))
+    if(classes.nonEmpty) attrs.put("class", classes.mkString(" "))
+    val wr = c.getHtmlWriter
+    wr.line
+    wr.tag(htag, attrs)
+    n.children.toVector.foreach(c.render)
+    wr.tag('/' + htag)
+    wr.line
+  }
+
+  def renderAttributedBlockQuote(n: AttributedBlockQuote, c: NodeRendererContext): Unit = {
+    val attrs = c.extendAttributes(n, Collections.emptyMap[String, String])
+    if(n.id ne null) attrs.put("id", n.id)
+    val classes = n.simpleAttrs.filter(_.startsWith(".")).map(_.drop(1))
+    if(classes.nonEmpty) attrs.put("class", classes.mkString(" "))
+    val wr = c.getHtmlWriter
+    wr.line
+    wr.tag("blockquote", attrs)
+    wr.line
+    n.children.toVector.foreach(c.render)
+    wr.line
+    wr.tag("/blockquote")
+    wr.line
+  }
+
+  /** Render a tab view. The default implementation simply renders the content so that merged code blocks
+    * look no different than regular code blocks. Themes can override this method to render the actual
+    * tab view. */
+  def renderTabView(pc: PageContext)(n: TabView, c: NodeRendererContext): Unit = {
+    n.children.toVector.foreach {
+      case i: TabItem =>
+        i.children.toVector.foreach(c.render)
+      case n => c.render(n)
     }
   }
 
-  def fencedCodeBlockRenderer(page: Page, css: ThemeResources) = SimpleHtmlNodeRenderer { (n: FencedCodeBlock, c: NodeRendererContext) =>
+  /** Render code that was run through the highlighter. This method is called for all fenced code blocks,
+    * indented code blocks and inline code. It can be overridden in subclasses as needed. */
+  def renderCode(hlr: HighlightResult, c: NodeRendererContext, block: Boolean): Unit = {
+    val langCode = hlr.language.map("language-" + _)
+    val codeClasses = (if(block) hlr.preCodeClasses else hlr.codeClasses) ++ langCode
+    val codeAttrs: Map[String, String] = (if(codeClasses.nonEmpty) Map("class" -> codeClasses.mkString(" ")) else Map.empty)
+    val preAttrs: Map[String, String] = (if(hlr.preClasses.nonEmpty) Map("class" -> hlr.preClasses.mkString(" ")) else Map.empty)
+    val wr = c.getHtmlWriter
+    if(block) {
+      wr.line
+      wr.tag("pre", preAttrs.asJava)
+    }
+    wr.tag("code", codeAttrs.asJava)
+    wr.raw(hlr.html.toString)
+    wr.tag("/code")
+    if(block) {
+      wr.tag("/pre")
+      wr.line
+    }
+  }
+
+  def fencedCodeBlockRenderer(page: Page, css: ThemeResources) = SimpleHtmlNodeRenderer { (n: AttributedFencedCodeBlock, c: NodeRendererContext) =>
     val info = if(n.getInfo eq null) Vector.empty else n.getInfo.split(' ').filter(_.nonEmpty).toVector
     val lang = info.headOption
     val hlr = global.highlighter.highlightTextAsHTML(n.getLiteral, lang, HighlightTarget.FencedCodeBlock, page)
     hlr.css.foreach(u => css.getURI(u, null, u.getPath.endsWith(".css")))
-    renderCode(n, hlr.html.toString, lang.orElse(hlr.language), c, true)
+    renderCode(hlr.copy(language = lang.orElse(hlr.language)), c, true)
   }
 
   def indentedCodeBlockRenderer(page: Page, css: ThemeResources) = SimpleHtmlNodeRenderer { (n: IndentedCodeBlock, c: NodeRendererContext) =>
     val hlr = global.highlighter.highlightTextAsHTML(n.getLiteral, None, HighlightTarget.IndentedCodeBlock, page)
     hlr.css.foreach(u => css.getURI(u, null, u.getPath.endsWith(".css")))
-    renderCode(n, hlr.html.toString, hlr.language, c, true)
+    renderCode(hlr, c, true)
   }
 
   def inlineCodeRenderer(page: Page, css: ThemeResources) = SimpleHtmlNodeRenderer { (n: Code, c: NodeRendererContext) =>
     val hlr = global.highlighter.highlightTextAsHTML(n.getLiteral, None, HighlightTarget.InlineCode, page)
     hlr.css.foreach(u => css.getURI(u, null, u.getPath.endsWith(".css")))
-    renderCode(n, hlr.html.toString, hlr.language, c, false)
+    renderCode(hlr, c, false)
   }
 
   class ThemeResources(val page: Page, tpe: String) extends Resources {
@@ -97,7 +135,7 @@ class HtmlTheme(global: Global) extends Theme(global) { self =>
           val targetURI =
             if(sourceURI.getScheme == "site") sourceURI // link to site resources at their original location
             else {
-              val tname = (if(targetFile eq null) suggestRelativePath(sourceURI) else targetFile).replaceAll("^/*", "")
+              val tname = (if(targetFile eq null) suggestRelativePath(sourceURI, tpe) else targetFile).replaceAll("^/*", "")
               baseURI.resolve(tname)
             }
           val spec = ResourceSpec(sourceURI, url, targetURI, keepLink)
@@ -117,6 +155,10 @@ class HtmlTheme(global: Global) extends Theme(global) { self =>
     val title = HtmlFormat.escape(p.section.title.getOrElse(""))
     val content = HtmlFormat.raw(renderer.render(p.doc))
     val js = new ThemeResources(p, "js")
+    def pageConfig(path: String): Option[String] =
+      if(p.config.hasPath(path)) Some(p.config.getString(path)) else None
+    def themeConfig(path: String): Option[String] =
+      if(global.userConfig.theme.config.hasPath(path)) Some(global.userConfig.theme.config.getString(path)) else None
   }
 
   def render(site: Site): Unit = {
@@ -127,6 +169,7 @@ class HtmlTheme(global: Global) extends Theme(global) { self =>
     site.pages.foreach { p =>
       val file = targetFile(p.uriWithSuffix(suffix), global.userConfig.targetDir)
       try {
+        val pc = new PageContext(p)
         val templateName = p.config.getString("template")
         logger.debug(s"Rendering page ${p.uri} to file $file with template ${templateName}")
         val imageRes = new ThemeResources(p, "image")
@@ -134,7 +177,9 @@ class HtmlTheme(global: Global) extends Theme(global) { self =>
         new SpecialLinkProcessor(imageRes, site, suffix, staticResourceURIs).apply(p)
         val template = getTemplate(templateName)
         val renderer = HtmlRenderer.builder()
-          .nodeRendererFactory(attributedHeadingRenderer)
+          .nodeRendererFactory(SimpleHtmlNodeRenderer(renderAttributedBlockQuote _))
+          .nodeRendererFactory(SimpleHtmlNodeRenderer(renderAttributedHeading _))
+          .nodeRendererFactory(SimpleHtmlNodeRenderer(renderTabView(pc) _))
           .nodeRendererFactory(fencedCodeBlockRenderer(p, cssRes))
           .nodeRendererFactory(indentedCodeBlockRenderer(p, cssRes))
           .nodeRendererFactory(inlineCodeRenderer(p, cssRes))
@@ -194,5 +239,7 @@ object HtmlTheme {
     def css: Resources
     def js: Resources
     def image: Resources
+    def pageConfig(path: String): Option[String]
+    def themeConfig(path: String): Option[String]
   }
 }

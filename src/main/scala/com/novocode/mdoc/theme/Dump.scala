@@ -8,7 +8,7 @@ import com.novocode.mdoc.commonmark.NodeExtensionMethods._
 class Dump(global: Global) extends Theme(global) {
   def render(site: Site): Unit = {
     site.pages.foreach { p =>
-      println("---------- Page: "+p.uri)
+      println("---------------------------------------- Page: "+p.uri)
       p.doc.dumpDoc()
     }
   }
