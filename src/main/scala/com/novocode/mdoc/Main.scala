@@ -20,7 +20,8 @@ object Main extends App {
   val sip = new SpecialImageProcessor(global.userConfig)
   pages.foreach { p =>
     val pagepp = p.extensions.mdoc.flatMap(_.pageProcessors(global, site))
-    (AttributeFencedCodeBlocksProcessor +: sip +: pagepp).foreach(_(p))
+    p.processors = (AttributeFencedCodeBlocksProcessor +: sip +: pagepp)
+    p.applyProcessors()
   }
 
   val etp = new ExpandTocProcessor(toc)

@@ -48,10 +48,10 @@
             <div class="row">
               <div class="large-12 columns a_limited top-bar">
                 <div class="top-bar-left">
-                  @{p.themeConfig("strings.headerLeft").getOrElse("")}
+                  @{p.string("headerLeft").getOrElse("")}
                 </div>
                 <div class="top-bar-right">
-                  @{p.themeConfig("strings.headerRight").getOrElse("")}
+                  @{p.string("headerRight").getOrElse("")}
                 </div>
               </div>
             </div>
@@ -67,7 +67,7 @@
               @for(items <- p.siteNav) {
                 <div data-sticky-container class="small-12 medium-12 large-2 large-order-1 columns a_sitenav_container">
                   <nav class="a_sitenav" data-sticky data-sticky-on="large" data-anchor="_sections">
-                    @for(s <- p.themeConfig("strings.siteNav")) { <header>@s</header> }
+                    @for(s <- p.string("siteNav")) { <header>@s</header> }
                   <ul>
                     @for(i <- items) { @siteNav(i) }
                   </ul>
@@ -78,7 +78,7 @@
               @if(p.themeConfigBoolean("pageNav").getOrElse(false)) {
                 <div class="small-12 medium-12 large-2 large-order-3 columns a_show-for-xlarge" data-sticky-container>
                   <nav class="a_pagenav" data-sticky data-sticky-on="large" data-anchor="_sections">
-                    @for(s <- p.themeConfig("strings.pageNav")) { <header>@s</header> }
+                    @for(s <- p.string("pageNav")) { <header>@s</header> }
                     <ul class="vertical menu" data-magellan>
                       @for(s <- p.sections) { @pageNav(s) }
                     </ul>
@@ -94,10 +94,10 @@
         <div class="row">
           <div class="small-12 medium-12 large-12 columns top-bar">
             <div class="top-bar-left">
-              @{HtmlFormat.raw(p.themeConfig("strings.footerLeft").getOrElse(""))}
+              @{p.string("footerLeft").getOrElse(HtmlFormat.empty)}
             </div>
             <div class="top-bar-right">
-              @{HtmlFormat.raw(p.themeConfig("strings.footerRight").getOrElse(""))}
+              @{p.string("footerRight").getOrElse(HtmlFormat.empty)}
             </div>
           </div>
         </div>

@@ -170,6 +170,11 @@ class HtmlTheme(global: Global) extends Theme(global) { self =>
       case None => None
     }
     def resolveLink(dest: String): String = slp.resolve(p.uri, dest, "link", true, false)
+    def string(name: String): Option[Html] = themeConfig(s"strings.$name").map { md =>
+      val snippet = p.parseAndProcessSnippet(md)
+      slp(snippet)
+      HtmlFormat.raw(renderer.render(snippet.doc))
+    }
   }
 
   def renderers(pc: PageContext): Seq[NodeRendererFactory] = Seq(
@@ -260,5 +265,6 @@ object HtmlTheme {
     def sections: Vector[Section]
     def siteNav: Option[Vector[ExpandTocProcessor.TocItem]]
     def resolveLink(dest: String): String
+    def string(name: String): Option[Html]
   }
 }

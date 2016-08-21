@@ -7,7 +7,7 @@ import com.novocode.mdoc.commonmark.NodeExtensionMethods._
 import com.novocode.mdoc.config.{ReferenceConfig, Global}
 import com.typesafe.config.Config
 
-import org.commonmark.node.{Node, Heading}
+import org.commonmark.node.{Document, Node, Heading}
 import org.commonmark.parser.Parser
 
 import better.files._
@@ -61,7 +61,7 @@ object PageParser extends Logging {
     val title =
       if(pageConfig.hasPath("title")) Some(pageConfig.getString("title"))
       else UntitledSection(0, sections).findFirstHeading.map(_.title)
-    new Page(sourceFileURI, uri, suffix, doc, pageConfig, PageSection(title, sections), extensions)
+    new Page(sourceFileURI, uri, suffix, doc, pageConfig, PageSection(title, sections), extensions, parser)
   }
 
   private def computeSections(uri: URI, doc: Node): Vector[Section] = {
