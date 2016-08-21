@@ -10,7 +10,7 @@ body > div {
 
 h1, h2, h3, h4, h5, h6 {
   font-family: "Source Sans Pro", "Segoe UI", "Helvetica Neue", Helvetica, Roboto, Arial, sans-serif;
-  font-weight: lighter;
+  color: #444;
 }
 
 .top-bar {
@@ -23,7 +23,7 @@ h1, h2, h3, h4, h5, h6 {
 
 blockquote {
   margin: 1rem 0;
-  padding: 0.8rem 1rem 1px 1rem;
+  padding: 0.8rem 1rem;
   background-color: #f8f8f8;
   border-left: 0.2rem solid #cacaca;
 }
@@ -33,7 +33,33 @@ blockquote, blockquote p {
   color: black;
 }
 
-/********** highlight.js customization **********/
+blockquote :last-child {
+  margin-bottom: 0;
+}
+
+blockquote.note {
+  border-left-color: rgb(228,217,113);
+  background-color: rgba(228,217,113,0.2);
+}
+
+blockquote.warning {
+  border-left-color: rgb(255,117,0);
+  background-color: rgba(255,117,0,0.2);
+}
+
+hr {
+  border-bottom: 0.2rem solid #cacaca;
+}
+
+a, a:hover, a:active, a:visited {
+  color: rgb(0,120,215);
+}
+
+a:hover, a:active {
+  text-decoration: underline;
+}
+
+/********** highlight.js and tabs customization **********/
 
 pre, code, kbd, samp {
   font-family: "Droid Sans Mono","Source Code Pro",Menlo,Monaco,Consolas,"DejaVu Sans Mono",Inconsolata,monospace;
@@ -56,14 +82,18 @@ pre.hljs code {
   padding: 0;
 }
 
-pre.hljs, code.hljs {
+pre, pre.hljs, code.hljs {
   /* Override hljs background color: */
   background-color: #f8f8f8;
 }
 
+blockquote pre, blockquote pre.hljs, blockquote code.hljs {
+  background-color: white;
+}
+
 pre, pre.hljs {
   margin: 0 1rem 1rem 1rem;
-  padding: 0.5rem;
+  padding: 0.5rem 1rem;
   line-height: 1.5;
 }
 
@@ -72,12 +102,204 @@ pre, pre.hljs {
   overflow-x: auto;
 }
 
+.tabs-panel {
+  padding: 0;
+}
+
+.tabs, .tabs-content {
+  border-color: #ddd;
+}
+
+.tabs-title {
+  border-right: 1px solid #ddd;
+}
+
+.tabs-content {
+  margin-bottom: 1em;
+}
+
+.tabs-panel pre, .tabs-panel pre.hljs {
+  margin-bottom: 0;
+}
+
+.tabs-title a {
+  padding: 0.75rem 1.5rem;
+  font-size: 100%;
+  font-weight: normal;
+  color: inherit;
+}
+
+.tabs-title.is-active a {
+  font-weight: 600;
+  background-color: #f8f8f8;
+  text-decoration: none !important;
+}
+
 /********** Custom style classes **********/
 
 @media screen and (max-width: 68.9375em) {
   .a_show-for-xlarge {
     display: none !important;
   }
+}
+
+.a_limited {
+  max-width: 82.5rem;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.a_header, .a_footer {
+  background-color: #444;
+  color: white;
+}
+
+.a_header a, .a_footer a {
+  color: inherit !important;
+  text-decoration: underline !important;
+}
+
+.a_header {
+  margin-bottom: 1rem;
+}
+
+.a_header .top-bar {
+  margin-top: 0.5rem;
+  margin-bottom: 0.5rem;
+  font-size: 1.25rem;
+}
+
+.a_main {
+  margin-top: 1em;
+}
+
+.a_footer {
+  padding: 2rem 1rem;
+}
+
+.a_footer .top-bar-left {
+  padding-left: 3rem;
+}
+
+.a_footer .top-bar-right {
+  padding-right: 3rem;
+}
+
+.a_hlink {
+  visibility: hidden;
+  float: right;
+  padding-left: 1rem;
+  text-decoration: none !important;
+}
+
+.a_hlink::after {
+  content: '\00a0§\00a0';
+  color: #999;
+  font-size: 75%;
+  font-weight: 600;
+}
+
+.a_section:hover, .a_section:hover .a_hlink {
+  visibility: visible;
+}
+
+.a_sitenav {
+  width: 100%;
+}
+
+.a_sitenav header, .a_pagenav header {
+  margin-bottom: 0.8rem;
+  font-size: 1.2rem;
+  color: #444;
+}
+
+.a_sitenav a, .a_sitenav span {
+  color: black;
+  display: inline;
+  border-right: 0.2rem solid #eee;
+  display: block;
+  overflow-x: hidden;
+  padding-top: 0.2rem;
+  padding-bottom: 0.2rem;
+}
+
+.a_sitenav > ul li.a_thispage > a, .a_sitenav > ul li.a_thispage > span {
+  border-right-color: rgb(0,120,215);
+  background-color: rgba(0,120,215,0.15);
+}
+
+.a_sitenav li {
+  display: block;
+  padding: 0;
+}
+
+.a_sitenav > ul > li {
+  padding-right: 1rem;
+}
+
+.a_sitenav ul, .a_pagenav ul {
+  display: block;
+  margin: 0;
+  line-height: 1.3rem;
+}
+
+.a_sitenav > .menu > li > ul > li > ul {
+  padding: 0;
+}
+
+.a_pagenav {
+  padding-bottom: 3rem;
+}
+
+.a_pagenav header {
+  margin-left: 1rem;
+}
+
+.a_pagenav a {
+  color: black;
+  border-left: 0.2rem solid white;
+}
+
+.a_sitenav > ul > li a {
+  padding: 0.2rem 1rem;
+}
+
+.a_pagenav > ul >li a {
+  padding: 0.35rem 1rem;
+}
+
+.a_sitenav > ul > li > ul > li > a, .a_pagenav > ul > li > ul > li > a {
+  padding-left: 1.5rem;
+}
+
+.a_sitenav > ul > li > ul > li > ul > li > a, .a_pagenav > ul > li > ul > li > ul > li > a {
+  padding-left: 2rem;
+}
+
+.a_sitenav > ul > li > ul > li > ul > li > ul > li > a, .a_pagenav > ul > li > ul > li > ul > li > ul > li > a {
+  padding-left: 2.5rem;
+}
+
+.a_sitenav > ul > li > ul > li > ul > li > ul > li > ul > li > a, .a_pagenav > ul > li > ul > li > ul > li > ul > li > ul > li > a {
+  padding-left: 3rem;
+}
+
+.a_sitenav > ul > li > ul > li > ul > li > ul > li > ul > li > ul > li > a, .a_pagenav > ul > li > ul > li > ul > li > ul > li > ul > li > ul > li > a {
+  padding-left: 3.5rem;
+}
+
+.a_sitenav > ul > li > ul > li > ul > li > ul > li > ul > li > ul > li > ul > li > a, .a_pagenav > ul > li > ul > li > ul > li > ul > li > ul > li > ul > li > ul > li > a {
+  padding-left: 3.5rem;
+}
+
+.a_pagenav [data-magellan] a {
+  color: black;
+  border-left: 0.2rem solid #eee;
+}
+
+.a_pagenav [data-magellan] a.active, [data-magellan] a.active:focus {
+  border-left-color: rgb(0,120,215);
+  background-color: rgba(0,120,215,0.15);
 }
 
 #_sections {
@@ -93,6 +315,10 @@ pre, pre.hljs {
     border-top: 0.15rem solid #ddd;
     background-color: #f2f2f2;
   }
+  .a_sitenav a, .a_sitenav span {
+    overflow-x: visible;
+    border-right: 0;
+  }
 }
 
 @media screen and (min-width: 64em) {
@@ -103,125 +329,5 @@ pre, pre.hljs {
   .a_sitenav {
     padding-right: 0;
     padding-bottom: 1rem;
-    padding-top: 1rem;
   }
-}
-
-.a_limited {
-  max-width: 82.5rem;
-  margin-left: auto;
-  margin-right: auto;
-}
-
-.a_header, .a_footer {
-  background-color: #282828;
-  _background-color: #1c3b47;
-  color: white;
-}
-
-.a_header {
-  box-shadow: 0 0 8px rgba(0,0,0,0.5);
-  z-index: 9999;
-  margin-bottom: 0.5rem;
-}
-
-.a_header .top-bar {
-  margin-top: 0.5rem;
-  margin-bottom: 0.5rem;
-  font-size: 1.25rem;
-}
-
-.a_main {
-  margin-top: 1em;
-}
-
-.a_footer {
-  padding-top: 3rem;
-  padding-bottom: 3rem;
-}
-
-.a_footer .top-bar-left {
-  padding-left: 3rem;
-}
-
-.a_footer .top-bar-right {
-  padding-right: 3rem;
-}
-
-.a_hlink {
-  visibility: hidden;
-  float: right;
-  padding-left: 1rem;
-}
-
-.a_hlink::after {
-  content: '\00a0§\00a0';
-  color: #999;
-  font-size: 75%;
-  font-weight: 600;
-}
-
-.a_section:hover, .a_section:hover .a_hlink {
-  visibility: visible;
-}
-
-.a_sitenav a, .a_sitenav span {
-  color: black;
-  display: inline;
-}
-
-.a_sitenav li {
-  display: block;
-  padding-top: 0.2rem;
-  padding-bottom: 0.2rem;
-}
-
-.a_sitenav > ul > li {
-  border-right: 0.2rem solid #eee;
-  padding-right: 1rem;
-}
-
-.a_sitenav > ul > li.a_thispage {
-  border-right-color: rgb(0,120,215);
-}
-
-.a_sitenav ul {
-  display: block;
-  margin: 0;
-  line-height: 1.3rem;
-}
-
-.a_sitenav li ul {
-  margin-left: 1rem;
-}
-
-.a_sitenav > .menu > li > ul > li > ul {
-  padding: 0;
-}
-
-.a_pagenav {
-  margin-top: 1rem;
-  padding-bottom: 3rem;
-}
-
-.a_pagenav a {
-  color: black;
-  border-left: 0.2rem solid white;
-}
-
-.a_pagenav .menu > li > a {
-  padding: 0.5rem 1rem;
-}
-
-.a_pagenav .menu > li > ul > li > ul > li > a {
-  padding-left: 2rem;
-}
-
-.a_pagenav [data-magellan] a {
-  color: black;
-  border-left: 0.2rem solid #eee;
-}
-
-.a_pagenav [data-magellan] a.active, [data-magellan] a.active:focus {
-  border-left-color: rgb(0,120,215);
 }

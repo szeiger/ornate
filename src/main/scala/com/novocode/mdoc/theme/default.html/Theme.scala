@@ -39,25 +39,6 @@ class Theme(global: Global) extends HtmlTheme(global) {
     wr.line
   } else super.renderAttributedHeading(n, c)
 
-  override def renderAttributedBlockQuote(n: AttributedBlockQuote, c: NodeRendererContext): Unit = {
-    val callout =
-      if(n.simpleAttrs.contains(".warning")) Some("warning")
-      else if(n.simpleAttrs.contains(".note")) Some("primary")
-      else None
-    callout match {
-      case Some(s) =>
-        val wr = c.getHtmlWriter
-        wr.line
-        wr.raw(s"""<div class="callout $s">""")
-        wr.line
-        n.children.toVector.foreach(c.render)
-        wr.line
-        wr.raw("</div>")
-        wr.line
-      case None => super.renderAttributedBlockQuote(n, c)
-    }
-  }
-
   override def renderCode(hlr: HighlightResult, c: NodeRendererContext, block: Boolean): Unit = if(block) {
     val wr = c.getHtmlWriter
     wr.line

@@ -29,17 +29,26 @@ sealed abstract class Section {
   }
   def allHeadings: Iterator[HeadingSection] =
     children.iterator.flatMap(_.allHeadings)
+  def getTitle: Option[String]
+  def getID: Option[String]
 }
 
 final case class HeadingSection(id: String, level: Int, title: String, children: Vector[Section])(val heading: Heading) extends Section {
   override def allHeadings: Iterator[HeadingSection] =
     Iterator(this) ++ super.allHeadings
+  def getTitle = Some(title)
+  def getID = Some(id)
 }
 
-final case class UntitledSection(level: Int, children: Vector[Section]) extends Section
+final case class UntitledSection(level: Int, children: Vector[Section]) extends Section {
+  def getTitle = None
+  def getID = None
+}
 
 final case class PageSection(title: Option[String], children: Vector[Section]) extends Section {
   def level = 0
+  def getTitle = title
+  def getID = None
 }
 
-case class TocEntry(val page: Page, val title: String)
+case class TocEntry(val page: Page, val title: Option[String])

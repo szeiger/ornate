@@ -24,11 +24,6 @@ class HtmlBlockMatcher(elName: String) {
 class SpecialImageMatcher(protocols: Set[String]) {
   class Result(val protocol: String, val image: Image) {
     def dest = image.getDestination
-    def attributes: Map[String, String] =
-      dest.substring(protocol.length + 1).split(',').filter(_.nonEmpty).flatMap { s =>
-        val sep = s.indexOf('=')
-        if(sep == -1) None else Some((s.substring(0, sep).toLowerCase(Locale.ENGLISH), s.substring(sep+1)))
-      }.toMap
     lazy val uri = new URI(dest)
     def title = image.getTitle
   }

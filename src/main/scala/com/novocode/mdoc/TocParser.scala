@@ -51,7 +51,7 @@ object TocParser extends Logging {
             logger.warn(s"No TOC title defined for page $link")
             link
           }
-        TocEntry(page, title2)
+        TocEntry(page, Option(title2))
       }
     }
 

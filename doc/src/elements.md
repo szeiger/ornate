@@ -44,39 +44,39 @@ And here is the same image ![Alt text](webjar:/highlight.js/styles/pojoaque.jpg 
 Here's some Scala code:
 
 ```scala
-  class AttributedHeading extends Heading {
-    var id: String = null
-    val attrs: ListBuffer[String] = new ListBuffer
+class AttributedHeading extends Heading {
+  var id: String = null
+  val attrs: ListBuffer[String] = new ListBuffer
 
-    override protected def toStringAttributes = {
-      val b = new StringBuilder().append(s"level=$getLevel")
-      if(id ne null) b.append(" id="+id)
-      if(attrs.nonEmpty) b.append(attrs.mkString(" attrs=[", ", ", "]"))
-      b.toString
-    }
+  override protected def toStringAttributes = {
+    val b = new StringBuilder().append(s"level=$getLevel")
+    if(id ne null) b.append(" id="+id)
+    if(attrs.nonEmpty) b.append(attrs.mkString(" attrs=[", ", ", "]"))
+    b.toString
   }
+}
 ```
 
 Multiple code blocks can be combined in a tabbed view:
 
 ```scala merge=Scala
-  class AttributedHeading extends Heading {
-    var id: String = null
-    val attrs: ListBuffer[String] = new ListBuffer
+class AttributedHeading extends Heading {
+  var id: String = null
+  val attrs: ListBuffer[String] = new ListBuffer
 
-    override protected def toStringAttributes = {
-      val b = new StringBuilder().append(s"level=$getLevel")
-      if(id ne null) b.append(" id="+id)
-      if(attrs.nonEmpty) b.append(attrs.mkString(" attrs=[", ", ", "]"))
-      b.toString
-    }
+  override protected def toStringAttributes = {
+    val b = new StringBuilder().append(s"level=$getLevel")
+    if(id ne null) b.append(" id="+id)
+    if(attrs.nonEmpty) b.append(attrs.mkString(" attrs=[", ", ", "]"))
+    b.toString
   }
+}
 ```
 
 ```java merge=Java
-  public class AttributedHeading extends Heading {
-    // Insert lots of boilerplate here
-  }
+public class AttributedHeading extends Heading {
+  // Insert lots of boilerplate here
+}
 ```
 
 Using the `includeCode` extension, code blocks can also come from included files:
@@ -132,6 +132,8 @@ They may contain other block-level or inline content like code blocks:
 >     }
 >   }
 > ```
+>
+> And some `nested inline code` in a text paragraph.
 
 If the `blockQuoteAttributes` extension is enabled, quote classes *note* and *warning* are available:
 
@@ -203,7 +205,7 @@ This is a loose bullet list:
 
 - Nam eget iaculis augue. Maecenas nisl lorem, sollicitudin quis leo quis, malesuada mollis massa. Nam ac lacus arcu. Donec condimentum velit turpis, vitae posuere arcu volutpat vel. Morbi a metus et ante tincidunt vestibulum. Integer tincidunt velit ipsum, et vestibulum sapien molestie a. Mauris molestie tincidunt erat, a ornare elit pharetra ac. Nulla congue lacus purus, sit amet vehicula lacus scelerisque in. Integer ut interdum augue. Sed hendrerit mauris eget libero vestibulum, sed dignissim dui dictum. Nunc tincidunt commodo lorem id sollicitudin.
 
-# Tables
+## Tables
 
 Tables created by the `tables` extension are based on [GitHub Flavored Markdown](https://help.github.com/articles/organizing-information-with-tables/). The following examples were taken from this page. Here is a simple table:
 
@@ -226,39 +228,15 @@ Columns may be left, center or right aligned:
 | git status   | git status     | git status    |
 | git diff     | git diff       | git diff      |
 
-# Section Titles
+## TOC Trees
 
-The title above is at level H1. Here are the other available levels H2 to H6. Source:
+This is the full site TOC:
 
-```
-# Section Titles
+![](toctree:)
 
-...
+## Section Titles
 
-## H2 Title
-
-...
-
-### H3 Title
-
-...
-
-#### H4 Title
-
-...
-
-##### H5 Title
-
-...
-
-###### H6 Title
-
-...
-```
-
-## H2 Title
-
-Paragraph of text.
+The title above is at level H2, the topmost page title is at level H1. Here are the other available levels H3 to H6:
 
 ### H3 Title
 

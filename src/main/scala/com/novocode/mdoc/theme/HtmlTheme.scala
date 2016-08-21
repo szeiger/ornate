@@ -150,7 +150,8 @@ class HtmlTheme(global: Global) extends Theme(global) { self =>
     def mappings: Iterable[ResourceSpec] = buf
   }
 
-  class PageModelImpl(p: Page, val renderer: HtmlRenderer, val css: ThemeResources, val image: ThemeResources) extends PageModel {
+  class PageModelImpl(p: Page, site: Site, slp: SpecialLinkProcessor,
+                      val renderer: HtmlRenderer, val css: ThemeResources, val image: ThemeResources) extends PageModel {
     def theme = self
     val title = HtmlFormat.escape(p.section.title.getOrElse(""))
     val content = HtmlFormat.raw(renderer.render(p.doc))
@@ -159,6 +160,16 @@ class HtmlTheme(global: Global) extends Theme(global) { self =>
       if(p.config.hasPath(path)) Some(p.config.getString(path)) else None
     def themeConfig(path: String): Option[String] =
       if(global.userConfig.theme.config.hasPath(path)) Some(global.userConfig.theme.config.getString(path)) else None
+    def themeConfigBoolean(path: String): Option[Boolean] =
+      if(global.userConfig.theme.config.hasPath(path)) Some(global.userConfig.theme.config.getBoolean(path)) else None
+    def sections: Vector[Section] = p.section.children
+    lazy val siteNav: Option[Vector[ExpandTocProcessor.TocItem]] = themeConfig("siteNav") match {
+      case Some(uri) =>
+        val tocBlock = SpecialImageProcessor.parseTocURI(uri, global.userConfig)
+        Some(ExpandTocProcessor.buildTocTree(tocBlock, site.toc, p))
+      case None => None
+    }
+    def resolveLink(dest: String): String = slp.resolve(p.uri, dest, "link", true, false)
   }
 
   def render(site: Site): Unit = {
@@ -174,7 +185,8 @@ class HtmlTheme(global: Global) extends Theme(global) { self =>
         logger.debug(s"Rendering page ${p.uri} to file $file with template ${templateName}")
         val imageRes = new ThemeResources(p, "image")
         val cssRes = new ThemeResources(p, "css")
-        new SpecialLinkProcessor(imageRes, site, suffix, staticResourceURIs).apply(p)
+        val slp = new SpecialLinkProcessor(imageRes, site, suffix, staticResourceURIs)
+        slp(p)
         val template = getTemplate(templateName)
         val renderer = HtmlRenderer.builder()
           .nodeRendererFactory(SimpleHtmlNodeRenderer(renderAttributedBlockQuote _))
@@ -184,7 +196,7 @@ class HtmlTheme(global: Global) extends Theme(global) { self =>
           .nodeRendererFactory(indentedCodeBlockRenderer(p, cssRes))
           .nodeRendererFactory(inlineCodeRenderer(p, cssRes))
           .extensions(p.extensions.htmlRenderer.asJava).build()
-        val pm = new PageModelImpl(p, renderer, cssRes, imageRes)
+        val pm = new PageModelImpl(p, site, slp, renderer, cssRes, imageRes)
         val formatted = template.render(pm).body.trim
         siteResources ++= (pm.css.mappings ++ pm.js.mappings ++ pm.image.mappings).map(r => (r.url, r))
         file.parent.createDirectories()
@@ -241,5 +253,9 @@ object HtmlTheme {
     def image: Resources
     def pageConfig(path: String): Option[String]
     def themeConfig(path: String): Option[String]
+    def themeConfigBoolean(path: String): Option[Boolean]
+    def sections: Vector[Section]
+    def siteNav: Option[Vector[ExpandTocProcessor.TocItem]]
+    def resolveLink(dest: String): String
   }
 }

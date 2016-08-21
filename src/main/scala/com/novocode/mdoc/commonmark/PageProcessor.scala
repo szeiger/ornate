@@ -1,6 +1,7 @@
 package com.novocode.mdoc.commonmark
 
 import java.net.URI
+import java.util.Locale
 
 import com.novocode.mdoc._
 import NodeExtensionMethods._
@@ -17,17 +18,16 @@ class SpecialImageProcessor(config: UserConfig) extends PageProcessor {
 
   def apply(p: Page): Unit = p.doc.accept(new AbstractVisitor {
     override def visit(n: Paragraph): Unit = n match {
-      case SpecialObjectMatcher(r) => r.protocol match {
-        case "toctree" =>
-          val t = new TocBlock(
-            r.attributes.get("maxlevel").map(_.toInt).getOrElse(config.tocMaxLevel),
-            r.title,
-            r.attributes.get("mergefirst").map(_.toBoolean).getOrElse(config.tocMergeFirst),
-            r.attributes.get("local").map(_.toBoolean).getOrElse(false))
-          n.replaceWith(t)
-          r.image.children.foreach(t.appendChild)
-        case _ =>
-      }
+      case SpecialObjectMatcher(r) => try {
+        r.protocol match {
+          case "toctree" =>
+            val t = SpecialImageProcessor.parseTocURI(r.image.getDestination, config)
+            t.title = r.title
+            n.replaceWith(t)
+            r.image.children.foreach(t.appendChild)
+          case _ =>
+        }
+      } catch { case ex: Exception => logger.error("Error expanding TOC tree "+r.dest, ex) }
       case n => super.visit(n)
     }
     override def visit(n: Image): Unit = {
@@ -41,8 +41,57 @@ class SpecialImageProcessor(config: UserConfig) extends PageProcessor {
   })
 }
 
+object SpecialImageProcessor {
+  def parseTocURI(link: String, config: UserConfig): TocBlock = {
+    val uri = if(link == "toctree:") new URI("toctree:default") else new URI(link)
+    val scheme = uri.getScheme
+    assert(scheme == "toctree")
+    val attributes = uri.getSchemeSpecificPart.split(',').filter(_.nonEmpty).flatMap { s =>
+      val sep = s.indexOf('=')
+      if(sep == -1) None else Some((s.substring(0, sep).toLowerCase(Locale.ENGLISH), s.substring(sep+1)))
+    }.toMap
+    val maxLevel = attributes.get("maxlevel").map(_.toInt).getOrElse(config.tocMaxLevel)
+    new TocBlock(
+      maxLevel,
+      attributes.get("mergefirst").map(_.toBoolean).getOrElse(config.tocMergeFirst),
+      attributes.get("local").map(_.toBoolean).getOrElse(false),
+      attributes.get("focusmaxlevel").map(_.toInt).getOrElse(maxLevel)
+    )
+  }
+
+}
+
 class ExpandTocProcessor(toc: Vector[TocEntry]) extends PageProcessor {
-  case class TocItem(text: Option[String], target: Option[String], children: Vector[TocItem]) {
+  import ExpandTocProcessor._
+
+  def log(prefix: String, ti: TocItem): Unit = {
+    logger.debug(s"""$prefix- "${ti.text.getOrElse("")}" -> ${ti.target.getOrElse("")}""")
+    ti.children.foreach(ch => log(prefix+"  ", ch))
+  }
+
+  def apply(p: Page): Unit = {
+    p.doc.accept(new AbstractVisitor {
+      override def visit(n: CustomBlock): Unit = n match {
+        case n: TocBlock =>
+          val items = buildTocTree(n, toc, p)
+          if(items.nonEmpty) {
+            val ul = new BulletList
+            ul.setTight(true)
+            items.foreach { i =>
+              log("", i)
+              ul.appendChild(i.toNode)
+            }
+            n.replaceWith(ul)
+          } else n.unlink()
+        case _ =>
+          super.visit(n)
+      }
+    })
+  }
+}
+
+object ExpandTocProcessor {
+  case class TocItem(text: Option[String], target: Option[String], children: Vector[TocItem], focused: Boolean) {
     def toNode: ListItem = {
       val li = new ListItem
       text.foreach { t =>
@@ -66,14 +115,10 @@ class ExpandTocProcessor(toc: Vector[TocEntry]) extends PageProcessor {
       }
       li
     }
-    def log(prefix: String): Unit = {
-      logger.debug(s"""$prefix- "${text.getOrElse("")}" -> ${target.getOrElse("")}""")
-      children.foreach(_.log(prefix+"  "))
-    }
   }
 
   /** Turn a `Section` recursively into a `TocItem` tree */
-  def sectionToc(s: Section, p: Page, pTitle: Option[String], maxLevel: Int): Option[TocItem] = {
+  private def sectionToc(s: Section, p: Page, pTitle: Option[String], maxLevel: Int, focused: Boolean): Option[TocItem] = {
     if(s.level > maxLevel) None else {
       val (title, target) = s match {
         case PageSection(title, children) => (pTitle, Some(p.uri.toString))
@@ -85,14 +130,14 @@ class ExpandTocProcessor(toc: Vector[TocEntry]) extends PageProcessor {
           }
           (Some(title), id.map(p.uri.toString + "#" + _))
       }
-      val ch = s.children.flatMap(ch => sectionToc(ch, p, pTitle, maxLevel))
+      val ch = s.children.flatMap(ch => sectionToc(ch, p, pTitle, maxLevel, focused))
       if(title.isEmpty && target.isEmpty && ch.isEmpty) None
-      else Some(TocItem(title, target, ch))
+      else Some(TocItem(title, target, ch, focused))
     }
   }
 
   /** Remove items without a title and move their children into the preceding item */
-  def mergeHierarchies(items: Vector[TocItem]): Vector[TocItem] = {
+  private def mergeHierarchies(items: Vector[TocItem]): Vector[TocItem] = {
     val b = new ArrayBuffer[TocItem](items.length)
     items.foreach { item =>
       if(b.isEmpty || item.text.nonEmpty || item.target.nonEmpty) b += item
@@ -105,7 +150,7 @@ class ExpandTocProcessor(toc: Vector[TocEntry]) extends PageProcessor {
   }
 
   /** Merge top-level `TocItem` for the page itself with the first element of the page */
-  def mergePages(items: Vector[TocItem]): Vector[TocItem] = mergeHierarchies(items.flatMap { pageItem =>
+  private def mergePages(items: Vector[TocItem]): Vector[TocItem] = mergeHierarchies(items.flatMap { pageItem =>
     def rewriteFirstIn(items: Vector[TocItem]): Vector[TocItem] = {
       if(items.isEmpty) items // should never happen
       else {
@@ -118,33 +163,16 @@ class ExpandTocProcessor(toc: Vector[TocEntry]) extends PageProcessor {
     rewriteFirstIn(pageItem.children)
   })
 
-  def apply(p: Page): Unit = {
-    p.doc.accept(new AbstractVisitor {
-      override def visit(n: CustomBlock): Unit = n match {
-        case n: TocBlock =>
-          val items: Vector[TocItem] =
-            if(n.local) {
-              val title = toc.find(_.page eq p) match {
-                case Some(e) => Option(e.title)
-                case None => p.section.title
-              }
-              sectionToc(p.section, p, title, n.maxLevel).toVector.flatMap(_.children)
-            } else {
-              val items = toc.flatMap(e => sectionToc(e.page.section, e.page, Option(e.title), n.maxLevel))
-              if(n.mergeFirst) mergePages(items) else items
-            }
-          if(items.nonEmpty) {
-            val ul = new BulletList
-            ul.setTight(true)
-            items.foreach { i =>
-              i.log("")
-              ul.appendChild(i.toNode)
-            }
-            n.replaceWith(ul)
-          } else n.unlink()
-        case _ =>
-          super.visit(n)
+  def buildTocTree(n: TocBlock, toc: Vector[TocEntry], page: Page): Vector[TocItem] = {
+    if(n.local) {
+      val title = toc.find(_.page eq page) match {
+        case Some(e) => e.title
+        case None => page.section.title
       }
-    })
+      sectionToc(page.section, page, title, n.focusMaxLevel, true).toVector.flatMap(_.children)
+    } else {
+      val items = toc.flatMap(e => sectionToc(e.page.section, e.page, e.title, if(e.page eq page) n.focusMaxLevel else n.maxLevel, e.page eq page))
+      if(n.mergeFirst) mergePages(items) else items
+    }
   }
 }

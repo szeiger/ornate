@@ -1,4 +1,33 @@
 @(p: com.novocode.mdoc.theme.HtmlTheme.PageModel)
+
+@import com.novocode.mdoc.Section
+@pageNav(section: Section) = {
+  <li>
+    @for(t <- section.getTitle) {
+      @if(section.getID.isDefined) { <a href="#@section.getID.get">@t</a> } else { <span>@t</span> }
+    }
+    @if(section.children.nonEmpty) {
+      <ul class="vertical menu"> @for(ch <- section.children) { @pageNav(ch) } </ul>
+    }
+  </li>
+}
+
+@import com.novocode.mdoc.commonmark.ExpandTocProcessor.TocItem
+@siteNav(ti: TocItem) = {
+  <li @if(ti.focused) { class="a_thispage" }>
+    @if(ti.target.isDefined && ti.text.isDefined) {
+      <a href="@p.resolveLink(ti.target.get)">@ti.text.get</a>
+    } else {
+      @if(ti.text.isDefined) {
+        <span>@ti.text.get</span>
+      }
+    }
+    @if(ti.children.nonEmpty) {
+      <ul> @for(ch <- ti.children) { @siteNav(ch) } </ul>
+    }
+  </li>
+}
+
 <!DOCTYPE html>
 <html class="no-js" lang="@{p.pageConfig("meta.lang").get}" dir="@{p.pageConfig("meta.dir").get}">
   <head>
@@ -15,101 +44,64 @@
       <div class="small-12 medium-12 large-12 columns align-self-top">
         <div class="row">
           @****************************** Header ******************************@
-          <div class="large-12 columns align-self-top a_header">
+          <header class="large-12 columns align-self-top a_header">
             <div class="row">
               <div class="large-12 columns a_limited top-bar">
                 <div class="top-bar-left">
-                  @{p.pageConfig("meta.siteTitle").getOrElse("")}
+                  @{p.themeConfig("strings.headerLeft").getOrElse("")}
                 </div>
                 <div class="top-bar-right">
-                  @{p.pageConfig("meta.siteTitle").getOrElse("")}
+                  @{p.themeConfig("strings.headerRight").getOrElse("")}
                 </div>
               </div>
             </div>
-          </div>
+          </header>
           @****************************** Rows ******************************@
           <div class="small-12 medium-12 large-12 columns align-self-top a_limited a_main">
             <div class="row">
               @****************************** Content ******************************@
-              <div class="columns large-order-2 sections" id="_sections">
+              <main class="columns large-order-2 sections" id="_sections">
                 @p.content
-              </div>
+              </main>
               @****************************** Site Navigation ******************************@
-              <div data-sticky-container class="small-12 medium-12 large-2 large-order-1 columns a_sitenav_container">
-                <nav class="a_sitenav" data-sticky data-sticky-on="large" data-anchor="_sections">
-                  @for(s <- p.themeConfig("strings.siteNav")) { <h4>@s</h4> }
+              @for(items <- p.siteNav) {
+                <div data-sticky-container class="small-12 medium-12 large-2 large-order-1 columns a_sitenav_container">
+                  <nav class="a_sitenav" data-sticky data-sticky-on="large" data-anchor="_sections">
+                    @for(s <- p.themeConfig("strings.siteNav")) { <header>@s</header> }
                   <ul>
-                    <li><a href="">Introduction</a></li>
-                    <li><a href="">Supported Databases</a></li>
-                    <li><a href="">Getting Started</a></li>
-                    <li><a href="">Database Configuration</a></li>
-                    <li class="a_thispage">
-                      <a href="">Database I/O Actions</a>
-                      <ul>
-                        <li>
-                          <span>Executing Database I/O Actions</span>
-                          <ul>
-                            <li><a href="">Materialized</a></li>
-                            <li><a href="">Streaming</a></li>
-                          </ul>
-                        </li>
-                        <li>
-                          <a href="">Composing Database I/O Actions</a>
-                          <ul>
-                            <li><a href="">Sequential Execution</a></li>
-                            <li><a href="">Error Handling</a></li>
-                            <li><a href="">Primitives</a></li>
-                            <li><a href="">Debugging</a></li>
-                            <li><a href="">Transactions and Pinned Sessions</a></li>
-                          </ul>
-                        </li>
-                        <li><a href="">JDBC Interoperability</a></li>
-                      </ul>
-                    </li>
-                    <li><a href="">Schemas</a></li>
-                    <li><a href="">Queries</a></li>
-                    <li><a href="">Schema Code Generation</a></li>
-                    <li><a href="">User-Defined Features</a></li>
-                    <li><a href="">Plain SQL Queries</a></li>
-                    <li><a href="">Coming from ORM to Slick</a></li>
-                    <li><a href="">Coming from SQL to Slick</a></li>
-                    <li><a href="">Upgrade Guides</a></li>
-                    <li><a href="">Slick Extensions</a></li>
-                    <li><a href="">Slick TestKit</a></li>
-                </nav>
-              </div>
-              @****************************** Page Navigation ******************************@
-              <div class="small-12 medium-12 large-2 large-order-3 columns a_show-for-xlarge" data-sticky-container>
-                <div class="a_pagenav" data-sticky data-sticky-on="large" data-anchor="_sections">
-                  @for(s <- p.themeConfig("strings.pageNav")) { <h4>@s</h4> }
-                  <ul class="vertical menu" data-magellan>
-                    <li><a href="#s1">First Arrival</a>
-                      <ul class="vertical menu">
-                        <li><a href="#s2">Second Arrival</a></li>
-                        <li><a href="#s3">Third Arrival</a></li>
-                      </ul>
-                    </li>
-                    <li><a href="#s4">S4</a></li>
+                    @for(i <- items) { @siteNav(i) }
                   </ul>
+                  </nav>
                 </div>
-              </div>
+              }
+              @****************************** Page Navigation ******************************@
+              @if(p.themeConfigBoolean("pageNav").getOrElse(false)) {
+                <div class="small-12 medium-12 large-2 large-order-3 columns a_show-for-xlarge" data-sticky-container>
+                  <nav class="a_pagenav" data-sticky data-sticky-on="large" data-anchor="_sections">
+                    @for(s <- p.themeConfig("strings.pageNav")) { <header>@s</header> }
+                    <ul class="vertical menu" data-magellan>
+                      @for(s <- p.sections) { @pageNav(s) }
+                    </ul>
+                  </nav>
+                </div>
+              }
             </div>
           </div>
         </div>
       </div>
       @****************************** Footer ******************************@
-      <div class="small-12 medium-12 large-12 columns align-self-bottom a_footer">
+      <footer class="small-12 medium-12 large-12 columns align-self-bottom a_footer">
         <div class="row">
           <div class="small-12 medium-12 large-12 columns top-bar">
             <div class="top-bar-left">
-              @{p.pageConfig("meta.siteTitle").getOrElse("")}
+              @{HtmlFormat.raw(p.themeConfig("strings.footerLeft").getOrElse(""))}
             </div>
             <div class="top-bar-right">
-              @{p.pageConfig("meta.siteTitle").getOrElse("")}
+              @{HtmlFormat.raw(p.themeConfig("strings.footerRight").getOrElse(""))}
             </div>
           </div>
         </div>
-      </div>
+      </footer>
     </div>
     <script src="@{p.js.get("js/jquery.min.js")}"></script>
     <script src="@{p.js.get("js/what-input.min.js")}"></script>
