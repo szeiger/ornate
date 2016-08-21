@@ -228,6 +228,14 @@ Columns may be left, center or right aligned:
 | git status   | git status     | git status    |
 | git diff     | git diff       | git diff      |
 
+Here is a wide table:
+
+| First Header  | Second Header | First Header  | Second Header | First Header  | Second Header | First Header  | Second Header | First Header  | Second Header |
+| ------------- | ------------- | ------------- | ------------- | ------------- | ------------- | ------------- | ------------- | ------------- | ------------- |
+| Content_Cell  | Content_Cell  | Content_Cell  | Content_Cell  | Content_Cell  | Content_Cell  | Content_Cell  | Content_Cell  | Content_Cell  | Content_Cell  |
+| Content_Cell  | Content_Cell  | Content_Cell  | Content_Cell  | Content_Cell  | Content_Cell  | Content_Cell  | Content_Cell  | Content_Cell  | Content_Cell  |
+
+
 ## TOC Trees
 
 This is the full site TOC:

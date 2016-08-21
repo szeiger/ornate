@@ -13,7 +13,7 @@ import com.novocode.mdoc.config.Global
 import com.novocode.mdoc.highlight.{HighlightResult, HighlightTarget}
 import org.commonmark.html.HtmlRenderer
 import org.commonmark.html.HtmlRenderer.HtmlRendererExtension
-import org.commonmark.html.renderer.{NodeRendererContext, NodeRenderer}
+import org.commonmark.html.renderer.{NodeRendererFactory, NodeRendererContext, NodeRenderer}
 import org.commonmark.node._
 import play.twirl.api.{Html, Template1, HtmlFormat}
 
@@ -172,6 +172,12 @@ class HtmlTheme(global: Global) extends Theme(global) { self =>
     def resolveLink(dest: String): String = slp.resolve(p.uri, dest, "link", true, false)
   }
 
+  def renderers(pc: PageContext): Seq[NodeRendererFactory] = Seq(
+    SimpleHtmlNodeRenderer(renderAttributedBlockQuote _),
+    SimpleHtmlNodeRenderer(renderAttributedHeading _),
+    SimpleHtmlNodeRenderer(renderTabView(pc) _)
+  )
+
   def render(site: Site): Unit = {
     val staticResources = global.findStaticResources
     val staticResourceURIs = staticResources.iterator.map(_._2.getPath).toSet
@@ -188,10 +194,7 @@ class HtmlTheme(global: Global) extends Theme(global) { self =>
         val slp = new SpecialLinkProcessor(imageRes, site, suffix, staticResourceURIs)
         slp(p)
         val template = getTemplate(templateName)
-        val renderer = HtmlRenderer.builder()
-          .nodeRendererFactory(SimpleHtmlNodeRenderer(renderAttributedBlockQuote _))
-          .nodeRendererFactory(SimpleHtmlNodeRenderer(renderAttributedHeading _))
-          .nodeRendererFactory(SimpleHtmlNodeRenderer(renderTabView(pc) _))
+        val renderer = renderers(pc).foldLeft(HtmlRenderer.builder()) { case (z, n) => z.nodeRendererFactory(n) }
           .nodeRendererFactory(fencedCodeBlockRenderer(p, cssRes))
           .nodeRendererFactory(indentedCodeBlockRenderer(p, cssRes))
           .nodeRendererFactory(inlineCodeRenderer(p, cssRes))

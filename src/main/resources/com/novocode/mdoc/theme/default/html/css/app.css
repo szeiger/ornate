@@ -95,6 +95,7 @@ pre, pre.hljs {
   margin: 0 1rem 1rem 1rem;
   padding: 0.5rem 1rem;
   line-height: 1.5;
+  border: 1px solid #ddd;
 }
 
 .a_xscroll {
@@ -120,6 +121,7 @@ pre, pre.hljs {
 
 .tabs-panel pre, .tabs-panel pre.hljs {
   margin-bottom: 0;
+  border: 0;
 }
 
 .tabs-title a {
@@ -201,6 +203,25 @@ pre, pre.hljs {
 
 .a_section:hover, .a_section:hover .a_hlink {
   visibility: visible;
+}
+
+.a_table {
+  margin: 1rem;
+  margin-top: 0;
+  padding: 0;
+}
+
+.a_table table {
+  margin: 0;
+  width: auto;
+}
+
+.a_table table th, .a_table table td {
+  border: 1px solid #ddd;
+}
+
+.a_table table th {
+  color: #444;
 }
 
 .a_sitenav {

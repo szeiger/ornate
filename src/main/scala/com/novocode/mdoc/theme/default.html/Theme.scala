@@ -1,14 +1,16 @@
 package com.novocode.mdoc.theme.default.html
 
 import java.net.URI
+import java.util.Collections
 
-import com.novocode.mdoc.commonmark.{TabItem, TabView, AttributedBlockQuote, AttributedHeading}
+import com.novocode.mdoc.commonmark._
 import com.novocode.mdoc.commonmark.NodeExtensionMethods._
 import com.novocode.mdoc.config.Global
 import com.novocode.mdoc.highlight.HighlightResult
 import com.novocode.mdoc.{PageParser, Page, Util}
 import com.novocode.mdoc.theme.HtmlTheme
-import org.commonmark.html.renderer.NodeRendererContext
+import org.commonmark.ext.gfm.tables.TableBlock
+import org.commonmark.html.renderer.{NodeRendererFactory, NodeRendererContext}
 
 import scala.collection.JavaConverters._
 
@@ -42,9 +44,9 @@ class Theme(global: Global) extends HtmlTheme(global) {
   override def renderCode(hlr: HighlightResult, c: NodeRendererContext, block: Boolean): Unit = if(block) {
     val wr = c.getHtmlWriter
     wr.line
-    wr.tag("div", Map("class" -> "row").asJava)
+    wr.raw("<div class=\"row\">")
     super.renderCode(hlr.copy(preClasses = hlr.preClasses ++ Seq("small-expand", "columns", "a_xscroll")), c, block)
-    wr.tag("/div")
+    wr.raw("</div>")
     wr.line
   } else super.renderCode(hlr, c, block)
 
@@ -73,4 +75,18 @@ class Theme(global: Global) extends HtmlTheme(global) {
     wr.raw("</div>")
     wr.line
   }
+
+  def renderTableBlock(n: TableBlock, c: NodeRendererContext): Unit = {
+    val wr = c.getHtmlWriter
+    wr.line
+    wr.raw("""<div class="row"><div class="small-expand columns a_xscroll a_table">""")
+    wr.tag("table", c.extendAttributes(n, Collections.emptyMap[String, String]))
+    n.children.toVector.foreach(c.render)
+    wr.tag("/table")
+    wr.raw("</div></div>")
+    wr.line()
+  }
+
+  override def renderers(pc: PageContext): Seq[NodeRendererFactory] =
+    SimpleHtmlNodeRenderer(renderTableBlock _) +: super.renderers(pc)
 }
