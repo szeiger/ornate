@@ -1,6 +1,6 @@
 # Configuration
 
-The configuration is written in HOCON. The site configuration is in `mdoc.conf`. It is resolved against the reference configuration `mdoc-reference.conf` that ships with mdoc. Every page may have a HOCON front matter section at the top, for example:
+The configuration is written in HOCON. The site configuration is in `ornate.conf`. It is resolved against the reference configuration `ornate-reference.conf` that ships with ornate. Every page may have a HOCON front matter section at the top, for example:
 
     ---
     highlight.highlightjs.inline = scala

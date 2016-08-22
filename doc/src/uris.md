@@ -1,6 +1,6 @@
 # URIs
 
-URIs are used pervasively throughout mdoc for referencing different kinds of content. The following schemes (including several custom schemes) are supported:
+URIs are used pervasively throughout Ornate for referencing different kinds of content. The following schemes (including several custom schemes) are supported:
 
 ## site
 

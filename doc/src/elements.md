@@ -86,7 +86,7 @@ Using the `includeCode` extension, code blocks can also come from included files
 
 ...or parts of included files:
 
-```scala src=../../src/main/scala/com/novocode/mdoc/Main.scala#main
+```scala src=../../src/main/scala/com/novocode/ornate/Main.scala#main
   Snippet Placeholder -- only rendered when snippet processing fails
 ```
 

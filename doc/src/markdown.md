@@ -7,11 +7,11 @@ extensionAliases = {
   autolink             = org.commonmark.ext.autolink.AutolinkExtension
   strikethrough        = org.commonmark.ext.gfm.strikethrough.StrikethroughExtension
   tables               = org.commonmark.ext.gfm.tables.TablesExtension
-  headerAttributes     = com.novocode.mdoc.commonmark.HeaderAttributesExtension
-  blockQuoteAttributes = com.novocode.mdoc.commonmark.BlockQuoteAttributesExtension
-  autoIdentifiers      = com.novocode.mdoc.commonmark.AutoIdentifiersExtension
-  mergeTabs            = com.novocode.mdoc.commonmark.MergeTabsExtension
-  includeCode          = com.novocode.mdoc.IncludeCodeExtension
+  headerAttributes     = com.novocode.ornate.commonmark.HeaderAttributesExtension
+  blockQuoteAttributes = com.novocode.ornate.commonmark.BlockQuoteAttributesExtension
+  autoIdentifiers      = com.novocode.ornate.commonmark.AutoIdentifiersExtension
+  mergeTabs            = com.novocode.ornate.commonmark.MergeTabsExtension
+  includeCode          = com.novocode.ornate.IncludeCodeExtension
 }
 ```
 
@@ -21,7 +21,7 @@ See the [commonmark-java documentation](https://github.com/atlassian/commonmark-
 
 ## headerAttributes and autoIdentifiers {#header_attributes}
 
-The `headerAttributes` extension implements the same header attribute syntax as [Pandoc](http://pandoc.org/MANUAL.html#header-identifiers) and [PHP Markdown Extra](https://michelf.ca/projects/php-markdown/extra/). Only the IDs are used by mdoc. Classes and key/value pairs are currently ignored. This extension is essential for controlling header links. Every heading to which you want to link from other parts of the document, from the TOC, or from external sources, requires an ID. In case of the TOC, headings without an ID will still be listed but not linked.
+The `headerAttributes` extension implements the same header attribute syntax as [Pandoc](http://pandoc.org/MANUAL.html#header-identifiers) and [PHP Markdown Extra](https://michelf.ca/projects/php-markdown/extra/). Only the IDs are used by Ornate. Classes and key/value pairs are currently ignored. This extension is essential for controlling header links. Every heading to which you want to link from other parts of the document, from the TOC, or from external sources, requires an ID. In case of the TOC, headings without an ID will still be listed but not linked.
 
 Here is an example for a heading title with an ID:
 
@@ -36,7 +36,7 @@ The `autoIdentifiers` extension uses the same algorithm as Pandoc to automatical
 
 ## blockQuoteAttributes
 
-This extension implements the same header attribute syntax for block quotes. mdoc recogizes the classes `.note` and `.warning` in block quote attributes to generate appropriately styles note and warning block. The header attributes must be the only thing on the first line of the block quote. Content starts on the second line.
+This extension implements the same header attribute syntax for block quotes. Ornate recogizes the classes `.note` and `.warning` in block quote attributes to generate appropriately styles note and warning block. The header attributes must be the only thing on the first line of the block quote. Content starts on the second line.
 
 Example source:
 
@@ -62,7 +62,7 @@ This gets rendered as:
 
 ## mergeTabs
 
-This extension allows you to merge directly adjacent fenced code blocks into a tabbed view. This is controlled through the *info string* of the fenced code block. The CommonMark specification leaves interpretation of this string undefined, suggesting only that the first token define the highlighting language. mdoc parses the info string with the same syntax as [header attributes](#header_attributes). Adjacent fenced code blocks are merged if their info string contains a key/value pair with the key `tab`. The value is used as the tab title.
+This extension allows you to merge directly adjacent fenced code blocks into a tabbed view. This is controlled through the *info string* of the fenced code block. The CommonMark specification leaves interpretation of this string undefined, suggesting only that the first token define the highlighting language. Ornate parses the info string with the same syntax as [header attributes](#header_attributes). Adjacent fenced code blocks are merged if their info string contains a key/value pair with the key `tab`. The value is used as the tab title.
 
 Example source:
 
@@ -103,13 +103,13 @@ If the fenced code block is not empty, its original content is discarded. It can
 Example source:
 
 ````markdown
-```scala src=../../src/main/scala/com/novocode/mdoc/Main.scala#main
+```scala src=../../src/main/scala/com/novocode/ornate/Main.scala#main
   Snippet Placeholder
 ```
 ````
 
 This gets rendered as:
 
-```scala src=../../src/main/scala/com/novocode/mdoc/Main.scala#main
+```scala src=../../src/main/scala/com/novocode/ornate/Main.scala#main
   Snippet Placeholder
 ```

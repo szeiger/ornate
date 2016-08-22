@@ -1,6 +1,6 @@
 # Introduction
 
-mdoc is a tool for building multi-page HTML sites from Markdown sources. The design goals are:
+*Ornate* is a tool for building multi-page HTML sites from Markdown sources. The design goals are:
 
 - Runs on the JVM; No installation required: Resolve the versioned dependencies in your build process for reproducible documentation builds with no external dependencies.
 - Based on [CommonMark](http://commonmark.org/), a standardized version of [Markdown](http://daringfireball.net/projects/markdown/).
@@ -12,7 +12,7 @@ mdoc is a tool for building multi-page HTML sites from Markdown sources. The des
 
 ## Running
 
-This is still experimental. No released versions have been published yet and the launcher is not configurable. You can run `com.novocode.mdoc.Main` and it will load `./doc/mdoc.conf`. All further configuration is done through the config file.
+This is still experimental. No released versions have been published yet and the launcher is not configurable. You can run `com.novocode.ornate.Main` and it will load `./doc/ornate.conf`. All further configuration is done through the config file.
 
 ## Terminology
 
@@ -24,6 +24,6 @@ This is still experimental. No released versions have been published yet and the
 
 - **Site**: The site consists of all pages and resources plus the computed TOC.
 
-- **Extension**: An extension can be a parser and/or renderer extension for [commonmark-java](https://github.com/atlassian/commonmark-java) or an mdoc extension for page processing. Extensions can be enabled separately for each page.
+- **Extension**: An extension can be a parser and/or renderer extension for [commonmark-java](https://github.com/atlassian/commonmark-java) or an Ornate extension for page processing. Extensions can be enabled separately for each page.
 
 - **Theme**: A theme is a class that renders the site in some way. The default themes generates HTML files and copies resources but themes are free to do whatever they want with the site.

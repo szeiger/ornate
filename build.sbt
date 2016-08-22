@@ -2,7 +2,7 @@ lazy val root = (project in file(".")).enablePlugins(SbtTwirl)
 
 organization := "com.novocode"
 
-name := "mdoc"
+name := "ornate"
 
 version := "0.1-SNAPSHOT"
 

@@ -7,14 +7,14 @@
     <root level="${log.root:-debug}">
         <appender-ref ref="STDOUT" />
     </root>
-    <logger name="com.novocode.mdoc.config.Global"                    level="info" />
-    <logger name="com.novocode.mdoc.PageParser"                       level="info" />
-    <logger name="com.novocode.mdoc.TocParser"                        level="warn" />
-    <logger name="com.novocode.mdoc.commonmark.SpecialImageProcessor" level="debug" />
-    <logger name="com.novocode.mdoc.commonmark.ExpandTocProcessor"    level="info" />
-    <logger name="com.novocode.mdoc.commonmark.MergeTabsProcessor"    level="info" />
-    <logger name="com.novocode.mdoc.theme.SpecialLinkProcessor"       level="info" />
-    <logger name="com.novocode.mdoc.theme.default.html.Theme"         level="debug" />
-    <logger name="com.novocode.mdoc.js.Modules"                       level="info" />
-    <logger name="com.novocode.mdoc.highlight.HighlightJSHighlighter" level="info" />
+    <logger name="com.novocode.ornate.config.Global"                    level="info" />
+    <logger name="com.novocode.ornate.PageParser"                       level="info" />
+    <logger name="com.novocode.ornate.TocParser"                        level="warn" />
+    <logger name="com.novocode.ornate.commonmark.SpecialImageProcessor" level="debug" />
+    <logger name="com.novocode.ornate.commonmark.ExpandTocProcessor"    level="info" />
+    <logger name="com.novocode.ornate.commonmark.MergeTabsProcessor"    level="info" />
+    <logger name="com.novocode.ornate.theme.SpecialLinkProcessor"       level="info" />
+    <logger name="com.novocode.ornate.theme.default.html.Theme"         level="debug" />
+    <logger name="com.novocode.ornate.js.Modules"                       level="info" />
+    <logger name="com.novocode.ornate.highlight.HighlightJSHighlighter" level="info" />
 </configuration>
