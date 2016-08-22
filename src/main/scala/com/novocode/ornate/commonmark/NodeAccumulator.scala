@@ -18,6 +18,7 @@ final class TextAccumulator extends NodeAccumulator[String] {
   private[this] val b: StringBuilder = new StringBuilder
   def result: String = b.toString
   override def visit(n: Text): Unit = b.append(n.getLiteral)
+  override def visit(n: Code): Unit = b.append(n.getLiteral)
   override def visit(n: SoftLineBreak): Unit = b.append('\n')
   override def visit(n: HardLineBreak): Unit = b.append('\n')
 }

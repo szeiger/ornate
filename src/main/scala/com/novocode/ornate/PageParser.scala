@@ -98,6 +98,12 @@ object PageParser extends Logging {
       val id2 = if(id eq null) newID(Util.createIdentifier(title)) else id
       (h, id2, title)
     }
+    if(logger.isDebugEnabled) {
+      logger.debug("Sections:")
+      withFullIDsAndTitles.foreach { case (h, id, title) =>
+        logger.debug(s"- $id: $title")
+      }
+    }
 
     @tailrec
     def lift(level: Int, s: Section): Section =

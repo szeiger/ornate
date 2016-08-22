@@ -15,7 +15,11 @@ trait Attributed {
       val s = current.toString
       current = null
       val i = s.indexOf("=")
-      if(i == -1) simpleAttrs += s
+      if(i == -1) {
+        if(s.startsWith("#")) {
+          if(id eq null) id = s.substring(1)
+        } else simpleAttrs += s
+      }
       else defAttrs += s.substring(0, i) -> s.substring(i+1)
     }
     def append(c: Char): Unit = {

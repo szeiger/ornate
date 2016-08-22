@@ -19,7 +19,7 @@ extensionAliases = {
 
 See the [commonmark-java documentation](https://github.com/atlassian/commonmark-java#extensions) for `autolink`, `strikethrough` and `tables`.
 
-## headerAttributes and autoIdentifiers {#header_attributes}
+## `headerAttributes` and `autoIdentifiers` {#header_attributes}
 
 The `headerAttributes` extension implements the same header attribute syntax as [Pandoc](http://pandoc.org/MANUAL.html#header-identifiers) and [PHP Markdown Extra](https://michelf.ca/projects/php-markdown/extra/). Only the IDs are used by Ornate. Classes and key/value pairs are currently ignored. This extension is essential for controlling header links. Every heading to which you want to link from other parts of the document, from the TOC, or from external sources, requires an ID. In case of the TOC, headings without an ID will still be listed but not linked.
 
@@ -34,7 +34,7 @@ Links to this section get to use `#settings` instead of
 
 The `autoIdentifiers` extension uses the same algorithm as Pandoc to automatically derive an ID from the heading title if no ID was set explicitly via `headerAttributes`
 
-## blockQuoteAttributes
+## `blockQuoteAttributes`
 
 This extension implements the same header attribute syntax for block quotes. Ornate recogizes the classes `.note` and `.warning` in block quote attributes to generate appropriately styles note and warning block. The header attributes must be the only thing on the first line of the block quote. Content starts on the second line.
 
@@ -60,7 +60,7 @@ This gets rendered as:
 > {.warning}
 > This is a warning.
 
-## mergeTabs
+## `mergeTabs`
 
 This extension allows you to merge directly adjacent fenced code blocks into a tabbed view. This is controlled through the *info string* of the fenced code block. The CommonMark specification leaves interpretation of this string undefined, suggesting only that the first token define the highlighting language. Ornate parses the info string with the same syntax as [header attributes](#header_attributes). Adjacent fenced code blocks are merged if their info string contains a key/value pair with the key `tab`. The value is used as the tab title.
 
@@ -94,7 +94,7 @@ public class AttributedHeading extends Heading {
 }
 ```
 
-## includeCode
+## `includeCode`
 
 This extension allows you to include code snippets from an external file in a fenced code block. The `src` attribute specifies the external file relative to the source URI of the current page. If the URI has a fragment, it is used to extract only parts the file delimited by lines ending with the fragment ID (including the `#` symbol). The delimiter lines are not included, only the lines between them. Multiple delimited sections are allowed. They are concatenated when extrating the snippet. Each section is dedented individually by stripping off leading whitespace that is common to all lines (*including* the delimiter lines).
 
