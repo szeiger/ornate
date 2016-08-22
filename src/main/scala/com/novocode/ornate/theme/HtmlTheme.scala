@@ -196,7 +196,9 @@ class HtmlTheme(global: Global) extends Theme(global) { self =>
         logger.debug(s"Rendering page ${p.uri} to file $file with template ${templateName}")
         val imageRes = new ThemeResources(p, "image")
         val cssRes = new ThemeResources(p, "css")
-        val slp = new SpecialLinkProcessor(imageRes, site, suffix, staticResourceURIs)
+        val indexPage =
+          if(global.userConfig.theme.config.hasPath("global.indexPage")) Some(global.userConfig.theme.config.getString("global.indexPage")) else None
+        val slp = new SpecialLinkProcessor(imageRes, site, suffix, indexPage, staticResourceURIs)
         slp(p)
         val template = getTemplate(templateName)
         val renderer = renderers(pc).foldLeft(HtmlRenderer.builder()) { case (z, n) => z.nodeRendererFactory(n) }
