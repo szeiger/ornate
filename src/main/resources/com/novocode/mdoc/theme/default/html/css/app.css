@@ -17,6 +17,10 @@ h1, h2, h3, h4, h5, h6 {
   background: inherit;
 }
 
+.top-bar p {
+  margin: 0;
+}
+
 .top-bar-right {
   text-align: right;
 }

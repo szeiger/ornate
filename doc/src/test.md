@@ -3,10 +3,6 @@
 #title: Foo
 highlight.highlightjs.inline = scala
 ---
-## Introduction at 2nd level
-
-Some text here
-
 # Target
 
 ## 2nd level
@@ -39,3 +35,31 @@ And this `val x = 42` is inline code.
 Here's an image from highlight.js:
 
 ![](webjar:/highlight.js/styles/brown-papersq.png)
+
+Title     {#title_id foo=bar}
+-----
+
+#### Level 4
+
+#### Level 4
+
+### Level 3
+
+### Level 3
+
+Subtitle
+--------
+
+## toctree:maxLevel=2,mergeFirst=false {#contents_id} ##
+
+![](toctree:maxLevel=2,mergeFirst=false)
+
+## toctree: {#contents_id} ##
+
+![foo](toctree: "bar")
+
+## Pages
+
+![](toctree:maxlevel=0,mergefirst=false)
+
+End of document

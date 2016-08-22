@@ -1,29 +1,29 @@
-Title     {#title_id foo=bar}
-=====
+# Introduction
 
-#### Level 4
+mdoc is a tool for building multi-page HTML sites from Markdown sources. The design goals are:
 
-#### Level 4
+- Runs on the JVM; No installation required: Resolve the versioned dependencies in your build process for reproducible documentation builds with no external dependencies.
+- Based on [CommonMark](http://commonmark.org/), a standardized version of [Markdown](http://daringfireball.net/projects/markdown/).
+- Use well-established extensions: In particular, many developers are already familiar with [Github-flavored Markdown](https://help.github.com/categories/writing-on-github/).
+- Graceful degradation: Some features require proprietary syntax extensions. They should degrade gracefully when processed with a pure CommonMark engine.
+- Configuration based on [Typesafe Config](https://github.com/typesafehub/config).
+- Modular design: Themes, templates, highlighters, extensions - everything can be customized with Scala code.
+- Clean, modern default theme using responsive design for a good user experience on all device from mobile phones to desktop PCs.
 
-### Level 3
+## Running
 
-### Level 3
+This is still experimental. No released versions have been published yet and the launcher is not configurable. You can run `com.novocode.mdoc.Main` and it will load `./doc/mdoc.conf`. All further configuration is done through the config file.
 
-[Intro link](introduction.md)
+## Terminology
 
-Subtitle
---------
+- **Page**: A page comes from a single CommonMark source file. It has a source URI and a page URI in the `site:` namespace. Themes can also create synthetic pages which are not associated with any source file.
 
-## toctree:maxLevel=2,mergeFirst=false {#contents_id} ##
+- **Resource**: A file which is copied verbatim to the generated site. Resources share the `site:` namespace with pages. They can be provided as part of sources (together with pages) or be generated during processing.
 
-![](toctree:maxLevel=2,mergeFirst=false)
+- **TOC**: The table of contents is built from a global configuration and the sections of all pages.
 
-## toctree: {#contents_id} ##
+- **Site**: The site consists of all pages and resources plus the computed TOC.
 
-![foo](toctree: "bar")
+- **Extension**: An extension can be a parser and/or renderer extension for [commonmark-java](https://github.com/atlassian/commonmark-java) or an mdoc extension for page processing. Extensions can be enabled separately for each page.
 
-## Pages
-
-![](toctree:maxlevel=0,mergefirst=false)
-
-End of document
+- **Theme**: A theme is a class that renders the site in some way. The default themes generates HTML files and copies resources but themes are free to do whatever they want with the site.

@@ -59,7 +59,7 @@ class AttributedHeading extends Heading {
 
 Multiple code blocks can be combined in a tabbed view:
 
-```scala merge=Scala
+```scala tab=Scala
 class AttributedHeading extends Heading {
   var id: String = null
   val attrs: ListBuffer[String] = new ListBuffer
@@ -73,7 +73,7 @@ class AttributedHeading extends Heading {
 }
 ```
 
-```java merge=Java
+```java tab=Java
 public class AttributedHeading extends Heading {
   // Insert lots of boilerplate here
 }

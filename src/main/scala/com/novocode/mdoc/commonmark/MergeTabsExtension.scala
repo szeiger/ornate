@@ -20,8 +20,8 @@ class MergeTabsProcessor extends PageProcessor {
         case _ =>
           val all =
             (Iterator(n) ++ n.nextElements.collect[FencedCodeBlock] { case f: FencedCodeBlock => f }).map {
-              case f: AttributedFencedCodeBlock => (f, f.defAttrs.get("merge"))
-              case f => (f, Attributed.parse(n.getInfo).defAttrs.get("merge"))
+              case f: AttributedFencedCodeBlock => (f, f.defAttrs.get("tab"))
+              case f => (f, Attributed.parse(n.getInfo).defAttrs.get("tab"))
             }.takeWhile(_._2.isDefined).toVector
           all.length match {
             case 0 =>
