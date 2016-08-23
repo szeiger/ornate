@@ -36,7 +36,7 @@ The `autoIdentifiers` extension uses the same algorithm as Pandoc to automatical
 
 ## `blockQuoteAttributes`
 
-This extension implements the same header attribute syntax for block quotes. Ornate recogizes the classes `.note` and `.warning` in block quote attributes to generate appropriately styles note and warning block. The header attributes must be the only thing on the first line of the block quote. Content starts on the second line.
+This extension implements the same header attribute syntax for block quotes. Ornate recogizes the classes `.note` and `.warning` in block quote attributes to generate appropriately styled note and warning blocks. The header attributes must be the only thing on the first line of the block quote. Content starts on the second line.
 
 Example source:
 
