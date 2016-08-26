@@ -19,7 +19,7 @@ object Main extends App {
 
   val sip = new SpecialImageProcessor(global.userConfig)
   pages.foreach { p =>
-    val pagepp = p.extensions.ornate.flatMap(_.pageProcessors(global, site))
+    val pagepp = p.extensions.ornate.flatMap(_.pageProcessors(site))
     p.processors = (AttributeFencedCodeBlocksProcessor +: sip +: pagepp)
     p.applyProcessors()
   }

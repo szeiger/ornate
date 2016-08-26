@@ -9,7 +9,7 @@ import NodeExtensionMethods._
 
 /** Merge adjacent fenced code blocks into tabs. */
 class MergeTabsExtension extends Extension {
-  override def pageProcessors(global: Global, site: Site) = Seq(new MergeTabsProcessor)
+  override def pageProcessors(site: Site) = Seq(new MergeTabsProcessor)
 }
 
 class MergeTabsProcessor extends PageProcessor {

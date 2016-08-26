@@ -142,6 +142,7 @@ class FileMatcherTest {
       "r/doc/target",
       "r/doc/target/index.html",
       "r/doc/target/introduction.html",
+      "r/doc/ornate.conf",
       "r/src",
       "r/src/main",
       "r/src/main/logback.xml",
@@ -161,6 +162,7 @@ class FileMatcherTest {
       "r/src",
       "r/src/main",
       "r/src/main/logback.xml",
+      "r/src/main/ornate-reference.conf",
       "r/src/doc"
     ))
 }

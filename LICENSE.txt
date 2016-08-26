@@ -21,3 +21,8 @@ For details, see https://github.com/zurb/foundation-sites/blob/v6.2.2/LICENSE
 
 This product bundles whatinput 2.0.0, which is available under an MIT license.
 For details, see https://github.com/ten1seven/what-input/blob/v2.0.0/LICENSE
+
+When using the Emoji extension, the generated sites can contain images from
+the EmojiOne project (https://github.com/Ranks/emojione) which require
+attribution when used in commercial projects. See http://emojione.com/licensing/
+for details.

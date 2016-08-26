@@ -27,9 +27,12 @@ libraryDependencies ++= Seq(
   "org.slf4j" % "slf4j-api" % "1.7.18",
   "ch.qos.logback" % "logback-classic" % "1.1.6",
   "com.github.pathikrit" %% "better-files" % "2.16.0",
+  "com.typesafe.play" %% "play-json" % "2.5.5",
   //"org.scala-lang.modules" %% "scala-xml" % "1.0.5",
   "org.webjars" % "webjars-locator-core" % "0.31",
   "org.webjars.npm" % "highlight.js" % "9.6.0",
+  //"org.webjars.npm" % "emoji-datasource" % "2.4.4",
+  "org.webjars.npm" % "emojione" % "2.2.6",
   //"org.webjars.npm" % "domino" % "1.0.25",
   //"org.webjars.npm" % "mermaid" % "6.0.0",
   "com.novocode" % "junit-interface" % "0.11" % "test"

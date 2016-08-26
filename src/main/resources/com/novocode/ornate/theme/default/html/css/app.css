@@ -150,6 +150,11 @@ pre, pre.hljs {
   }
 }
 
+img.emoji {
+  width: 1.4rem;
+  height: 1.4rem;
+}
+
 .a_limited {
   max-width: 82.5rem;
   margin-left: auto;

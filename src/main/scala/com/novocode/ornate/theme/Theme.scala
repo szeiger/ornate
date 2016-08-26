@@ -8,6 +8,7 @@ import com.novocode.ornate.commonmark.NodeExtensionMethods._
 
 import better.files._
 import com.novocode.ornate.config.Global
+import com.novocode.ornate.js.NashornSupport
 
 import scala.collection.JavaConverters._
 
@@ -40,7 +41,7 @@ abstract class Theme(global: Global) extends Logging {
     case "site" => global.userConfig.resourceDir.path.toUri.resolve(uri.getPath.replaceFirst("^/*", "")).toURL
     case "webjar" =>
       val parts = uri.getPath.split('/').filter(_.nonEmpty)
-      val path = global.webJarLocator.getFullPathExact(parts.head, parts.tail.mkString("/"))
+      val path = NashornSupport.locator.getFullPathExact(parts.head, parts.tail.mkString("/"))
       if(path eq null) throw new FileNotFoundException("WebJar resource not found: "+uri)
       getClass.getClassLoader.getResource(path)
     case "theme" =>

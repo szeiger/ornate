@@ -12,6 +12,7 @@ extensionAliases = {
   autoIdentifiers      = com.novocode.ornate.commonmark.AutoIdentifiersExtension
   mergeTabs            = com.novocode.ornate.commonmark.MergeTabsExtension
   includeCode          = com.novocode.ornate.IncludeCodeExtension
+  emoji                = com.novocode.ornate.EmojiExtension
 }
 ```
 
@@ -113,3 +114,17 @@ This gets rendered as:
 ```scala src=../../src/main/scala/com/novocode/ornate/Main.scala#main
   Snippet Placeholder
 ```
+
+## `emoji`
+
+The `emoji` extension translates Emoji names to the appropriate Unicode representations or images.
+
+Example source:
+
+```markdown
+Is this feature :thumbsup: or :thumbsdown:?
+```
+
+This gets rendered as:
+
+Is this feature :thumbsup: or :thumbsdown:?

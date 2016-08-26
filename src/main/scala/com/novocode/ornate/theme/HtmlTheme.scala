@@ -27,7 +27,7 @@ class HtmlTheme(global: Global) extends Theme(global) { self =>
   import HtmlTheme._
   val suffix = ".html"
 
-  class PageContext(val page: Page) {
+  class PageContext(val page: Page, val slp: SpecialLinkProcessor) {
     private[this] var last = -1
     def newID(): String = {
       last += 1
@@ -120,6 +120,21 @@ class HtmlTheme(global: Global) extends Theme(global) { self =>
     renderCode(hlr, c, false)
   }
 
+  def emojiRenderer(pc: PageContext) = SimpleHtmlNodeRenderer { (n: Emoji, c: NodeRendererContext) =>
+    val wr = c.getHtmlWriter
+    if(n.uri ne null) {
+      wr.raw(s"""<img class="emoji" title="${n.name}" alt="""")
+      wr.text(n.unicode)
+      wr.raw("""" src="""")
+      wr.text(pc.slp.resolve(pc.page.uri, n.uri.toString, "image", false, true))
+      wr.raw("""""/>""")
+    } else {
+      wr.raw(s"""<span class="emoji" title="${n.name}">""")
+      wr.text(n.unicode)
+      wr.raw("</span>")
+    }
+  }
+
   class ThemeResources(val page: Page, tpe: String) extends Resources {
     private[this] val baseURI = {
       val dir = global.userConfig.theme.config.getString(s"global.dirs.$tpe")
@@ -178,6 +193,7 @@ class HtmlTheme(global: Global) extends Theme(global) { self =>
   }
 
   def renderers(pc: PageContext): Seq[NodeRendererFactory] = Seq(
+    emojiRenderer(pc),
     SimpleHtmlNodeRenderer(renderAttributedBlockQuote _),
     SimpleHtmlNodeRenderer(renderAttributedHeading _),
     SimpleHtmlNodeRenderer(renderTabView(pc) _)
@@ -191,7 +207,6 @@ class HtmlTheme(global: Global) extends Theme(global) { self =>
     site.pages.foreach { p =>
       val file = targetFile(p.uriWithSuffix(suffix), global.userConfig.targetDir)
       try {
-        val pc = new PageContext(p)
         val templateName = p.config.getString("template")
         logger.debug(s"Rendering page ${p.uri} to file $file with template ${templateName}")
         val imageRes = new ThemeResources(p, "image")
@@ -200,6 +215,7 @@ class HtmlTheme(global: Global) extends Theme(global) { self =>
           if(global.userConfig.theme.config.hasPath("global.indexPage")) Some(global.userConfig.theme.config.getString("global.indexPage")) else None
         val slp = new SpecialLinkProcessor(imageRes, site, suffix, indexPage, staticResourceURIs)
         slp(p)
+        val pc = new PageContext(p, slp)
         val template = getTemplate(templateName)
         val renderer = renderers(pc).foldLeft(HtmlRenderer.builder()) { case (z, n) => z.nodeRendererFactory(n) }
           .nodeRendererFactory(fencedCodeBlockRenderer(p, cssRes))

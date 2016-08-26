@@ -18,7 +18,6 @@ trait NashornSupport { this: Logging =>
   import NashornSupport._
 
   val engine = new NashornScriptEngineFactory().getScriptEngine("--const-as-var").asInstanceOf[NashornScriptEngine]
-  val locator = new WebJarAssetLocator()
   val mainModule = new Modules(engine) {
     override def resolve(path: Vector[String]): Option[String] = path match {
       case Vector("node_modules", module, pElems @ _*) =>
@@ -101,4 +100,6 @@ object NashornSupport {
       "trace" -> jsFunc(args => if(jslog.isDebugEnabled) jslog.debug("console.trace()", new Throwable("console.trace()")))
     )
   }
+
+  lazy val locator = new WebJarAssetLocator()
 }

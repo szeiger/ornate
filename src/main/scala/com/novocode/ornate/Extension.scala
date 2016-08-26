@@ -7,7 +7,9 @@ import com.novocode.ornate.commonmark.PageProcessor
 import com.novocode.ornate.config.Global
 
 trait Extension {
-  def pageProcessors(global: Global, site: Site): Seq[PageProcessor] = Nil
+  def pageProcessors(site: Site): Seq[PageProcessor] = Nil
+  def parserExtensions: Seq[ParserExtension] = Nil
+  def htmlRendererExtensions: Seq[HtmlRendererExtension] = Nil
 }
 
 class Extensions(extensions: Vector[(String, Option[AnyRef])]) {
@@ -23,10 +25,18 @@ class Extensions(extensions: Vector[(String, Option[AnyRef])]) {
   }.mkString(", ")
 
   def parser: Vector[ParserExtension] =
-    extensions.collect { case (_, Some(e: ParserExtension)) => e }
+    extensions.flatMap {
+      case (_, Some(e: ParserExtension)) => Vector(e)
+      case (_, Some(e: Extension)) => e.parserExtensions
+      case _ => None
+    }
 
   def htmlRenderer: Vector[HtmlRendererExtension] =
-    extensions.collect { case (_, Some(e: HtmlRendererExtension)) => e }
+    extensions.flatMap {
+      case (_, Some(e: HtmlRendererExtension)) => Vector(e)
+      case (_, Some(e: Extension)) => e.htmlRendererExtensions
+      case _ => None
+    }
 
   def ornate: Vector[Extension] =
     extensions.collect { case (_, Some(e: Extension)) => e }

@@ -17,7 +17,7 @@ import scala.io.Codec
 
 /** Include code snippets from external files in fenced code blocks. */
 class IncludeCodeExtension extends Extension {
-  override def pageProcessors(global: Global, site: Site) = Seq(IncludeCodeProcessor)
+  override def pageProcessors(site: Site) = Seq(IncludeCodeProcessor)
 }
 
 object IncludeCodeProcessor extends PageProcessor {

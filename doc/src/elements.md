@@ -39,6 +39,8 @@ Here's an image from highlight.js in its own paragraph:
 
 And here is the same image ![Alt text](webjar:/highlight.js/styles/pojoaque.jpg "Image title") used in an inline context.
 
+Here is a paragraph with embedded emojis: Lorem ipsum dolor sit amet :thumbsup:, consectetur adipiscing elit. Donec erat sem, ultrices ac rhoncus ut, pharetra sed velit. Quisque eu est sed nisl porta placerat et tempor mi. Aenean porta turpis sed :thumbsdown: erat vestibulum blandit. Morbi dapibus eros enim, non dignissim augue posuere ac. Etiam facilisis mauris tempus euismod imperdiet. Ut ultricies libero tellus, in porttitor lorem tincidunt in. Praesent nulla lectus, consectetur ac bibendum eu, consectetur nec massa.
+
 ## Code Blocks
 
 Here's some Scala code:

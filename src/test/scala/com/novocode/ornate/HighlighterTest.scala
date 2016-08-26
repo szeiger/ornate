@@ -13,25 +13,25 @@ import play.twirl.api.HtmlFormat
 class HighlighterTest {
   val startDir = file"doc"
   val global = new Global(startDir, startDir / "ornate.conf")
-  val p1 = PageParser.parseWithFrontMatter(global.referenceConfig, new URI("site:/p1"), "", "p1 content", true)
-  val p2 = PageParser.parseWithFrontMatter(global.referenceConfig, new URI("site:/p2"), "",
+  val p1 = PageParser.parseWithFrontMatter(None, global.referenceConfig, new URI("site:/p1"), "", "p1 content")
+  val p2 = PageParser.parseWithFrontMatter(None, global.referenceConfig, new URI("site:/p2"), "",
     """---
       |highlight.highlightjs.fenced: rust
       |---
       |p2 content
-    """.stripMargin, true)
-  val p3 = PageParser.parseWithFrontMatter(global.referenceConfig, new URI("site:/p3"), "",
+    """.stripMargin)
+  val p3 = PageParser.parseWithFrontMatter(None, global.referenceConfig, new URI("site:/p3"), "",
     """---
       |highlight.highlightjs.fenced: [json, scala, rust]
       |---
       |p3 content
-    """.stripMargin, true)
-  val p4 = PageParser.parseWithFrontMatter(global.referenceConfig, new URI("site:/p4"), "",
+    """.stripMargin)
+  val p4 = PageParser.parseWithFrontMatter(None, global.referenceConfig, new URI("site:/p4"), "",
     """---
       |highlight.highlightjs.fenced: null
       |---
       |p4 content
-    """.stripMargin, true)
+    """.stripMargin)
 
   @Test def testHighlightJS: Unit = {
     val hl = new HighlightJSHighlighter(global, global.userConfig.highlight)
