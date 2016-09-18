@@ -4,7 +4,7 @@ import org.commonmark.html.HtmlRenderer.HtmlRendererExtension
 import org.commonmark.parser.Parser.ParserExtension
 
 import com.novocode.ornate.commonmark.PageProcessor
-import com.novocode.ornate.config.Global
+import com.novocode.ornate.config.{ConfiguredObject, Global}
 
 trait Extension {
   def pageProcessors(site: Site): Seq[PageProcessor] = Nil
@@ -12,16 +12,16 @@ trait Extension {
   def htmlRendererExtensions: Seq[HtmlRendererExtension] = Nil
 }
 
-class Extensions(extensions: Vector[(String, Option[AnyRef])]) {
+class Extensions(extensions: Vector[(ConfiguredObject, Option[AnyRef])]) {
   override def toString: String = extensions.map {
-    case (name, None) => s"($name)"
-    case (name, Some(o)) =>
+    case (co, None) => s"(${co.name})"
+    case (co, Some(o)) =>
       val types = Seq(
         if(o.isInstanceOf[Extension]) Some("e") else None,
         if(o.isInstanceOf[ParserExtension]) Some("p") else None,
         if(o.isInstanceOf[HtmlRendererExtension]) Some("h") else None
       ).flatten
-      if(types.isEmpty) name else types.mkString(s"$name[", ",", "]")
+      if(types.isEmpty) co.name else types.mkString(s"${co.name}[", ",", "]")
   }.mkString(", ")
 
   def parser: Vector[ParserExtension] =

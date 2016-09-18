@@ -4,7 +4,7 @@ import java.net.URI
 
 import com.novocode.ornate.commonmark.Attributed
 import com.novocode.ornate.commonmark.NodeExtensionMethods._
-import com.novocode.ornate.config.Global
+import com.novocode.ornate.config.ConfiguredObject
 import com.novocode.ornate.js.NashornSupport
 import org.commonmark.node.{CustomNode, Text, Node, AbstractVisitor}
 import org.commonmark.parser.{PostProcessor, Parser}
@@ -13,13 +13,13 @@ import play.api.libs.json.{JsString, JsObject, JsArray, Json}
 import scala.collection.mutable.ArrayBuffer
 
 /** Replace emoji names with images. */
-class EmojiExtension(global: Global) extends Extension {
-  override val parserExtensions = Seq(new EmojiParserExtension(global))
+class EmojiExtension(co: ConfiguredObject) extends Extension {
+  override val parserExtensions = Seq(new EmojiParserExtension(co))
 }
 
-class EmojiParserExtension(val global: Global) extends Parser.ParserExtension with NashornSupport with Logging {
+class EmojiParserExtension(co: ConfiguredObject) extends Parser.ParserExtension with NashornSupport with Logging {
   import EmojiParserExtension._
-  val format = global.userConfig.raw.getString("global.emoji.format") // TODO use ConfigObject for extensions
+  val format = co.config.getString("format")
   val formatSuffix = format.replaceAll("_.*$", "")
 
   def extend(builder: Parser.Builder): Unit = builder.postProcessor(EmojiDelimiterProcessor)
