@@ -4,17 +4,21 @@
             <pattern>%highlight([%1.-1level]) %20.20logger{20}: %msg%n</pattern>
         </encoder>
     </appender>
+    <appender name="TRIGGER" class="com.novocode.ornate.ErrorRecognitionAppender" />
     <root level="${log.root:-debug}">
         <appender-ref ref="STDOUT" />
+        <appender-ref ref="TRIGGER" />
     </root>
     <logger name="com.novocode.ornate.config.Global"                    level="info" />
     <logger name="com.novocode.ornate.PageParser"                       level="info" />
     <logger name="com.novocode.ornate.TocParser"                        level="warn" />
+    <logger name="com.novocode.ornate.EmojiParserExtension"             level="info" />
+    <logger name="com.novocode.ornate.IncludeCodeProcessor"             level="info" />
     <logger name="com.novocode.ornate.commonmark.SpecialImageProcessor" level="debug" />
     <logger name="com.novocode.ornate.commonmark.ExpandTocProcessor"    level="info" />
     <logger name="com.novocode.ornate.commonmark.MergeTabsProcessor"    level="info" />
     <logger name="com.novocode.ornate.theme.SpecialLinkProcessor"       level="info" />
-    <logger name="com.novocode.ornate.theme.default.html.Theme"         level="debug" />
+    <logger name="com.novocode.ornate.theme.default.html.Theme"         level="info" />
     <logger name="com.novocode.ornate.js.Modules"                       level="info" />
     <logger name="com.novocode.ornate.highlight.HighlightJSHighlighter" level="info" />
 </configuration>

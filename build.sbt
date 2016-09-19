@@ -37,3 +37,8 @@ libraryDependencies ++= Seq(
   //"org.webjars.npm" % "mermaid" % "6.0.0",
   "com.novocode" % "junit-interface" % "0.11" % "test"
 )
+
+TaskKey[Unit]("makeDoc") := (Def.taskDyn {
+  val args = s""" com.novocode.ornate.Main "-Dversion=${version.value}" doc/ornate.conf"""
+  (runMain in Compile).toTask(args)
+}).value

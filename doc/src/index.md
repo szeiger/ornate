@@ -12,7 +12,15 @@
 
 ## Running
 
-This is still experimental. No released versions have been published yet and the launcher is not configurable. You can run `com.novocode.ornate.Main` and it will load `./doc/ornate.conf`. All further configuration is done through the config file.
+You can run Ornate from the command line via the class `com.novocode.ornate.Main`. The following arguments are supported:
+
+- `[--base-dir=<path>]`: Source, resource and target dirs in the config are relative to the base directory. If not specified explicitly, this is the directory that contains the config file.
+- `[-D<option>=<value>...]`: Configuration options can be overridden with `-D` arguments or through system properties.
+- `<config-file>`: The path to the site config file, typically named `ornate.conf`.
+
+All further configuration is done through the config file.
+
+At the moment you have to build Ornate form source. Published versions on Maven Central and an sbt plugin for easier integration into your build are planned for the future.
 
 ## Terminology
 
