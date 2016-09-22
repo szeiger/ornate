@@ -1,6 +1,6 @@
 # Configuration
 
-The configuration is written in HOCON. The site configuration is in `ornate.conf`. It is resolved against the reference configuration `ornate-reference.conf` that ships with ornate. Every page may have a HOCON front matter section at the top, for example:
+The configuration is written in HOCON. The site configuration is in `ornate.conf`. It is resolved against the reference configuration `ornate-reference.conf` that ships with Ornate. Every page may have a HOCON front matter section at the top, for example:
 
     ---
     highlight.highlightjs.inline = scala
@@ -20,19 +20,7 @@ The configuration path `global` contains settings that are used in a global cont
 
 The most important global settings are:
 
-```yaml
-global {
-  # Directory containing the document sources
-  sourceDir = "src"
-  # Directory containing static resources that should be copied to the target site
-  resourceDir = ${global.sourceDir}
-  # Directory to which the output is rendered
-  targetDir = "target"
-  # TOC structure or null for no TOC
-  toc = null
-  # The theme, which also determines the output format
-  theme = default
-}
+```yaml src=../../src/main/resources/ornate-reference.conf#--doc-global
 ```
 
 ## Table of Contents

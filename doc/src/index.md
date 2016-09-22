@@ -7,8 +7,8 @@
 - Use well-established extensions: In particular, many developers are already familiar with [Github-flavored Markdown](https://help.github.com/categories/writing-on-github/).
 - Graceful degradation: Some features require proprietary syntax extensions. They should degrade gracefully when processed with a pure CommonMark engine.
 - Configuration based on [Typesafe Config](https://github.com/typesafehub/config).
-- Modular design: Themes, templates, highlighters, extensions - everything can be customized with Scala code.
-- Clean, modern default theme using responsive design for a good user experience on all device from mobile phones to desktop PCs.
+- Modular design: Themes, templates, [highlighters](highlighting.md), extensions - everything can be customized with Scala code.
+- Clean, modern [default theme](default-theme.md) using responsive design for a good user experience on all devices from mobile phones to desktop PCs.
 
 ## Running
 

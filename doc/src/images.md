@@ -2,7 +2,7 @@
 
 Ornate extends the use of standard Markdown image elements to non-image objects. These are not limited to external files, they can be included directly in the page depending on the [URI protocol](uris.md).
 
-## Table of Contents
+## Table of Contents {#toctree}
 
 `toctree` URIs represent the generated Table of Contents. They can be used in image elements or parts of the theme configuration. URIs are of the form `toctree:key=value,key=value,...` with case-insentive keys. The following keys are supported:
 
@@ -23,7 +23,7 @@ It is rendered as:
 
 ![](toctree:maxLevel=6,local=true,mergeFirst=false)
 
-## Configuration Values
+## Configuration Values {#config}
 
 `config` URIs can be used in image elements. They expand to strings from the page configuration. Title and text of the element are ignored.
 

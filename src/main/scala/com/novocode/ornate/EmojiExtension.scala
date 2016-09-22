@@ -19,7 +19,7 @@ class EmojiExtension(co: ConfiguredObject) extends Extension {
 
 class EmojiParserExtension(co: ConfiguredObject) extends Parser.ParserExtension with NashornSupport with Logging {
   import EmojiParserExtension._
-  val format = co.config.getString("format")
+  val format = co.config.getString("global.format")
   val formatSuffix = format.replaceAll("_.*$", "")
 
   def extend(builder: Parser.Builder): Unit = builder.postProcessor(EmojiDelimiterProcessor)

@@ -2,18 +2,7 @@
 
 The following extensions are provided out of the box. Except for `autolink` they are all enabled by default.
 
-```yaml
-extensionAliases = {
-  autolink             = org.commonmark.ext.autolink.AutolinkExtension
-  strikethrough        = org.commonmark.ext.gfm.strikethrough.StrikethroughExtension
-  tables               = org.commonmark.ext.gfm.tables.TablesExtension
-  headerAttributes     = com.novocode.ornate.commonmark.HeaderAttributesExtension
-  blockQuoteAttributes = com.novocode.ornate.commonmark.BlockQuoteAttributesExtension
-  autoIdentifiers      = com.novocode.ornate.commonmark.AutoIdentifiersExtension
-  mergeTabs            = com.novocode.ornate.commonmark.MergeTabsExtension
-  includeCode          = com.novocode.ornate.IncludeCodeExtension
-  emoji                = com.novocode.ornate.EmojiExtension
-}
+```yaml src=../../src/main/resources/ornate-reference.conf#--doc-extension-aliases
 ```
 
 ## commonmark-java extensions
@@ -114,6 +103,34 @@ This gets rendered as:
 ```scala src=../../src/main/scala/com/novocode/ornate/Main.scala#main
   Snippet Placeholder
 ```
+
+## `expandVars`
+
+This extension allows expansion of variables that reference configuration keys. The delimiters for variables are configurable, the default style being `{{variable}}`. Variable substutions are performed *after* Markdown parsing, so there is no way to escape delimiters. Global expansion for different node types can also be enabled in the configuration. By default this extension is enabled but all expansion options are disabled, so expansion is only performed in fenced code blocks with an explicit `expandVars=true` attribute. This is the default configuration:
+
+```yaml src=../../src/main/resources/ornate-reference.conf#--doc-expandVars
+```
+
+Example source:
+
+````markdown
+```yaml expandVars=true
+# Set the version to {{version}}:
+version = "{{version}}"
+```
+````
+
+This gets rendered as:
+
+```yaml expandVars=true
+# Set the version to {{version}}:
+version = "{{version}}"
+```
+
+> {.note}
+> Note: When using `expandVars` together with `includeCode`, the order in which the extensions are run determines whether variables in included snippets are expanded. The default configuration adds `expandVars` *after* `includeCode` so that snippets are processed by `expandVars`.
+
+In plain text you can also use objects with [config](images.md#config) URIs instead of `expandVars` but this is not possible in code elements, which cannot contain embedded Markdown syntax.
 
 ## `emoji`
 
