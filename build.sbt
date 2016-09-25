@@ -1,5 +1,5 @@
 lazy val root = project.in(file("."))
-  .aggregate(core)
+  .aggregate(core, plugin)
   .dependsOn(core)
   .settings(inThisBuild(Seq(
     organization := "com.novocode",
@@ -45,4 +45,18 @@ lazy val core = project.in(file("core"))
     testOptions += Tests.Argument(TestFrameworks.JUnit, "-q", "-v", "-s", "-a"),
     fork in Test := true,
     parallelExecution in Test := false
+  )
+
+lazy val plugin = project.in(file("plugin"))
+  .enablePlugins(BuildInfoPlugin)
+  .settings(
+    name := "sbt-ornate",
+    sbtPlugin := true,
+    scalaVersion := "2.10.6",
+    buildInfoKeys := Seq[BuildInfoKey](organization, (name in core), version, (scalaVersion in core)),
+    buildInfoPackage := "com.novocode.ornate.sbtplugin",
+    scriptedSettings,
+    scriptedLaunchOpts ++= Seq("-Xmx1024M", "-Dplugin.version=" + version.value),
+    scriptedBufferLog := false,
+    scriptedDependencies := { val _ = ((publishLocal in core).value, publishLocal.value) }
   )

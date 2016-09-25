@@ -46,6 +46,12 @@ object Main extends Logging {
   }
 
   def main(args: Array[String]): Unit = {
+    val res = runToStatus(args)
+    if(res != 0) System.exit(res)
+  }
+
+  // Like `main` but returns the status instead of calling `System.exit`. This is used by the sbt plugin.
+  def runToStatus(args: Array[String]): Int = {
     var baseDirName: Option[String] = None
     var configFileName: Option[String] = None
     var badOption: Boolean = false
@@ -62,14 +68,14 @@ object Main extends Logging {
     }
     if(args.isEmpty || badOption || configFileName.isEmpty) {
       printUsage
-      System.exit(1)
+      1
     } else {
       val configFile = File(configFileName.get)
       val baseDir = baseDirName.map(s => File(s)).getOrElse(configFile.parent)
       val overrides = ConfigFactory.parseProperties(props).withFallback(ConfigFactory.systemProperties())
       val global = new Global(baseDir, configFile, overrides)
       run(global)
-      if(ErrorRecognitionAppender.rearm()) System.exit(1)
+      if(ErrorRecognitionAppender.rearm()) 1 else 0
     }
   }
 }

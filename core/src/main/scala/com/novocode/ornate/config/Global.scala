@@ -7,7 +7,6 @@ import com.novocode.ornate._
 import com.novocode.ornate.theme.Theme
 import org.commonmark.html.HtmlRenderer.HtmlRendererExtension
 import org.commonmark.parser.Parser.ParserExtension
-import org.webjars.WebJarAssetLocator
 
 import scala.collection.JavaConverters._
 import better.files._

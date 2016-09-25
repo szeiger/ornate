@@ -20,7 +20,24 @@ You can run Ornate from the command line via the class `com.novocode.ornate.Main
 
 All further configuration is done through the config file.
 
-At the moment you have to build Ornate form source. Published versions on Maven Central and an sbt plugin for easier integration into your build are planned for the future.
+Ornate also provides an sbt plugin. In order to use it, you have to add it to your `project/plugins.sbt`:
+
+```scala expandVars=true
+addSbtPlugin("com.novocode" % "sbt-ornate" % "{{version}}")
+```
+
+A minimum project definition in `build.sbt` which enables the plugin looks like this:
+
+```scala src=../../plugin/src/sbt-test/ornate/simple/build.sbt
+```
+
+You can run Ornate from sbt with the `ornate` task. By default it looks for a config file `src/ornate.conf`, source and resources under `src/site`, and it builds the site to `target/site`. These settings can be changed directly through the sbt configuration:
+
+```scala src=../../plugin/src/main/scala/com/novocode/ornate/sbtplugin/OrnatePlugin.scala#--doc-plugin
+```
+
+> {.note}
+> Note: At the moment you have to build Ornate form source. Published versions on Maven Central will come soon!
 
 ## Terminology
 

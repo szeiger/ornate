@@ -2,6 +2,7 @@ package com.novocode.ornate.js
 
 import java.util
 import java.util.Locale
+import java.util.regex.Pattern
 import javax.script.{ScriptContext, SimpleBindings, Bindings, ScriptEngineManager}
 
 import better.files._
@@ -101,5 +102,8 @@ object NashornSupport {
     )
   }
 
-  lazy val locator = new WebJarAssetLocator()
+  lazy val locator = {
+    val loader = Option(Thread.currentThread.getContextClassLoader).getOrElse(getClass.getClassLoader)
+    new WebJarAssetLocator(WebJarAssetLocator.getFullPathIndex(Pattern.compile(".*"), loader))
+  }
 }
