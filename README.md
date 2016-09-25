@@ -1,3 +1,8 @@
+Ornate
+======
+
+[![Build Status](https://travis-ci.org/szeiger/ornate.svg?branch=master)](https://travis-ci.org/szeiger/ornate)
+
 *Ornate* is a tool for building multi-page HTML sites from Markdown sources. The design goals are:
 
 - Runs on the JVM; No installation required: Resolve the versioned dependencies in your build process for reproducible documentation builds with no external dependencies.

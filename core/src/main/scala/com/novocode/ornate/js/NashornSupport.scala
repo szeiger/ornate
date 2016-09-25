@@ -18,7 +18,12 @@ import scala.io.Codec
 trait NashornSupport { this: Logging =>
   import NashornSupport._
 
-  val engine = new NashornScriptEngineFactory().getScriptEngine("--const-as-var").asInstanceOf[NashornScriptEngine]
+  val engine = {
+    val f = new NashornScriptEngineFactory
+    // Older JDK8 versions have `getScriptEngine(Array[String])`, newer ones have `getScriptEngine(String...)`
+    f.getClass.getMethod("getScriptEngine", classOf[Array[String]]).invoke(f, Array("--const-as-var"))
+  }.asInstanceOf[NashornScriptEngine]
+
   val mainModule = new Modules(engine) {
     override def resolve(path: Vector[String]): Option[String] = path match {
       case Vector("node_modules", module, pElems @ _*) =>
