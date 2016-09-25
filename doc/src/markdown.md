@@ -2,7 +2,7 @@
 
 The following extensions are provided out of the box. Except for `autolink` they are all enabled by default.
 
-```yaml src=../../src/main/resources/ornate-reference.conf#--doc-extension-aliases
+```yaml src=../../core/src/main/resources/ornate-reference.conf#--doc-extension-aliases
 ```
 
 ## commonmark-java extensions
@@ -93,14 +93,14 @@ If the fenced code block is not empty, its original content is discarded. It can
 Example source:
 
 ````markdown
-```scala src=../../src/main/scala/com/novocode/ornate/Main.scala#main
+```scala src=../../core/src/main/scala/com/novocode/ornate/Main.scala#main
   Snippet Placeholder
 ```
 ````
 
 This gets rendered as:
 
-```scala src=../../src/main/scala/com/novocode/ornate/Main.scala#main
+```scala src=../../core/src/main/scala/com/novocode/ornate/Main.scala#main
   Snippet Placeholder
 ```
 
@@ -108,7 +108,7 @@ This gets rendered as:
 
 This extension allows expansion of variables that reference configuration keys. The delimiters for variables are configurable, the default style being `{{variable}}`. Variable substutions are performed *after* Markdown parsing, so there is no way to escape delimiters. Global expansion for different node types can also be enabled in the configuration. By default this extension is enabled but all expansion options are disabled, so expansion is only performed in fenced code blocks with an explicit `expandVars=true` attribute. This is the default configuration:
 
-```yaml src=../../src/main/resources/ornate-reference.conf#--doc-expandVars
+```yaml src=../../core/src/main/resources/ornate-reference.conf#--doc-expandVars
 ```
 
 Example source:

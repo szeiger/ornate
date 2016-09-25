@@ -1,6 +1,6 @@
 package com.novocode.ornate
 
-import java.io.{InputStreamReader, BufferedReader}
+import java.io.{FileNotFoundException, InputStreamReader, BufferedReader}
 import java.net.URI
 
 import com.novocode.ornate.commonmark.Attributed
@@ -42,7 +42,10 @@ object IncludeCodeProcessor extends PageProcessor {
               case None =>
                 logger.error(s"Cannot include snippet $src on synthetic page ${p.uri}")
             }
-          } catch { case ex: Exception => logger.error(s"Error including snippet $src on page ${p.uri}", ex) }
+          } catch {
+            case ex: FileNotFoundException => logger.error(s"Page ${p.uri}: File for snippet $src not found")
+            case ex: Exception => logger.error(s"Page ${p.uri}: Error including snippet $src", ex)
+          }
         }
       }
     })

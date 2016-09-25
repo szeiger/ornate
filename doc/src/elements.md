@@ -83,12 +83,12 @@ public class AttributedHeading extends Heading {
 
 Using the `includeCode` extension, code blocks can also come from included files:
 
-```xml src=../../src/main/resources/logback.xml
+```xml src=../../core/src/main/resources/logback.xml
 ```
 
 ...or parts of included files:
 
-```scala src=../../src/main/scala/com/novocode/ornate/Main.scala#main
+```scala src=../../core/src/main/scala/com/novocode/ornate/Main.scala#main
   Snippet Placeholder -- only rendered when snippet processing fails
 ```
 

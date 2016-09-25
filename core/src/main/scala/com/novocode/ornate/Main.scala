@@ -7,7 +7,7 @@ import com.novocode.ornate.commonmark.{AttributeFencedCodeBlocksProcessor, Expan
 import com.novocode.ornate.config.Global
 import com.typesafe.config.{ConfigFactory, Config}
 
-object Main {
+object Main extends Logging {
   def run(global: Global): Unit = {
     //#main
     val userPages = PageParser.parseSources(global)
@@ -15,6 +15,7 @@ object Main {
     val themePages = global.theme.synthesizePages(themePageURIs)
     val pages = userPages ++ themePages
 
+    logger.info("Processing site")
     val toc = TocParser.parse(global.userConfig, pages)
     val site = new Site(pages, toc)
 
@@ -28,6 +29,7 @@ object Main {
     val etp = new ExpandTocProcessor(toc)
     pages.foreach(etp)
 
+    logger.info("Rendering site")
     global.theme.render(site)
     //#main
   }

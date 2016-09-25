@@ -20,8 +20,10 @@ import scala.io.Codec
 
 object PageParser extends Logging {
   def parseSources(global: Global): Vector[Page] = {
-    global.findSources.flatMap { case (f, suffix, uri) =>
-      logger.info(s"Parsing $f as $uri")
+    val sources = global.findSources
+    logger.info(s"Parsing ${sources.length} source files")
+    sources.flatMap { case (f, suffix, uri) =>
+      logger.debug(s"Parsing $f as $uri")
       try Some(parseWithFrontMatter(Some(f.uri), global.userConfig, uri, suffix, f.contentAsString(Codec.UTF8)))
       catch { case ex: Exception =>
         logger.error(s"Error parsing $f -- skipping file", ex)

@@ -20,7 +20,7 @@ The configuration path `global` contains settings that are used in a global cont
 
 The most important global settings are:
 
-```yaml src=../../src/main/resources/ornate-reference.conf#--doc-global
+```yaml src=../../core/src/main/resources/ornate-reference.conf#--doc-global
 ```
 
 ## Table of Contents

@@ -4,5 +4,5 @@ Ornate's default theme generates multiple HTML pages for the site, one per page.
 
 This is the theme's default configuration:
 
-```yaml src=../../src/main/resources/ornate-reference.conf#--doc-theme
+```yaml src=../../core/src/main/resources/ornate-reference.conf#--doc-theme
 ```
