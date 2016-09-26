@@ -10,35 +10,6 @@
 - Modular design: Themes, templates, [highlighters](highlighting.md), extensions - everything can be customized with Scala code.
 - Clean, modern [default theme](default-theme.md) using responsive design for a good user experience on all devices from mobile phones to desktop PCs.
 
-## Running
-
-You can run Ornate from the command line via the class `com.novocode.ornate.Main`. The following arguments are supported:
-
-- `[--base-dir=<path>]`: Source, resource and target dirs in the config are relative to the base directory. If not specified explicitly, this is the directory that contains the config file.
-- `[-D<option>=<value>...]`: Configuration options can be overridden with `-D` arguments or through system properties.
-- `<config-file>`: The path to the site config file, typically named `ornate.conf`.
-
-All further configuration is done through the config file.
-
-Ornate also provides an sbt plugin. In order to use it, you have to add it to your `project/plugins.sbt`:
-
-```scala expandVars=true
-addSbtPlugin("com.novocode" % "sbt-ornate" % "{{version}}")
-```
-
-A minimum project definition in `build.sbt` which enables the plugin looks like this:
-
-```scala src=../../plugin/src/sbt-test/ornate/simple/build.sbt
-```
-
-You can run Ornate from sbt with the `ornate` task. By default it looks for a config file `src/ornate.conf`, source and resources under `src/site`, and it builds the site to `target/site`. These settings can be changed directly through the sbt configuration:
-
-```scala src=../../plugin/src/main/scala/com/novocode/ornate/sbtplugin/OrnatePlugin.scala#--doc-plugin
-```
-
-> {.note}
-> Note: At the moment you have to build Ornate form source. Published versions on Maven Central will come soon!
-
 ## Terminology
 
 - **Page**: A page comes from a single CommonMark source file. It has a source URI and a page URI in the `site:` namespace. Themes can also create synthetic pages which are not associated with any source file.

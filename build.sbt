@@ -1,6 +1,7 @@
 lazy val root = project.in(file("."))
   .aggregate(core, plugin)
   .dependsOn(core)
+  .disablePlugins(BintrayPlugin)
   .settings(inThisBuild(Seq(
     organization := "com.novocode",
     version := "0.1-SNAPSHOT",
@@ -11,13 +12,18 @@ lazy val root = project.in(file("."))
     developers := List(
       Developer("szeiger", "Stefan Zeiger", "szeiger@novocode.com", url("https://github.com/szeiger"))
     ),
-    description := "Ornate is a tool for building multi-page HTML sites from Markdown sources."
+    description := "Ornate is a tool for building multi-page HTML sites from Markdown sources.",
+    bintrayReleaseOnPublish := false,
+    licenses += ("Apache-2.0", url("https://www.apache.org/licenses/LICENSE-2.0.html"))
   )))
   .settings(
     TaskKey[Unit]("makeDoc") := (Def.taskDyn {
       val args = s""" com.novocode.ornate.Main "-Dversion=${version.value}" doc/ornate.conf"""
       (runMain in Compile).toTask(args)
-    }).value
+    }).value,
+    publishArtifact := false,
+    publish := {},
+    publishLocal := {}
   )
 
 val commonMarkVersion = "0.6.0"
@@ -58,5 +64,6 @@ lazy val plugin = project.in(file("plugin"))
     scriptedSettings,
     scriptedLaunchOpts ++= Seq("-Xmx1024M", "-Dplugin.version=" + version.value),
     scriptedBufferLog := false,
-    scriptedDependencies := { val _ = ((publishLocal in core).value, publishLocal.value) }
+    scriptedDependencies := { val _ = ((publishLocal in core).value, publishLocal.value) },
+    bintrayRepository := "sbt-plugins"
   )
