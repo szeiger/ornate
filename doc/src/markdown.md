@@ -145,3 +145,12 @@ Is this feature :thumbsup: or :thumbsdown:?
 This gets rendered as:
 
 Is this feature :thumbsup: or :thumbsdown:?
+
+## `globalRefs`
+
+This extension allows you to prepend reference targets that are defined in the site config or page config to every page. This is useful for targets that are either computed from other config values or used on many pages. This is the default configuration:
+
+```yaml src=../../core/src/main/resources/ornate-reference.conf#--doc-globalRefs
+```
+
+The keys in the map are the reference labels. The values are defined in the same way as [TOC entries](configuration.md#table-of-contents), either as a string (containing the link target) or an object with the fields `url` and `title`.

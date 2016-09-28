@@ -15,7 +15,7 @@ class ExpandVarsExtension(co: ConfiguredObject) extends Extension {
   override def pageProcessors(site: Site) = Seq(new ExpandVarsProcessor(co))
 }
 
-class ExpandVarsProcessor(co: ConfiguredObject) extends PageProcessor {
+class ExpandVarsProcessor(co: ConfiguredObject) extends PageProcessor with Logging {
   def apply(p: Page): Unit = p.doc.accept(new AbstractVisitor {
     val config = co.getConfig(p.config)
     val inCode = config.getBoolean("code")

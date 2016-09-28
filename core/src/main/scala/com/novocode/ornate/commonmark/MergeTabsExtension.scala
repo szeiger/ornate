@@ -1,6 +1,6 @@
 package com.novocode.ornate.commonmark
 
-import com.novocode.ornate.{Extension, Page, Site}
+import com.novocode.ornate.{Logging, Extension, Page, Site}
 import com.novocode.ornate.config.Global
 import com.novocode.ornate.theme.Resources
 import org.commonmark.node.{CustomBlock, FencedCodeBlock, AbstractVisitor}
@@ -12,7 +12,7 @@ class MergeTabsExtension extends Extension {
   override def pageProcessors(site: Site) = Seq(new MergeTabsProcessor)
 }
 
-class MergeTabsProcessor extends PageProcessor {
+class MergeTabsProcessor extends PageProcessor with Logging {
   def apply(p: Page): Unit = {
     p.doc.accept(new AbstractVisitor {
       override def visit(n: FencedCodeBlock): Unit = n.getParent match {

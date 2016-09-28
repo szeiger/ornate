@@ -1,12 +1,14 @@
 package com.novocode.ornate
 
+import com.typesafe.config.Config
 import org.commonmark.html.HtmlRenderer.HtmlRendererExtension
 import org.commonmark.parser.Parser.ParserExtension
 
 import com.novocode.ornate.commonmark.PageProcessor
-import com.novocode.ornate.config.{ConfiguredObject, Global}
+import com.novocode.ornate.config.{ReferenceConfig, ConfiguredObject, Global}
 
 trait Extension {
+  def preProcessors(pageConfig: Config): Seq[PreProcessor] = Nil
   def pageProcessors(site: Site): Seq[PageProcessor] = Nil
   def parserExtensions: Seq[ParserExtension] = Nil
   def htmlRendererExtensions: Seq[HtmlRendererExtension] = Nil

@@ -11,7 +11,7 @@ import org.commonmark.node._
 
 import scala.collection.mutable.ArrayBuffer
 
-class SpecialImageProcessor(config: UserConfig) extends PageProcessor {
+class SpecialImageProcessor(config: UserConfig) extends PageProcessor with Logging {
   val SpecialObjectMatcher = new SpecialImageParagraphMatcher(Set("toctree", "config"))
 
   def apply(p: Page): Unit = p.doc.accept(new AbstractVisitor {

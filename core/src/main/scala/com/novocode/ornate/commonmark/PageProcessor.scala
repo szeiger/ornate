@@ -7,9 +7,9 @@ import org.commonmark.node._
 
 import scala.collection.mutable.ArrayBuffer
 
-abstract class PageProcessor extends (Page => Unit) with Logging
+abstract class PageProcessor extends (Page => Unit)
 
-class ExpandTocProcessor(toc: Vector[TocEntry]) extends PageProcessor {
+class ExpandTocProcessor(toc: Vector[TocEntry]) extends PageProcessor with Logging {
   import ExpandTocProcessor._
 
   def log(prefix: String, ti: TocItem): Unit = {

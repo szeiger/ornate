@@ -3,10 +3,10 @@
 *Ornate* is a tool for building multi-page HTML sites from Markdown sources. The design goals are:
 
 - Runs on the JVM; No installation required: Resolve the versioned dependencies in your build process for reproducible documentation builds with no external dependencies.
-- Based on [CommonMark](http://commonmark.org/), a standardized version of [Markdown](http://daringfireball.net/projects/markdown/).
-- Use well-established extensions: In particular, many developers are already familiar with [Github-flavored Markdown](https://help.github.com/categories/writing-on-github/).
+- Based on [CommonMark], a standardized version of [Markdown].
+- Use well-established extensions: In particular, many developers are already familiar with [Github-flavored Markdown][ghfm].
 - Graceful degradation: Some features require proprietary syntax extensions. They should degrade gracefully when processed with a pure CommonMark engine.
-- Configuration based on [Typesafe Config](https://github.com/typesafehub/config).
+- Configuration based on [Typesafe Config][config].
 - Modular design: Themes, templates, [highlighters](highlighting.md), extensions - everything can be customized with Scala code.
 - Clean, modern [default theme](default-theme.md) using responsive design for a good user experience on all devices from mobile phones to desktop PCs.
 

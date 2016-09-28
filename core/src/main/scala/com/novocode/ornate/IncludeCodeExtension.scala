@@ -20,7 +20,7 @@ class IncludeCodeExtension extends Extension {
   override def pageProcessors(site: Site) = Seq(IncludeCodeProcessor)
 }
 
-object IncludeCodeProcessor extends PageProcessor {
+object IncludeCodeProcessor extends PageProcessor with Logging {
   def apply(p: Page): Unit = {
     p.doc.accept(new AbstractVisitor {
       override def visit(n: FencedCodeBlock): Unit = {

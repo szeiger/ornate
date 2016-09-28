@@ -57,7 +57,9 @@ object PageParser extends Logging {
     if(logger.isDebugEnabled) logger.debug("Page extensions: " + extensions)
 
     val parser = Parser.builder().extensions(extensions.parser.asJava).build()
-    val doc = parser.parse(content)
+    val pre = extensions.ornate.flatMap(_.preProcessors(pageConfig))
+    val preprocessedContent = pre.foldLeft(content) { case (s, f) => f(s) }
+    val doc = parser.parse(preprocessedContent)
 
     val sections = computeSections(uri, doc)
     val title =
