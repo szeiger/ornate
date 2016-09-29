@@ -23,7 +23,8 @@ lazy val root = project.in(file("."))
     }).value,
     publishArtifact := false,
     publish := {},
-    publishLocal := {}
+    publishLocal := {},
+    PgpKeys.publishSigned := {}
   )
 
 val commonMarkVersion = "0.6.0"
