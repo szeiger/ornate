@@ -15,17 +15,24 @@ import com.typesafe.config.{ConfigValue, ConfigFactory, Config}
 import scala.collection.mutable
 import scala.collection.mutable.ListBuffer
 
-class Global(startDir: File, confFile: File, overrides: Config = ConfigFactory.empty()) extends Logging {
+class Global(startDir: File, confFile: Option[File], overrides: Config = ConfigFactory.empty()) extends Logging {
   val (referenceConfig: ReferenceConfig, userConfig: UserConfig) = {
     val ref = ConfigFactory.parseResources(getClass, "/ornate-reference.conf")
     val refC = new ReferenceConfig(ref.resolve(), this)
-    if(confFile.exists) {
-      val c = ConfigFactory.parseFile(confFile.toJava)
-      logger.info(s"Using configuration file $confFile")
-      (refC, new UserConfig(overrides.withFallback(c).withFallback(ref).resolve(), startDir, this))
-    } else {
-      logger.info(s"Configuration file $confFile not found, using defaults from ornate-reference.conf")
-      (refC, new UserConfig(overrides.withFallback(ref).resolve(), startDir, this))
+    confFile.flatMap { f =>
+      if(f.exists) {
+        logger.info(s"Using configuration file $confFile")
+        Some(f)
+      } else {
+        logger.info(s"Configuration file $confFile not found, using defaults from ornate-reference.conf")
+        None
+      }
+    } match {
+      case Some(f) =>
+        val c = ConfigFactory.parseFile(f.toJava)
+        (refC, new UserConfig(overrides.withFallback(c).withFallback(ref).resolve(), startDir, this))
+      case None =>
+        (refC, new UserConfig(overrides.withFallback(ref).resolve(), startDir, this))
     }
   }
 

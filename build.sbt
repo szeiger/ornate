@@ -46,6 +46,7 @@ lazy val core = project.in(file("core"))
       "org.webjars" % "webjars-locator-core" % "0.31",
       "org.webjars.npm" % "highlight.js" % "9.6.0",
       "org.webjars.npm" % "emojione" % "2.2.6",
+      "org.webjars.npm" % "elasticlunr" % "0.9.5",
       "ch.qos.logback" % "logback-classic" % "1.1.6",
       "com.novocode" % "junit-interface" % "0.11" % "test"
     ),

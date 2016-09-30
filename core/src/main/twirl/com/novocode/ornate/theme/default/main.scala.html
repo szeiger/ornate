@@ -1,0 +1,119 @@
+@(p: com.novocode.ornate.theme.HtmlTheme.PageModel)(content: Html)(footer: Html = HtmlFormat.empty)
+
+@import com.novocode.ornate.Section
+@pageNav(section: Section) = {
+  <li>
+    @for(t <- section.getTitle) {
+      @if(section.getID.isDefined) { <a href="#@section.getID.get">@t</a> } else { <span>@t</span> }
+    }
+    @if(section.children.nonEmpty) {
+      <ul class="vertical menu"> @for(ch <- section.children) { @pageNav(ch) } </ul>
+    }
+  </li>
+}
+
+@import com.novocode.ornate.commonmark.ExpandTocProcessor.TocItem
+@siteNav(ti: TocItem) = {
+  <li @if(ti.focused) { class="a_thispage" }>
+    @if(ti.target.isDefined && ti.text.isDefined) {
+      <a href="@p.resolveLink(ti.target.get)">@ti.text.get</a>
+    } else {
+      @if(ti.text.isDefined) {
+        <span>@ti.text.get</span>
+      }
+    }
+    @if(ti.children.nonEmpty) {
+      <ul> @for(ch <- ti.children) { @siteNav(ch) } </ul>
+    }
+  </li>
+}
+
+<!DOCTYPE html>
+<html class="no-js" lang="@{p.pageConfig("meta.lang").get}" dir="@{p.pageConfig("meta.dir").get}">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="x-ua-compatible" content="ie=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>@p.title</title>
+    <link rel="stylesheet" href="@{p.css.get("css/foundation.min.css")}">
+    <link rel="stylesheet" href="@{p.css.get("css/app.css")}">
+    @for(href <- p.css.links) { <link rel="stylesheet" href="@href"> }
+  </head>
+  <body>
+    <div class="expanded row">
+      <div class="small-12 medium-12 large-12 columns align-self-top">
+        <div class="row">
+          @****************************** Header ******************************@
+          <header class="large-12 columns align-self-top a_header">
+            <div class="row">
+              <div class="large-12 columns a_limited top-bar">
+                <div class="top-bar-left">
+                  @{p.stringHtml("headerLeft").getOrElse("")}
+                </div>
+                <div class="top-bar-right align-right row">
+                  @{p.stringHtml("headerRight").getOrElse("")}
+                  @for(link <- p.searchLink) {
+                    <form action="@{p.searchLink}" method="get" class="align-right a_search">
+                      <input name="q" type="search" @for(s <- p.stringText("searchPlaceholder")) { placeholder="@{s}" }>
+                      <button><img alt="&#1F50D;" src="@{p.image.get("images/search.svg")}" /></button>
+                    </form>
+                  }
+                </div>
+              </div>
+            </div>
+          </header>
+          @****************************** Rows ******************************@
+          <div class="small-12 medium-12 large-12 columns align-self-top a_limited a_main">
+            <div class="row">
+              @****************************** Content ******************************@
+              <main class="columns large-order-2 sections" id="_sections">
+                @content
+              </main>
+              @****************************** Site Navigation ******************************@
+              @for(items <- p.siteNav) {
+                <div data-sticky-container class="small-12 medium-12 large-2 large-order-1 columns a_sitenav_container">
+                  <nav class="a_sitenav" data-sticky data-sticky-on="large" data-anchor="_sections">
+                    @for(s <- p.stringHtml("siteNav")) { <header>@s</header> }
+                  <ul>
+                    @for(i <- items) { @siteNav(i) }
+                  </ul>
+                  </nav>
+                </div>
+              }
+              @****************************** Page Navigation ******************************@
+              @if(p.themeConfigBoolean("pageNav").getOrElse(p.sections.map(_.recursiveTitleCount).sum > 1)) {
+                <div class="small-12 medium-12 large-2 large-order-3 columns a_show-for-xlarge" data-sticky-container>
+                  <nav class="a_pagenav" data-sticky data-sticky-on="large" data-anchor="_sections">
+                    @for(s <- p.stringHtml("pageNav")) { <header>@s</header> }
+                    <ul class="vertical menu" data-magellan>
+                      @for(s <- p.sections) { @pageNav(s) }
+                    </ul>
+                  </nav>
+                </div>
+              }
+            </div>
+          </div>
+        </div>
+      </div>
+      @****************************** Footer ******************************@
+      <footer class="small-12 medium-12 large-12 columns align-self-bottom a_footer">
+        <div class="row">
+          <div class="small-12 medium-12 large-12 columns top-bar">
+            <div class="top-bar-left">
+              @{p.stringHtml("footerLeft").getOrElse(HtmlFormat.empty)}
+            </div>
+            <div class="top-bar-right">
+              @{p.stringHtml("footerRight").getOrElse(HtmlFormat.empty)}
+            </div>
+          </div>
+        </div>
+      </footer>
+    </div>
+    <script src="@{p.js.get("js/jquery.min.js")}"></script>
+    <script src="@{p.js.get("js/what-input.min.js")}"></script>
+    <script src="@{p.js.get("js/foundation.min.js")}"></script>
+    @for(href <- p.js.links) { <script src="@href"></script> }
+    <script src="@{p.js.get("js/app.js")}"></script>
+    @footer
+  </body>
+</html>

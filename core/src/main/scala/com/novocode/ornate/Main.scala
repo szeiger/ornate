@@ -73,7 +73,7 @@ object Main extends Logging {
       val configFile = File(configFileName.get)
       val baseDir = baseDirName.map(s => File(s)).getOrElse(configFile.parent)
       val overrides = ConfigFactory.parseProperties(props).withFallback(ConfigFactory.systemProperties())
-      val global = new Global(baseDir, configFile, overrides)
+      val global = new Global(baseDir, Some(configFile), overrides)
       run(global)
       if(ErrorRecognitionAppender.rearm()) 1 else 0
     }

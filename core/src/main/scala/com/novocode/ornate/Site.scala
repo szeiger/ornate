@@ -44,6 +44,8 @@ sealed abstract class Section {
     children.iterator.flatMap(_.allHeadings)
   def getTitle: Option[String]
   def getID: Option[String]
+  def recursiveTitleCount: Int =
+    children.map(_.recursiveTitleCount).sum + getTitle.map(_ => 1).getOrElse(0)
 }
 
 final case class HeadingSection(id: String, level: Int, title: String, children: Vector[Section])(val heading: Heading) extends Section {

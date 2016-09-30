@@ -22,6 +22,9 @@ object JSResultConverter {
     new JSMap {
       def apply[R](key: String)(implicit ev: JSResultConverter[R]): R =
         if(jo.hasMember(key)) ev(jo.getMember(key)) else null.asInstanceOf[R]
+      override def toString: String = {
+        jo.keySet.iterator.asScala.map(k => s"$k: ${jo.getMember(k)}").mkString("{", ", ", "}")
+      }
     }
   }
 }

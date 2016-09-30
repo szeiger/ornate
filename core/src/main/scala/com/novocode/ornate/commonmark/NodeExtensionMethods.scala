@@ -15,11 +15,6 @@ class NodeExtensionMethods(private val node: Node) extends AnyVal {
     children.foreach(ch => ch.dumpDoc(prefix + "  "))
   }
 
-  def compute[T](a: NodeAccumulator[T]): T = {
-    node.accept(a)
-    a.result
-  }
-
   def replaceWith(n: Node): Node = {
     node.insertBefore(n)
     node.unlink()

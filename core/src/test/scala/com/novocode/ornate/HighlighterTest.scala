@@ -11,8 +11,7 @@ import better.files._
 import play.twirl.api.HtmlFormat
 
 class HighlighterTest {
-  val startDir = file"doc"
-  val global = new Global(startDir, startDir / "ornate.conf")
+  val global = new Global(file"../doc", None)
   val p1 = PageParser.parseWithFrontMatter(None, global.referenceConfig, new URI("site:/p1"), "", "p1 content")
   val p2 = PageParser.parseWithFrontMatter(None, global.referenceConfig, new URI("site:/p2"), "",
     """---

@@ -25,6 +25,22 @@ h1, h2, h3, h4, h5, h6 {
   text-align: right;
 }
 
+input::-webkit-input-placeholder, textarea::-webkit-input-placeholder {
+  color: #999;
+}
+
+input::-moz-placeholder, textarea::-moz-placeholder {
+  color: #999;
+}
+
+input:-ms-input-placeholder, textarea:-ms-input-placeholder {
+  color: #999;
+}
+
+input::placeholder, textarea::placeholder {
+  color: #999;
+}
+
 blockquote {
   margin: 1rem 0;
   padding: 0.8rem 1rem;
@@ -61,6 +77,106 @@ a, a:hover, a:active, a:visited {
 
 a:hover, a:active {
   text-decoration: underline;
+}
+
+/********** Top bar search **********/
+
+.top-bar-right .a_search {
+  position: relative;
+}
+
+.top-bar-right .a_search input, .top-bar-right .a_search button {
+  border-radius: 0 !important;
+  margin: 0;
+  background-color: #ddd;
+}
+
+.top-bar-right .a_search input {
+  border: 0 !important;
+  box-shadow: none;
+  height: 34px;
+  width: 15em;
+  padding-left: 8px;
+  padding-right: 46px;
+  max-width: none;
+  /*transition: box-shadow .5s,width .5s !important;*/
+}
+
+.top-bar-right .a_search input:focus {
+  /*width: 20em;*/
+  background-color: white;
+  box-shadow: 0 0 5px #cacaca;
+}
+
+.top-bar-right .a_search button {
+  position: absolute;
+  top: 0px;
+  right: 0px;
+  height: 34px;
+  padding: 0;
+  width: 34px;
+  color: #444 !important;
+  background: transparent !important;
+}
+
+.top-bar-right .a_search button img {
+  width: 16px;
+  height: 16px;
+}
+
+/********** Search page **********/
+
+main .a_search {
+  position: relative;
+  margin-bottom: 2em;
+}
+
+main .a_search input, main .a_search button {
+  border-radius: 0 !important;
+}
+
+main .a_search input {
+  border: 1px solid #c0c0c0;
+  box-shadow: none;
+  height: 40px;
+  width: 100%;
+  padding-left: 8px;
+  padding-right: 46px;
+}
+
+main .a_search input:focus {
+  border: 1px solid rgb(0,120,215);
+  box-shadow: none;
+}
+
+main .a_search button {
+  position: absolute;
+  top: 1px;
+  right: 1px;
+  height: 38px;
+  padding: 0;
+  width: 38px;
+  background-color: rgb(0,120,215);
+  color: #ffffff;
+}
+
+main .a_search button:hover, main .a_search button:focus {
+  background-color: rgb(0,100,180) !important;
+  color: #ffffff;
+}
+
+main .a_search button img {
+  width: 16px;
+  height: 16px;
+}
+
+main .a_search button:hover, main .a_search button:focus {
+  background-color: #fefefe;
+  color: #444;
+}
+
+.a_searchresults > li > a {
+  font-weight: bold;
 }
 
 /********** highlight.js and tabs customization **********/

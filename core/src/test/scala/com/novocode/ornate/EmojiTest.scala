@@ -9,8 +9,7 @@ import org.junit.Test
 import play.api.libs.json.{JsArray, JsString, JsObject}
 
 class EmojiTest {
-  val startDir = file"doc"
-  val global = new Global(startDir, startDir / "ornate.conf")
+  val global = new Global(file"../doc", None)
   val emoji = new EmojiParserExtension(global.referenceConfig.objectKind("extension").create("emoji"))
   val uri = new URI("webjar:/emojione/assets/svg/1f329.svg")
   val u = (Character.toChars(0x1f329) ++ Character.toChars(0xfe0f)).mkString

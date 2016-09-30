@@ -43,16 +43,7 @@ class SpecialLinkProcessor(imageResources: Resources, site: Site, suffix: String
               }
               Util.relativeSiteURI(pageURI, uri)
           }
-          ((indexPage match {
-            case Some(s) =>
-              val p = rel.getPath
-              if(p == s)
-                new URI(rel.getScheme, rel.getAuthority, "./", rel.getQuery, rel.getFragment)
-              else if(p.endsWith("/"+s))
-                new URI(rel.getScheme, rel.getAuthority, p.substring(0, p.length-s.length), rel.getQuery, rel.getFragment)
-              else rel
-            case None => rel
-          }): URI).toString
+          Util.rewriteIndexPageLink(rel, indexPage).toString
         case "theme" | "webjar" | "classpath" if allowResources =>
           try imageResources.get(uri.toString, null, false).toString
           catch { case ex: Exception =>

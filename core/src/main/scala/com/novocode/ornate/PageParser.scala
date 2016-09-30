@@ -2,7 +2,7 @@ package com.novocode.ornate
 
 import java.net.URI
 
-import com.novocode.ornate.commonmark.{AttributedHeading, HeadingAccumulator, TextAccumulator}
+import com.novocode.ornate.commonmark.{AttributedHeading, NodeUtil}
 import com.novocode.ornate.commonmark.NodeExtensionMethods._
 import com.novocode.ornate.config.{ReferenceConfig, Global}
 import com.typesafe.config.Config
@@ -49,19 +49,23 @@ object PageParser extends Logging {
 
     val pageConfig = if(front.nonEmpty) globalConfig.parsePageConfig(front) else globalConfig.raw
 
-    parseContent(sourceFileURI, globalConfig, uri, suffix, content, pageConfig)
+    parseContent(sourceFileURI, globalConfig, uri, suffix, Some(content), pageConfig)
   }
 
-  def parseContent(sourceFileURI: Option[URI], appConfig: ReferenceConfig, uri: URI, suffix: String, content: String, pageConfig: Config): Page = {
+  def parseContent(sourceFileURI: Option[URI], appConfig: ReferenceConfig, uri: URI, suffix: String, content: Option[String], pageConfig: Config): Page = {
     val extensions = appConfig.getExtensions(pageConfig.getStringList("extensions").asScala)
     if(logger.isDebugEnabled) logger.debug("Page extensions: " + extensions)
 
     val parser = Parser.builder().extensions(extensions.parser.asJava).build()
     val pre = extensions.ornate.flatMap(_.preProcessors(pageConfig))
-    val preprocessedContent = pre.foldLeft(content) { case (s, f) => f(s) }
-    val doc = parser.parse(preprocessedContent)
-
-    val sections = computeSections(uri, doc)
+    val (doc, sections) = content match {
+      case Some(s) =>
+        val preprocessedContent = pre.foldLeft(s) { case (s, f) => f(s) }
+        val doc = parser.parse(preprocessedContent)
+        val sections = computeSections(uri, doc)
+        (doc, sections)
+      case None => (new Document, Vector.empty)
+    }
     val title =
       if(pageConfig.hasPath("title")) Some(pageConfig.getString("title"))
       else UntitledSection(0, sections).findFirstHeading.map(_.title)
@@ -69,7 +73,7 @@ object PageParser extends Logging {
   }
 
   private def computeSections(uri: URI, doc: Node): Vector[Section] = {
-    val headings = doc.compute(new HeadingAccumulator).map {
+    val headings = NodeUtil.findHeadings(doc).map {
       case h: AttributedHeading => (h, h.id)
       case h =>
         val a = new AttributedHeading
@@ -98,7 +102,7 @@ object PageParser extends Logging {
         (h, id)
     }
     val withFullIDsAndTitles = withUniqueIDs.map { case (h, id) =>
-      val title = h.compute(new TextAccumulator)
+      val title = NodeUtil.extractText(h).trim
       val id2 = if(id eq null) newID(Util.createIdentifier(title)) else id
       (h, id2, title)
     }
@@ -137,6 +141,6 @@ object PageParser extends Logging {
         lift(level, new HeadingSection(h._2, h._1.getLevel, h._3, children)(h._1)) :: create(level, rest)
     }
 
-    mergeEmpty(create(1, withFullIDsAndTitles).toVector)
+    mergeEmpty(create(1, withFullIDsAndTitles.toList).toVector)
   }
 }

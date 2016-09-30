@@ -51,6 +51,17 @@ object Util {
     }
   }
 
+  def rewriteIndexPageLink(rel: URI, indexPage: Option[String]): URI = indexPage match {
+    case Some(s) =>
+      val p = rel.getPath
+      if(p == s)
+        new URI(rel.getScheme, rel.getAuthority, "./", rel.getQuery, rel.getFragment)
+      else if(p.endsWith("/"+s))
+        new URI(rel.getScheme, rel.getAuthority, p.substring(0, p.length-s.length), rel.getQuery, rel.getFragment)
+      else rel
+    case None => rel
+  }
+
   def sourceFileURI(baseDir: File, file: File): URI = {
     val segments = baseDir.relativize(file).iterator().asScala.toVector.map(s => URLEncoder.encode(s.toString, "UTF-8"))
     siteRootURI.resolve(segments.mkString("/", "/", ""))

@@ -57,7 +57,7 @@ class FileMatcher(val patterns: Vector[String]) {
     Entry(pattern, Pattern.compile(b.toString), negate, dirOnly)
   }
 
-  def matches(absPath: String, isDir: Boolean): Boolean = {
+  private def matchesThis(absPath: String, isDir: Boolean): Boolean = {
     var matched = false
     for(e <- entries)
       if(e.negate == matched && (isDir || !e.dirOnly) && e.compiled.matcher(absPath + '/').matches)
@@ -69,7 +69,7 @@ class FileMatcher(val patterns: Vector[String]) {
     def filter(f: T, basePath: String): Vector[T] = {
       val path = basePath + '/' + getName(f)
       val d = isDir(f)
-      if(!matches(path, d)) {
+      if(!matchesThis(path, d)) {
         if(d) f +: getChildren(f).flatMap(ch => filter(ch, path))
         else Vector(f)
       } else Vector.empty
@@ -78,4 +78,14 @@ class FileMatcher(val patterns: Vector[String]) {
   }
 
   def filter(dir: File): Vector[File] = filterAny(dir)(_.name)(_.isDirectory)(_.children.toVector)
+
+  def matchesPath(absPath: String, isDir: Boolean = false): Boolean = {
+    val elems = absPath.split('/').iterator.filter(_.nonEmpty)
+    var path = ""
+    while(elems.hasNext) {
+      path = path + '/' + elems.next
+      if(matchesThis(path, isDir || elems.hasNext)) return true
+    }
+    false
+  }
 }

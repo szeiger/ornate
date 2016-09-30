@@ -6,7 +6,6 @@ import java.util.regex.Pattern
 import javax.script.{ScriptContext, SimpleBindings, Bindings, ScriptEngineManager}
 
 import better.files._
-import com.novocode.ornate.Logging
 import jdk.nashorn.api.scripting._
 import org.slf4j.{LoggerFactory, Logger}
 import org.webjars.WebJarAssetLocator
@@ -15,8 +14,10 @@ import scala.collection.JavaConverters._
 import scala.io.Codec
 
 /** Some utilities for running JavaScript code on Nashorn. */
-trait NashornSupport { this: Logging =>
+trait NashornSupport {
   import NashornSupport._
+
+  def logger: Logger
 
   val engine = {
     val f = new NashornScriptEngineFactory
@@ -69,10 +70,16 @@ trait NashornSupport { this: Logging =>
     locator.listAssets(prefixedPath).asScala.iterator.map(_.substring(prefixedPath.length)).toVector
   }
 
-  def call[T](thiz: AnyRef, name: String, args: AnyRef*)(implicit ev: JSResultConverter[T]): T =
-    ev(engine.invokeMethod(thiz, name, args: _*))
+  def call[T](thiz: AnyRef, name: String, args: Any*)(implicit ev: JSResultConverter[T]): T =
+    ev(engine.invokeMethod(thiz, name, args.asInstanceOf[Seq[AnyRef]]: _*))
 
   def engineBindings: Bindings = engine.getBindings(ScriptContext.ENGINE_SCOPE)
+
+  private[this] lazy val json = engine.eval("JSON").asInstanceOf[ScriptObjectMirror]
+
+  def parseJSON(jsonString: String): AnyRef = json.callMember("parse", jsonString)
+
+  def stringifyJSON(value: AnyRef): String = json.callMember("stringify", value).asInstanceOf[String]
 }
 
 object NashornSupport {

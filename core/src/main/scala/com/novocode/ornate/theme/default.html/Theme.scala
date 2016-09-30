@@ -7,10 +7,11 @@ import com.novocode.ornate.commonmark._
 import com.novocode.ornate.commonmark.NodeExtensionMethods._
 import com.novocode.ornate.config.Global
 import com.novocode.ornate.highlight.HighlightResult
-import com.novocode.ornate.{PageParser, Page, Util}
+import com.novocode.ornate.{PageSection, PageParser, Page, Util}
 import com.novocode.ornate.theme.HtmlTheme
 import org.commonmark.ext.gfm.tables.TableBlock
 import org.commonmark.html.renderer.{NodeRendererFactory, NodeRendererContext}
+import org.commonmark.node.Document
 
 import scala.collection.JavaConverters._
 
@@ -20,9 +21,14 @@ class Theme(global: Global) extends HtmlTheme(global) {
     uris.flatMap {
       case ("toc", u) =>
         logger.debug(s"Creating TOC page $u")
-        Some(PageParser.parseContent(None, global.referenceConfig, u, ".md",
-          "# Table of Contents\n\n![Table of Contents](toctree:)",
-          global.userConfig.parsePageConfig("title: Table of Contents")))
+        Some(PageParser.parseContent(None, global.userConfig, u, ".md",
+          Some(global.userConfig.theme.config.getString("strings.tocPage")),
+          global.userConfig.raw))
+      case ("search", u) =>
+        logger.debug(s"Creating search page $u")
+        Some(PageParser.parseContent(None, global.userConfig, u, ".md",
+          Some(global.userConfig.theme.config.getString("strings.searchPage")),
+          global.userConfig.theme.config.getConfig("global.searchPageConfig").withFallback(global.userConfig.raw)))
       case (name, u) =>
         logger.warn(s"""Unknown extra page name "$name" in theme configuration -- ignoring""")
         None
