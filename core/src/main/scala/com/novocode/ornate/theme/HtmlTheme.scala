@@ -293,7 +293,7 @@ class HtmlTheme(global: Global) extends Theme(global) { self =>
           logger.debug(s"Excluding page ${p.uri} from search index")
         else {
           val body = NodeUtil.extractText(p.doc).trim
-          val title = p.section.title.getOrElse("").trim
+          val title = site.findTocEntry(p).flatMap(_.title).orElse(p.section.title).getOrElse("").trim
           val excerpt = if(excerptLength > 0) {
             val bodyOnly = NodeUtil.extractText(p.doc, withCodeBlocks=false, withFirstHeading=false, limit=excerptLength).trim
             val short = bodyOnly.indexOf(' ', excerptLength) match {

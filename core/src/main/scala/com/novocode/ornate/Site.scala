@@ -13,6 +13,8 @@ class Site(val pages: Vector[Page], val toc: Vector[TocEntry]) {
   def getPageFor(uri: URI): Option[Page] =
     if(uri.getScheme == Util.siteRootURI.getScheme) pageMap.get(uri.getPath)
     else None
+
+  def findTocEntry(p: Page): Option[TocEntry] = toc.find(te => te.page eq p)
 }
 
 class Page(val sourceFileURI: Option[URI], val uri: URI, val suffix: String, val doc: Node, val config: Config,
