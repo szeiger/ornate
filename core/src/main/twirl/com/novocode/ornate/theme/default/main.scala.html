@@ -109,8 +109,8 @@
         </div>
       </footer>
     </div>
-    <script src="@{p.js.get("js/jquery.min.js")}"></script>
-    <script src="@{p.js.get("js/what-input.min.js")}"></script>
+    <script src="@{p.js.get("webjar:/jquery/dist/jquery.min.js")}"></script>
+    <script src="@{p.js.get("webjar:/what-input/what-input.min.js")}"></script>
     <script src="@{p.js.get("js/foundation.min.js")}"></script>
     @for(href <- p.js.links) { <script src="@href"></script> }
     <script src="@{p.js.get("js/app.js")}"></script>

@@ -22,6 +22,9 @@ Links to this section get to use `#settings` instead of
 `#all_configuration_settings` (the auto-generated ID).
 ```
 
+> {.note}
+> Note: IDs starting with an underscore (`_`) character should be avoided for headers. The [default theme](default-theme.md) creates some IDs of this form for internal use.
+
 The `autoIdentifiers` extension uses the same algorithm as Pandoc to automatically derive an ID from the heading title if no ID was set explicitly via `headerAttributes`
 
 ## `blockQuoteAttributes`
@@ -86,7 +89,7 @@ public class AttributedHeading extends Heading {
 
 ## `includeCode`
 
-This extension allows you to include code snippets from an external file in a fenced code block. The `src` attribute specifies the external file relative to the source URI of the current page. If the URI has a fragment, it is used to extract only parts the file delimited by lines ending with the fragment ID (including the `#` symbol). The delimiter lines are not included, only the lines between them. Multiple delimited sections are allowed. They are concatenated when extrating the snippet. Each section is dedented individually by stripping off leading whitespace that is common to all lines (*including* the delimiter lines).
+This extension allows you to include code snippets from an external file in a fenced code block. The `src` attribute specifies the external file relative to the source URI of the current page. If the URI has a fragment, it is used to extract only parts of the file delimited by lines ending with the fragment ID (including the `#` symbol). The delimiter lines are not included, only the lines between them. Multiple delimited sections are allowed. They are concatenated when extrating the snippet. Each section is dedented individually by stripping off leading whitespace that is common to all lines (*including* the delimiter lines).
 
 If the fenced code block is not empty, its original content is discarded. It can be used to show a placeholder in Markdown processors without this `includeCode` feature.
 
@@ -132,7 +135,7 @@ version = "{{version}}"
 
 In plain text you can also use objects with [config](images.md#config) URIs instead of `expandVars` but this is not possible in code elements, which cannot contain embedded Markdown syntax.
 
-## `emoji`
+## `emoji` {#emoji}
 
 The `emoji` extension translates Emoji names to the appropriate Unicode representations or images.
 
