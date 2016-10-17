@@ -1,6 +1,7 @@
 package com.novocode.ornate
 
 import com.novocode.ornate.config.ConfiguredObject
+import com.novocode.ornate.config.ConfigExtensionMethods.configExtensionMethods
 import com.typesafe.config.{ConfigObject, Config}
 
 import scala.collection.JavaConverters._
@@ -16,9 +17,7 @@ class GlobalRefsExtension(co: ConfiguredObject) extends Extension with Logging {
       val (link, title) = e.getValue match {
         case v: ConfigObject =>
           val c = v.toConfig
-          val link = if(c.hasPath("url")) c.getString("url") else null
-          val title = if(c.hasPath("title")) c.getString("title") else null
-          (link, title)
+          (c.getStringOr("url"), c.getStringOr("title"))
         case v =>
           (String.valueOf(v.unwrapped()), null)
       }

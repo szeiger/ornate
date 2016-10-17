@@ -9,6 +9,7 @@ import com.novocode.ornate.commonmark.NodeExtensionMethods._
 
 import better.files._
 import com.novocode.ornate.commonmark._
+import com.novocode.ornate.config.ConfigExtensionMethods.configExtensionMethods
 import com.novocode.ornate.config.Global
 import com.novocode.ornate.highlight.{HighlightResult, HighlightTarget}
 import com.novocode.ornate.js.ElasticlunrSearch
@@ -28,7 +29,7 @@ class HtmlTheme(global: Global) extends Theme(global) { self =>
   import HtmlTheme._
   val tc = global.userConfig.theme.config
   val suffix = ".html"
-  val indexPage = if(tc.hasPath("global.indexPage")) Some(tc.getString("global.indexPage")) else None
+  val indexPage = tc.getStringOpt("global.indexPage")
 
   class PageContext(val page: Page, val slp: SpecialLinkProcessor) {
     private[this] var last = -1
@@ -175,12 +176,9 @@ class HtmlTheme(global: Global) extends Theme(global) { self =>
     val content = HtmlFormat.raw(renderer.render(p.doc))
     val js = new ThemeResources(p, "js")
     private lazy val pageTC = global.userConfig.theme.getConfig(p.config)
-    def pageConfig(path: String): Option[String] =
-      if(p.config.hasPath(path)) Some(p.config.getString(path)) else None
-    def themeConfig(path: String): Option[String] =
-      if(pageTC.hasPath(path)) Some(pageTC.getString(path)) else None
-    def themeConfigBoolean(path: String): Option[Boolean] =
-      if(pageTC.hasPath(path)) Some(pageTC.getBoolean(path)) else None
+    def pageConfig(path: String): Option[String] = p.config.getStringOpt(path)
+    def themeConfig(path: String): Option[String] = pageTC.getStringOpt(path)
+    def themeConfigBoolean(path: String): Option[Boolean] = pageTC.getBooleanOpt(path)
     def sections: Vector[Section] = p.section.children
     lazy val siteNav: Option[Vector[ExpandTocProcessor.TocItem]] = themeConfig("siteNav") match {
       case Some(uri) =>
@@ -196,19 +194,11 @@ class HtmlTheme(global: Global) extends Theme(global) { self =>
     }
     def stringHtml(name: String): Option[Html] = string(name).map(n => HtmlFormat.raw(renderer.render(n)))
     def stringText(name: String): Option[Html] = string(name).map(n => HtmlFormat.escape(NodeUtil.extractText(n)))
-    def searchLink: Option[String] = {
-      val searchPage =
-        if(tc.hasPath("global.pages.search")) Some(tc.getString("global.pages.search")) else None
-      searchPage.map { uri =>
-        Util.rewriteIndexPageLink(Util.relativeSiteURI(p.uri, Util.replaceSuffix(Util.siteRootURI.resolve(uri), ".md", ".html")), indexPage).toString
-      }
+    def searchLink: Option[String] = tc.getStringOpt("global.pages.search").map { uri =>
+      Util.rewriteIndexPageLink(Util.relativeSiteURI(p.uri, Util.replaceSuffix(Util.siteRootURI.resolve(uri), ".md", ".html")), indexPage).toString
     }
-    def searchIndex: Option[String] = {
-      val indexFile =
-        if(tc.hasPath("global.searchIndex")) Some(tc.getString("global.searchIndex")) else None
-      indexFile.map { uri =>
-        Util.relativeSiteURI(p.uri, Util.siteRootURI.resolve(uri)).toString
-      }
+    def searchIndex: Option[String] = tc.getStringOpt("global.searchIndex").map { uri =>
+      Util.relativeSiteURI(p.uri, Util.siteRootURI.resolve(uri)).toString
     }
   }
 
@@ -283,10 +273,8 @@ class HtmlTheme(global: Global) extends Theme(global) { self =>
       val searchPage = Util.siteRootURI.resolve(tc.getString("global.pages.search"))
       val searchIndexFile = targetFile(Util.siteRootURI.resolve(tc.getString("global.searchIndex")), global.userConfig.targetDir)
       logger.debug("Writing search index to "+searchIndexFile)
-      val exclude = new FileMatcher(
-        if(tc.hasPath("global.searchExcludePages")) tc.getStringList("global.searchExcludePages").asScala.toVector else Vector.empty
-      )
-      val excerptLength = if(tc.hasPath("global.searchExcerptLength")) tc.getInt("global.searchExcerptLength") else 0
+      val exclude = new FileMatcher(tc.getStringListOr("global.searchExcludePages").toVector)
+      val excerptLength = tc.getIntOr("global.searchExcerptLength")
       val idx = ElasticlunrSearch.createIndex
       site.pages.foreach { p =>
         if(exclude.matchesPath(p.uri.getPath))
@@ -305,8 +293,7 @@ class HtmlTheme(global: Global) extends Theme(global) { self =>
             noDots + "..."
           } else ""
           val link = Util.rewriteIndexPageLink(Util.relativeSiteURI(searchPage, p.uriWithSuffix(suffix)), indexPage).toString
-          val keywords =
-            if(p.config.hasPath("meta.keywords")) p.config.getString("meta.keywords") else ""
+          val keywords = p.config.getStringOr("meta.keywords", "")
           idx.add(title, body, excerpt, keywords, link)
         }
       }

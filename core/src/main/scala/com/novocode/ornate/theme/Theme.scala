@@ -4,13 +4,11 @@ import java.io.FileNotFoundException
 import java.net.{URL, URI}
 
 import com.novocode.ornate._
-import com.novocode.ornate.commonmark.NodeExtensionMethods._
-
-import better.files._
+import com.novocode.ornate.config.ConfigExtensionMethods.configExtensionMethods
 import com.novocode.ornate.config.Global
 import com.novocode.ornate.js.NashornSupport
 
-import scala.collection.JavaConverters._
+import better.files._
 
 /** Base class for themes. */
 abstract class Theme(global: Global) extends Logging {
@@ -24,14 +22,10 @@ abstract class Theme(global: Global) extends Logging {
 
   /** Get synthetic page names and the mapped URIs for pages that should be created by the theme.
     * Any pages that have to be created before resolving the TOC should be part of this. */
-  def syntheticPageURIs: Vector[(String, URI)] = {
-    if(global.userConfig.theme.config.hasPath("global.pages")) {
-      val co = global.userConfig.theme.config.getObject("global.pages")
-      co.entrySet().asScala.iterator.filter(_.getValue.unwrapped ne null).map(e =>
-        (e.getKey, Util.siteRootURI.resolve(e.getValue.unwrapped.asInstanceOf[String]))
-      ).toVector
-    } else Vector.empty
-  }
+  def syntheticPageURIs: Vector[(String, URI)] =
+    global.userConfig.theme.config.getConfigMapOr("global.pages").iterator.filter(_._2.unwrapped ne null).map(e =>
+      (e._1, Util.siteRootURI.resolve(e._2.unwrapped.asInstanceOf[String]))
+    ).toVector
 
   /** Resolve a resource URI to a URL. Resource URIs can use use the following protocols:
     * file, site (static site resources), webjar (absolute WebJar resource), theme (relative

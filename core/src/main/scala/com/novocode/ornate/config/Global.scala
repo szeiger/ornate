@@ -5,6 +5,7 @@ import java.net.{URLEncoder, URI}
 import com.novocode.ornate.highlight.{NoHighlighter, Highlighter}
 import com.novocode.ornate._
 import com.novocode.ornate.theme.Theme
+import com.novocode.ornate.config.ConfigExtensionMethods.configExtensionMethods
 import org.commonmark.html.HtmlRenderer.HtmlRendererExtension
 import org.commonmark.parser.Parser.ParserExtension
 
@@ -105,7 +106,7 @@ class ReferenceConfig(val raw: Config, global: Global) {
 
   def objectKind(prefix: String): ConfiguredObjectKind =
     cachedObjectKinds.getOrElseUpdate(prefix, {
-      val m = raw.getObject(s"global.${prefix}Aliases").unwrapped().asScala.toMap.mapValues(_.toString)
+      val m = raw.getConfigMapOr(s"global.${prefix}Aliases").mapValues(_.unwrapped.toString)
       new ConfiguredObjectKind(prefix, m, raw, global)
     })
 }
@@ -122,16 +123,11 @@ class UserConfig(raw: Config, startDir: File, global: Global) extends ReferenceC
   val theme = objectKind("theme").singleton
   val highlight = objectKind("highlight").singleton
 
-  val toc: Option[Vector[ConfigValue]] =
-    if(raw.hasPath("global.toc")) Some(raw.getList("global.toc").asScala.toVector)
-    else None
+  val toc: Option[Vector[ConfigValue]] = raw.getListOpt("global.toc").map(_.toVector)
 }
 
 class ConfiguredObject(val prefix: String, val name: String, val className: String, rootConfig: Config, val global: Global) {
-  def getConfig(pageConfig: Config): Config = {
-    val n = s"$prefix.$name"
-    if(pageConfig.hasPath(n)) pageConfig.getConfig(n) else ConfigFactory.empty()
-  }
+  def getConfig(pageConfig: Config): Config = pageConfig.getConfigOr(s"$prefix.$name")
   lazy val config: Config = getConfig(rootConfig)
 }
 

@@ -3,8 +3,7 @@ package com.novocode.ornate
 import java.util.Locale
 
 import com.novocode.ornate.config.UserConfig
-
-import scala.collection.JavaConverters._
+import com.novocode.ornate.config.ConfigExtensionMethods.configExtensionMethods
 
 import java.net.URI
 
@@ -32,9 +31,7 @@ object TocParser extends Logging {
       val (link, title) = v match {
         case v: ConfigObject =>
           val c = v.toConfig
-          val link = if(c.hasPath("url")) c.getString("url") else null
-          val title = if(c.hasPath("title")) c.getString("title") else null
-          (link, title)
+          (c.getStringOr("url"), c.getStringOr("title"))
         case v =>
           (String.valueOf(v.unwrapped()), null)
       }

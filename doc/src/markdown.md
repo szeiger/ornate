@@ -1,8 +1,13 @@
 # Markdown Extensions
 
-The following extensions are provided out of the box. Except for `autolink` they are all enabled by default.
+The following extensions are provided out of the box.
 
 ```yaml src=../../core/src/main/resources/ornate-reference.conf#--doc-extension-aliases
+```
+
+Except for `autolink` they are all enabled by default. This can be configured on a per-page basis through the `extensions` setting:
+
+```yaml src=../../core/src/main/resources/ornate-reference.conf#--doc-extensions
 ```
 
 ## commonmark-java extensions
@@ -157,3 +162,8 @@ This extension allows you to prepend reference targets that are defined in the s
 ```
 
 The keys in the map are the reference labels. The values are defined in the same way as [TOC entries](configuration.md#table-of-contents), either as a string (containing the link target) or an object with the fields `url` and `title`.
+
+For example, this manual uses for following global refs:
+
+```yaml src=../../doc/ornate.conf#--doc-globalRefs
+```

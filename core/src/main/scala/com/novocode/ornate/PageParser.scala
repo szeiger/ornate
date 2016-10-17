@@ -4,6 +4,7 @@ import java.net.URI
 
 import com.novocode.ornate.commonmark.{AttributedHeading, NodeUtil}
 import com.novocode.ornate.commonmark.NodeExtensionMethods._
+import com.novocode.ornate.config.ConfigExtensionMethods.configExtensionMethods
 import com.novocode.ornate.config.{ReferenceConfig, Global}
 import com.typesafe.config.Config
 
@@ -66,9 +67,7 @@ object PageParser extends Logging {
         (doc, sections)
       case None => (new Document, Vector.empty)
     }
-    val title =
-      if(pageConfig.hasPath("title")) Some(pageConfig.getString("title"))
-      else UntitledSection(0, sections).findFirstHeading.map(_.title)
+    val title = pageConfig.getStringOpt("title").orElse(UntitledSection(0, sections).findFirstHeading.map(_.title))
     new Page(sourceFileURI, uri, suffix, doc, pageConfig, PageSection(title, sections), extensions, parser)
   }
 

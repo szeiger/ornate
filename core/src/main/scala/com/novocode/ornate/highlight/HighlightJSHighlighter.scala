@@ -4,11 +4,11 @@ import java.net.URI
 
 import com.novocode.ornate.js.{JSMap, NashornSupport}
 import com.novocode.ornate.{Logging, Page}
+import com.novocode.ornate.config.ConfigExtensionMethods.configExtensionMethods
 import com.novocode.ornate.config.{ConfiguredObject, Global}
 import play.twirl.api.HtmlFormat
 
 import scala.collection.mutable
-import scala.collection.JavaConverters._
 
 /** A Highlighter based on highlight.js */
 class HighlightJSHighlighter(global: Global, conf: ConfiguredObject) extends Highlighter with NashornSupport with Logging {
@@ -36,28 +36,21 @@ class HighlightJSHighlighter(global: Global, conf: ConfiguredObject) extends Hig
 
   def highlightTextAsHTML(text: String, lang: Option[String], target: HighlightTarget, page: Page): HighlightResult = try {
     val localConf = conf.getConfig(page.config)
-    if(localConf.hasPath("preload"))
-      requireLanguages(localConf.getStringList("preload").asScala)
+    localConf.getStringListOpt("preload").foreach(requireLanguages)
     val langs: Vector[String] = lang match {
       case Some("text") => Vector.empty
       case Some(l) => Vector(l)
       case None =>
-        val defaultPath = target match {
+        localConf.getStringOrStringList(target match {
           case HighlightTarget.FencedCodeBlock   => "fenced"
           case HighlightTarget.IndentedCodeBlock => "indented"
           case HighlightTarget.InlineCode        => "inline"
-        }
-        if(!localConf.hasPath(defaultPath)) Vector.empty
-        else localConf.getAnyRef(defaultPath) match {
-          case s: String => Vector(s)
-          case i: java.util.Collection[_] => i.asScala.toVector.asInstanceOf[Vector[String]]
-        }
+        })
     }
-    val css =
-      if(localConf.hasPath("styleResources")) {
-        val base = new URI("webjar:/highlight.js/styles/")
-        localConf.getStringList("styleResources").asScala.map(base.resolve _)
-      } else Nil
+    val css = {
+      val base = new URI("webjar:/highlight.js/styles/")
+      localConf.getStringListOr("styleResources").map(base.resolve _)
+    }
     def textHighlight(text: String) =
       HighlightResult(HtmlFormat.escape(text), None, css, preClasses = Seq("hljs"), codeClasses = Seq("hljs"))
     if(langs.isEmpty) textHighlight(text)
