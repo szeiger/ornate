@@ -12,7 +12,7 @@ import com.novocode.ornate.commonmark._
 import com.novocode.ornate.config.ConfigExtensionMethods.configExtensionMethods
 import com.novocode.ornate.config.Global
 import com.novocode.ornate.highlight.{HighlightResult, HighlightTarget}
-import com.novocode.ornate.js.ElasticlunrSearch
+import com.novocode.ornate.js.{CSSO, ElasticlunrSearch}
 import org.commonmark.html.HtmlRenderer
 import org.commonmark.html.HtmlRenderer.HtmlRendererExtension
 import org.commonmark.html.renderer.{NodeRendererFactory, NodeRendererContext, NodeRenderer}
@@ -139,7 +139,7 @@ class HtmlTheme(global: Global) extends Theme(global) { self =>
     }
   }
 
-  class ThemeResources(val page: Page, tpe: String) extends Resources {
+  class ThemeResources(val page: Page, tpe: String) extends Resources(tpe) {
     private[this] val baseURI = {
       val dir = tc.getString(s"global.dirs.$tpe")
       Util.siteRootURI.resolve(if(dir.endsWith("/")) dir else dir + "/")
@@ -147,7 +147,7 @@ class HtmlTheme(global: Global) extends Theme(global) { self =>
     private[this] val buf = new mutable.ArrayBuffer[ResourceSpec]
     private[this] val map = new mutable.HashMap[URL, ResourceSpec]
 
-    def getURI(sourceURI: URI, targetFile: String, keepLink: Boolean): URI = {
+    def getURI(sourceURI: URI, targetFile: String, createLink: Boolean): URI = {
       try {
         val url = resolveResource(sourceURI)
         map.getOrElseUpdate(url, {
@@ -157,10 +157,10 @@ class HtmlTheme(global: Global) extends Theme(global) { self =>
               val tname = (if(targetFile eq null) suggestRelativePath(sourceURI, tpe) else targetFile).replaceAll("^/*", "")
               baseURI.resolve(tname)
             }
-          val spec = ResourceSpec(sourceURI, url, targetURI, keepLink)
+          val spec = ResourceSpec(sourceURI, url, targetURI, createLink, this)
           buf += spec
           spec
-        }).uri
+        }).targetURI
       } catch { case ex: Exception =>
         logger.error(s"Error resolving theme resource URI $sourceURI -- Skipping resource and using original link")
         sourceURI
@@ -232,7 +232,7 @@ class HtmlTheme(global: Global) extends Theme(global) { self =>
           .extensions(p.extensions.htmlRenderer.asJava).build()
         val pm = new PageModelImpl(p, site, slp, renderer, cssRes, imageRes)
         val formatted = template.render(pm).body.trim
-        siteResources ++= (pm.css.mappings ++ pm.js.mappings ++ pm.image.mappings).map(r => (r.url, r))
+        siteResources ++= (pm.css.mappings ++ pm.js.mappings ++ pm.image.mappings).map(r => (r.sourceURL, r))
         file.parent.createDirectories()
         file.write(formatted+'\n')(codec = Codec.UTF8)
       } catch { case ex: Exception =>
@@ -252,18 +252,16 @@ class HtmlTheme(global: Global) extends Theme(global) { self =>
       }
     }
 
+    val minifyCSS = tc.getBooleanOr("global.minify.css")
     siteResources.valuesIterator.filter(_.sourceURI.getScheme != "site").foreach { rs =>
-      val file = targetFile(rs.uri, global.userConfig.targetDir)
-      logger.debug(s"Copying theme resource ${rs.url} to file $file")
+      val file = targetFile(rs.targetURI, global.userConfig.targetDir)
+      logger.debug(s"Copying theme resource ${rs.sourceURL} to file $file")
       try {
-        file.parent.createDirectories()
-        val in = rs.url.openStream()
-        try {
-          val out = file.newOutputStream
-          try in.pipeTo(out) finally out.close
-        } finally in.close
+        if(minifyCSS && rs.resources.resourceType == "css" && rs.sourceURI.getPath.endsWith(".css") && !rs.sourceURI.getPath.endsWith(".min.css")) {
+          Util.copyToFileWithTextTransform(rs.sourceURL, file)(CSSO.minify)
+        } else Util.copyToFile(rs.sourceURL, file)
       } catch { case ex: Exception =>
-        logger.error(s"Error copying theme resource ${rs.url} to $file", ex)
+        logger.error(s"Error copying theme resource ${rs.sourceURL} to $file", ex)
       }
     }
   }

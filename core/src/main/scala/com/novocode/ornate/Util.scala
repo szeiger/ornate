@@ -1,10 +1,16 @@
 package com.novocode.ornate
 
+import java.io.ByteArrayOutputStream
+import java.math.BigInteger
+import java.security.MessageDigest
+
 import scala.annotation.tailrec
 import scala.collection.JavaConverters._
-import java.net.{URLEncoder, URI}
+import java.net.{URL, URLEncoder, URI}
 import java.util.Locale
 import better.files._
+
+import scala.io.Codec
 
 object Util {
   val siteRootURI = new URI("site", null, "/", null)
@@ -65,5 +71,33 @@ object Util {
   def sourceFileURI(baseDir: File, file: File): URI = {
     val segments = baseDir.relativize(file).iterator().asScala.toVector.map(s => URLEncoder.encode(s.toString, "UTF-8"))
     siteRootURI.resolve(segments.mkString("/", "/", ""))
+  }
+
+  def sha1(data: Array[Byte]): String = {
+    val md = MessageDigest.getInstance("SHA-1")
+    md.update(data)
+    md.digest()
+    String.format("%040x", new BigInteger(1, md.digest()))
+  }
+
+  def copyToFile(source: URL, target: File): Unit = {
+    target.parent.createDirectories()
+    val in = source.openStream()
+    try {
+      val out = target.newOutputStream
+      try in.pipeTo(out) finally out.close
+    } finally in.close
+  }
+
+  def copyToFileWithTextTransform(source: URL, target: File)(f: String => String)(implicit codec: Codec): Unit = {
+    target.parent.createDirectories()
+    val in = source.openStream()
+    val s = try {
+      val out = new ByteArrayOutputStream()
+      in.pipeTo(out)
+      out.toString(codec.name)
+    } finally in.close
+    val s2 = f(s)
+    target.write(s2)
   }
 }

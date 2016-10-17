@@ -18,3 +18,7 @@ When using the [Emoji extension](markdown.md#emoji), the generated sites can con
 ## Search
 
 The default theme can generate a JavaScript-based search function for the site using [Elasticlunr](http://elasticlunr.com/) (available under the [MIT license](https://github.com/weixsong/elasticlunr.js/blob/v0.9.5/LICENSE)). The search index includes page titles, content and keywords. See above for configuration options.
+
+## Minification
+
+CSS files required by the theme can be minified with [CSSO](https://github.com/css/csso) by setting `theme.default.global.minify.css = true`. It is turned off by default for better performance.

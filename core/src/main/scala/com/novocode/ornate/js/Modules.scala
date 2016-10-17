@@ -11,6 +11,8 @@ import javax.script.{Bindings, ScriptContext, SimpleBindings}
 import jdk.nashorn.api.scripting.{NashornScriptEngine, ScriptObjectMirror}
 import jdk.nashorn.internal.runtime.ECMAException
 
+import scala.util.control.NonFatal
+
 class Modules(engine: NashornScriptEngine) {
   val logger = LoggerFactory.getLogger(classOf[Modules])
   private val cache = new mutable.HashMap[Vector[String], Module]
@@ -89,11 +91,14 @@ class Modules(engine: NashornScriptEngine) {
       throw new ECMAException(error, null)
     }
 
-    private[this] def loadAsFile(path: Vector[String]): Option[Module] =
-      loadJSModule(path).orElse {
+    private[this] def loadAsFile(path: Vector[String]): Option[Module] = {
+      val exact =
+        if(path.last.endsWith(".json")) loadJSONModule(path) else loadJSModule(path)
+      exact.orElse {
         val (init, last) = (path.init, path.last)
         loadJSModule(init :+ (last + ".js")).orElse(loadJSONModule(init :+ (last + ".json")))
       }
+    }
 
     private[this] def loadAsDirectory(path: Vector[String]): Option[Module] =
       resolve(path :+ "package.json").flatMap { s =>
@@ -109,7 +114,10 @@ class Modules(engine: NashornScriptEngine) {
       }.find(_.isDefined).flatten
 
     private[this] def loadJSModule(path: Vector[String]) =
-      cached(path)(p => resolve(p).map(code => new JSModule(p, Some(this), Some(code))))
+      try cached(path)(p => resolve(p).map(code => new JSModule(p, Some(this), Some(code))))
+      catch { case NonFatal(ex) =>
+        throw new RuntimeException("Error loading module "+path.mkString("/"), ex)
+      }
 
     private[this] def loadJSONModule(path: Vector[String]) =
       cached(path)(p => resolve(p).map(code => new ImmediateModule(parseJson(code))))

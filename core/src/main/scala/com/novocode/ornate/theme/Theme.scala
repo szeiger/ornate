@@ -62,17 +62,23 @@ abstract class Theme(global: Global) extends Logging {
   }
 }
 
-trait Resources {
+abstract class Resources(val resourceType: String) {
   protected def mappings: Iterable[ResourceSpec]
   protected def page: Page
-  protected def getURI(uri: URI, targetFile: String, keepLink: Boolean): URI
-
-  final def get(path: String, targetFile: String = null, keepLink: Boolean = false): URI =
-    Util.relativeSiteURI(page.uri, getURI(Util.themeRootURI.resolve(path), targetFile, keepLink))
-  final def require(path: String, targetFile: String = null, keepLink: Boolean = true): Unit =
-    get(path, targetFile, keepLink)
+  protected def getURI(uri: URI, targetFile: String, createLink: Boolean): URI
+  final def get(path: String, targetFile: String = null, createLink: Boolean = false): URI =
+    Util.relativeSiteURI(page.uri, getURI(Util.themeRootURI.resolve(path), targetFile, createLink))
+  final def require(path: String, targetFile: String = null, createLink: Boolean = true): Unit =
+    get(path, targetFile, createLink)
   final def links: Iterable[URI] =
-    mappings.collect { case r: ResourceSpec if r.keepLink => Util.relativeSiteURI(page.uri, r.uri) }
+    mappings.collect { case r: ResourceSpec if r.createLink => Util.relativeSiteURI(page.uri, r.targetURI) }
 }
 
-case class ResourceSpec(sourceURI: URI, url: URL, uri: URI, keepLink: Boolean)
+/** Resource to include in the generated site.
+  * @param sourceURI The source URI
+  * @param sourceURL the resolved source URL to locate the file
+  * @param targetURI the target `site:` URI
+  * @param createLink whether to create a link to the resource (e.g. "script" or "style" tag)
+  * @param resources the `Resources` object which created this ResourceSpec
+  */
+case class ResourceSpec(sourceURI: URI, sourceURL: URL, targetURI: URI, createLink: Boolean, resources: Resources)

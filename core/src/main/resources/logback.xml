@@ -22,5 +22,6 @@
     <logger name="com.novocode.ornate.theme.default.html.Theme"         level="info" />
     <logger name="com.novocode.ornate.js.Modules"                       level="info" />
     <logger name="com.novocode.ornate.js.ElasticlunrSearch"             level="info" />
+    <logger name="com.novocode.ornate.js.CSSO"                          level="info" />
     <logger name="com.novocode.ornate.highlight.HighlightJSHighlighter" level="info" />
 </configuration>
