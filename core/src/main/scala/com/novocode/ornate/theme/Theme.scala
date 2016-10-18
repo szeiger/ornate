@@ -81,4 +81,10 @@ abstract class Resources(val resourceType: String) {
   * @param createLink whether to create a link to the resource (e.g. "script" or "style" tag)
   * @param resources the `Resources` object which created this ResourceSpec
   */
-case class ResourceSpec(sourceURI: URI, sourceURL: URL, targetURI: URI, createLink: Boolean, resources: Resources)
+case class ResourceSpec(sourceURI: URI, sourceURL: URL, targetURI: URI, createLink: Boolean, resources: Resources) {
+  def minifiableType: Option[String] = {
+    val rtp = resources.resourceType
+    val p = sourceURI.getPath
+    if(p.endsWith(s".$rtp") && !p.endsWith(s".min.$rtp")) Some(rtp) else None
+  }
+}

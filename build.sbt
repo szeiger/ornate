@@ -50,6 +50,7 @@ lazy val core = project.in(file("core"))
       "org.webjars.npm" % "jquery" % "2.2.4",
       "org.webjars.npm" % "what-input" % "2.1.1",
       "org.webjars.npm" % "csso" % "2.2.1",
+      "com.google.javascript" % "closure-compiler" % "v20160911",
       "ch.qos.logback" % "logback-classic" % "1.1.6",
       "com.novocode" % "junit-interface" % "0.11" % "test"
     ),

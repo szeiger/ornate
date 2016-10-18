@@ -21,4 +21,7 @@ The default theme can generate a JavaScript-based search function for the site u
 
 ## Minification
 
-CSS files required by the theme can be minified with [CSSO](https://github.com/css/csso) by setting `theme.default.global.minify.css = true`. It is turned off by default for better performance.
+CSS files required by the theme can be minified with [CSSO](https://github.com/css/csso), JavaScript files can be minified with [Closure Compiler](https://developers.google.com/closure/compiler/). Minification is turned off by default for better performance when building the site. It can be enabled with the following settings under `theme.default.global`:
+
+```yaml src=../../core/src/main/resources/ornate-reference.conf#--doc-minify
+```

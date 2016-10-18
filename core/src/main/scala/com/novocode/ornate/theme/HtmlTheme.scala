@@ -253,13 +253,26 @@ class HtmlTheme(global: Global) extends Theme(global) { self =>
     }
 
     val minifyCSS = tc.getBooleanOr("global.minify.css")
+    val minifyJS = tc.getBooleanOr("global.minify.js")
     siteResources.valuesIterator.filter(_.sourceURI.getScheme != "site").foreach { rs =>
       val file = targetFile(rs.targetURI, global.userConfig.targetDir)
       logger.debug(s"Copying theme resource ${rs.sourceURL} to file $file")
       try {
-        if(minifyCSS && rs.resources.resourceType == "css" && rs.sourceURI.getPath.endsWith(".css") && !rs.sourceURI.getPath.endsWith(".min.css")) {
-          Util.copyToFileWithTextTransform(rs.sourceURL, file)(CSSO.minify)
-        } else Util.copyToFile(rs.sourceURL, file)
+        rs.minifiableType match {
+          case Some("css") => Util.copyToFileWithTextTransform(rs.sourceURL, file) { s =>
+            try CSSO.minify(s) catch { case ex: Exception =>
+              logger.error(s"Error minifying theme CSS file ${rs.sourceURI} with CSSO", ex)
+              s
+            }
+          }
+          case Some("js") => Util.copyToFileWithTextTransform(rs.sourceURL, file) { s =>
+            try Util.closureMinimize(s, rs.sourceURI.toString) catch { case ex: Exception =>
+              logger.error(s"Error minifying theme JS file ${rs.sourceURI} with Closure Compiler", ex)
+              s
+            }
+          }
+          case _ => Util.copyToFile(rs.sourceURL, file)
+        }
       } catch { case ex: Exception =>
         logger.error(s"Error copying theme resource ${rs.sourceURL} to $file", ex)
       }

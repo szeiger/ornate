@@ -100,4 +100,15 @@ object Util {
     val s2 = f(s)
     target.write(s2)
   }
+
+  def closureMinimize(source: String, name: String = "<eval>"): String = {
+    import com.google.javascript.jscomp._
+    val compiler = new Compiler
+    val options = new CompilerOptions
+    CompilationLevel.SIMPLE_OPTIMIZATIONS.setOptionsForCompilationLevel(options)
+    val extern = AbstractCommandLineRunner.getBuiltinExterns(CompilerOptions.Environment.BROWSER)
+    val input = SourceFile.fromCode(name, source)
+    compiler.compile(extern, List(input).asJava, options)
+    compiler.toSource
+  }
 }

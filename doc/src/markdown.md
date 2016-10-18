@@ -112,6 +112,11 @@ This gets rendered as:
   Snippet Placeholder
 ```
 
+`includeCode` can be configured to remove certain lines (matching a regular expression). This is useful for removing delimiter lines in case of overlapping delimited sections. The default configuration removes lines containing `//#` with nothing but whitespace in front from `.java`, `.scala` and `.sbt` snippets:
+
+```yaml src=../../core/src/main/resources/ornate-reference.conf#--doc-includeCode
+```
+
 ## `expandVars`
 
 This extension allows expansion of variables that reference configuration keys. The delimiters for variables are configurable, the default style being `{{variable}}`. Variable substutions are performed *after* Markdown parsing, so there is no way to escape delimiters. Global expansion for different node types can also be enabled in the configuration. By default this extension is enabled but all expansion options are disabled, so expansion is only performed in fenced code blocks with an explicit `expandVars=true` attribute. This is the default configuration:
