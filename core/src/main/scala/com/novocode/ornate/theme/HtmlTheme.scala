@@ -213,6 +213,9 @@ class HtmlTheme(global: Global) extends Theme(global) { self =>
     val staticResources = global.findStaticResources
     val staticResourceURIs = staticResources.iterator.map(_._2.getPath).toSet
     val siteResources = new mutable.HashMap[URL, ResourceSpec]
+    val minifyCSS = tc.getBooleanOr("global.minify.css")
+    val minifyJS = tc.getBooleanOr("global.minify.js")
+    val minifyHTML = tc.getBooleanOr("global.minify.html")
 
     site.pages.foreach { p =>
       val file = targetFile(p.uriWithSuffix(suffix), global.userConfig.targetDir)
@@ -234,7 +237,9 @@ class HtmlTheme(global: Global) extends Theme(global) { self =>
         val formatted = template.render(pm).body.trim
         siteResources ++= (pm.css.mappings ++ pm.js.mappings ++ pm.image.mappings).map(r => (r.sourceURL, r))
         file.parent.createDirectories()
-        file.write(formatted+'\n')(codec = Codec.UTF8)
+        val min =
+          if(minifyHTML) Util.htmlCompressorMinimize(formatted, minimizeCss = minifyCSS, minimizeJs = minifyJS) else formatted+'\n'
+        file.write(min)(codec = Codec.UTF8)
       } catch { case ex: Exception =>
         logger.error(s"Error rendering page ${p.uri} to $file", ex)
       }
@@ -252,8 +257,6 @@ class HtmlTheme(global: Global) extends Theme(global) { self =>
       }
     }
 
-    val minifyCSS = tc.getBooleanOr("global.minify.css")
-    val minifyJS = tc.getBooleanOr("global.minify.js")
     siteResources.valuesIterator.filter(_.sourceURI.getScheme != "site").foreach { rs =>
       val file = targetFile(rs.targetURI, global.userConfig.targetDir)
       logger.debug(s"Copying theme resource ${rs.sourceURL} to file $file")

@@ -14,4 +14,20 @@ class MinifyTest {
     val min = Util.closureMinimize("var b = function () {};")
     assertEquals("var b=function(){};", min)
   }
+
+  @Test def testHtmlCompressor: Unit = {
+    val min = Util.htmlCompressorMinimize(
+      """<html><head>
+        |  <script type="text/javscript">
+        |    var b = function () {};
+        |  </script>
+        |  <style>
+        |    .test { color: #ff0000; }
+        |  </style>
+        |</head><body>
+        |  <p class="test">Text</p>
+        |</body></html>
+      """.stripMargin, minimizeCss = true, minimizeJs = true)
+    assertEquals("<html><head> <script type=\"text/javscript\">var b=function(){};</script> <style>.test{color:red}</style> </head><body> <p class=test>Text</p> </body></html>", min)
+  }
 }

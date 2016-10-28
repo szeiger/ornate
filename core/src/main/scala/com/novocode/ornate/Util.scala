@@ -4,6 +4,10 @@ import java.io.ByteArrayOutputStream
 import java.math.BigInteger
 import java.security.MessageDigest
 
+import com.google.javascript.jscomp.CompilationLevel
+import com.googlecode.htmlcompressor.compressor.{Compressor, ClosureJavaScriptCompressor, HtmlCompressor}
+import com.novocode.ornate.js.CSSO
+
 import scala.annotation.tailrec
 import scala.collection.JavaConverters._
 import java.net.{URL, URLEncoder, URI}
@@ -110,5 +114,23 @@ object Util {
     val input = SourceFile.fromCode(name, source)
     compiler.compile(extern, List(input).asJava, options)
     compiler.toSource
+  }
+
+  def htmlCompressorMinimize(source: String, minimizeCss: Boolean, minimizeJs: Boolean): String = {
+    val c = new HtmlCompressor
+    c.setRemoveQuotes(true)
+    if(minimizeCss) {
+      c.setCompressCss(true)
+      c.setCssCompressor(new Compressor {
+        def compress(source: String): String = CSSO.minify(source)
+      })
+    }
+    if(minimizeJs) {
+      c.setCompressJavaScript(true)
+      c.setJavaScriptCompressor(new Compressor {
+        def compress(source: String): String = closureMinimize(source, "<inline>")
+      })
+    }
+    c.compress(source)
   }
 }
