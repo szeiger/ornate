@@ -17,8 +17,8 @@ import scala.collection.JavaConverters._
 
 class Theme(global: Global) extends HtmlTheme(global) {
 
-  override def synthesizePages(uris: Vector[(String, URI)]): Vector[Page] = {
-    uris.flatMap {
+  override def synthesizePages: Vector[Page] = {
+    syntheticPageURIs.flatMap {
       case ("toc", u) =>
         logger.debug(s"Creating TOC page $u")
         Some(PageParser.parseContent(None, global.userConfig, u, ".md",

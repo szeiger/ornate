@@ -40,3 +40,12 @@ The main class for the command line launcher is `com.novocode.ornate.Main`. The 
 - `<config-file>`: The path to the site config file, typically named `ornate.conf`.
 
 All further [configuration](configuration.md) is done through the config file.
+
+## Cleaning
+
+Cleaning the target directory is performed with a special theme, `com.novocode.ornate.theme.Clean`. On the command line you can invoke it with `-Dglobal.theme=clean`. Excluded resources can be configured:
+
+```yaml src=../../core/src/main/resources/ornate-reference.conf#--doc-clean-theme
+```
+
+When using the sbt plugin, the generated site is placed under `target/site` by default, so it can be deleted along with all other generated resources with sbt's standard `clean` task.

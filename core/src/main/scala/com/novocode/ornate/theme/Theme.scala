@@ -4,6 +4,7 @@ import java.io.FileNotFoundException
 import java.net.{URL, URI}
 
 import com.novocode.ornate._
+import com.novocode.ornate.commonmark.{ExpandTocProcessor, AttributeFencedCodeBlocksProcessor, SpecialImageProcessor}
 import com.novocode.ornate.config.ConfigExtensionMethods.configExtensionMethods
 import com.novocode.ornate.config.Global
 import com.novocode.ornate.js.NashornSupport
@@ -13,16 +14,41 @@ import better.files._
 /** Base class for themes. */
 abstract class Theme(global: Global) extends Logging {
 
+  /** The full pipeline for building the site. */
+  def build: Unit = {
+    val pages = buildAllPages
+
+    logger.info("Processing site")
+    val toc = TocParser.parse(global.userConfig, pages)
+    val site = new Site(pages, toc)
+
+    val sip = new SpecialImageProcessor(global.userConfig)
+    pages.foreach { p =>
+      val pagepp = p.extensions.ornate.flatMap(_.pageProcessors(site))
+      p.processors = (AttributeFencedCodeBlocksProcessor +: sip +: pagepp)
+      p.applyProcessors()
+    }
+
+    val etp = new ExpandTocProcessor(toc)
+    pages.foreach(etp)
+
+    logger.info("Rendering site")
+    render(site)
+  }
+
   /** Render the site. May create additional synthetic pages and copy resources on demand. */
   def render(site: Site): Unit
 
+  /** Get all source pages and synthetic pages */
+  def buildAllPages: Vector[Page] = PageParser.parseSources(global) ++ synthesizePages
+
   /** Synthesize configured synthetic pages pre-TOC. Not all requested pages have to be
     * created but only the ones that are returned will be available for resolving the TOC. */
-  def synthesizePages(uris: Vector[(String, URI)]): Vector[Page] = Vector.empty
+  def synthesizePages: Vector[Page] = Vector.empty
 
   /** Get synthetic page names and the mapped URIs for pages that should be created by the theme.
     * Any pages that have to be created before resolving the TOC should be part of this. */
-  def syntheticPageURIs: Vector[(String, URI)] =
+  protected def syntheticPageURIs: Vector[(String, URI)] =
     global.userConfig.theme.config.getConfigMapOr("global.pages").iterator.filter(_._2.unwrapped ne null).map(e =>
       (e._1, Util.siteRootURI.resolve(e._2.unwrapped.asInstanceOf[String]))
     ).toVector
@@ -75,6 +101,7 @@ abstract class Resources(val resourceType: String) {
 }
 
 /** Resource to include in the generated site.
+  *
   * @param sourceURI The source URI
   * @param sourceURL the resolved source URL to locate the file
   * @param targetURI the target `site:` URI

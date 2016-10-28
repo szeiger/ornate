@@ -18,6 +18,7 @@
     <logger name="com.novocode.ornate.commonmark.SpecialImageProcessor" level="info" />
     <logger name="com.novocode.ornate.commonmark.ExpandTocProcessor"    level="info" />
     <logger name="com.novocode.ornate.commonmark.MergeTabsProcessor"    level="info" />
+    <logger name="com.novocode.ornate.theme.Clean"                      level="info" />
     <logger name="com.novocode.ornate.theme.SpecialLinkProcessor"       level="info" />
     <logger name="com.novocode.ornate.theme.default.html.Theme"         level="info" />
     <logger name="com.novocode.ornate.js.Modules"                       level="info" />

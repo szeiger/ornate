@@ -5,7 +5,7 @@ import java.util.regex.Pattern
 import better.files._
 
 /** Pattern matcher for gitignore-style patterns */
-class FileMatcher(val patterns: Vector[String]) {
+class FileMatcher(val patterns: Traversable[String]) {
   case class Entry(pattern: String, compiled: Pattern, negate: Boolean, dirOnly: Boolean)
 
   def this(gitignore: String) =
@@ -14,7 +14,7 @@ class FileMatcher(val patterns: Vector[String]) {
       t.nonEmpty && !t.startsWith("#")
     }.toVector)
 
-  val entries: Vector[Entry] = patterns.map(build)
+  val entries: Vector[Entry] = patterns.map(build)(collection.breakOut)
 
   private def build(pattern: String): Entry = {
     var p = pattern
