@@ -177,3 +177,27 @@ For example, this manual uses for following global refs:
 
 ```yaml src=../../doc/ornate.conf#--doc-globalRefs
 ```
+
+## `scaladocLinks`
+
+This extension simplifies linking to scaladoc entries by adding custom URI schemes that correspond to scaladoc sets. The extension is enabled by default but no schemes are configured. This manual uses the following configuration:
+
+```yaml src=../../doc/ornate.conf#--doc-scaladocLinks
+```
+
+Each key in the configuration (in this case only one, `api`) adds a URI scheme. The value is a config object with an `index` setting that defines the URI of the `index.html` file produced by scaladoc.
+
+> {.note}
+> Note the use of the [`unchecked` prefix](uris.md#unchecked) to suppress the errors that would otherwise be generated when building the manual without the scaladocs already in place. This is recommended for scaladoc links because the standard link checking is useless for scaladocs (use [sdlc](https://github.com/typesafehub/sbt-sdlc) instead) and you may want to quickly build the manual without building the scaladocs first (which can be slow for large projects).
+
+Example source:
+
+```markdown
+The [](api:com.novocode.ornate.highlight.Highlighter) trait
+```
+
+This gets rendered as:
+
+The [](api:com.novocode.ornate.highlight.Highlighter) trait
+
+When the link text is left empty (such as in this example), it is automatically derived from the link target.

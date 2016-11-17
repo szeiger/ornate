@@ -17,6 +17,10 @@ These protocols reference resources on the classpath. They differ only in the lo
 
 This is a special prefix for using arbitrary link destinations for links and images. The `abs:` prefix is stripped off and the remainder inserted verbatim into the generated site. This can be used to link to resources outside of the generated site. For example, `abs:/` links to the root of whatever filesystem or HTTP server the generated site is placed into. It is generally advisable to use `https:` links in these cases.
 
+## `unchecked`
+
+This is a special prefix that can be used with relative or absolute `site` URIs in links and image elements for referencing resources that are expected to be in the site's target location but are not present at build time. Links to `<path>` and `unchecked:<path>` are resolved in exactly the same way, except that the latter does not emit an error message when the resource is not found.
+
 ## `file`
 
 Standard `file` URIs. They can be used for referencing CSS, JS and image resources in themes and image markup elements. These files are copied into the generated site as resources.

@@ -1,3 +1,6 @@
+val makeDoc = TaskKey[Unit]("makeDoc")
+val makeSite = TaskKey[Unit]("makeSite")
+
 lazy val root = project.in(file("."))
   .aggregate(core, plugin)
   .dependsOn(core)
@@ -17,14 +20,22 @@ lazy val root = project.in(file("."))
     licenses += ("Apache-2.0", url("https://www.apache.org/licenses/LICENSE-2.0.html"))
   )))
   .settings(
-    TaskKey[Unit]("makeDoc") := (Def.taskDyn {
+    makeDoc := (Def.taskDyn {
       val args = s""" com.novocode.ornate.Main "-Dversion=${version.value}" doc/ornate.conf"""
       (runMain in Compile).toTask(args)
     }).value,
     publishArtifact := false,
     publish := {},
     publishLocal := {},
-    PgpKeys.publishSigned := {}
+    PgpKeys.publishSigned := {},
+    makeSite := {
+      makeDoc.value
+      val target = file("doc/target/api")
+      IO.delete(target)
+      IO.createDirectory(target)
+      val api = (doc in Compile in core).value
+      IO.copyDirectory(api, target)
+    }
   )
 
 val commonMarkVersion = "0.6.0"

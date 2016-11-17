@@ -14,6 +14,7 @@
     <logger name="com.novocode.ornate.TocParser"                        level="warn" />
     <logger name="com.novocode.ornate.EmojiParserExtension"             level="info" />
     <logger name="com.novocode.ornate.GlobalRefsExtension"              level="info" />
+    <logger name="com.novocode.ornate.ScaladocLinksExtension"           level="info" />
     <logger name="com.novocode.ornate.IncludeCodeProcessor"             level="info" />
     <logger name="com.novocode.ornate.commonmark.SpecialImageProcessor" level="info" />
     <logger name="com.novocode.ornate.commonmark.ExpandTocProcessor"    level="info" />

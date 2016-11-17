@@ -21,11 +21,13 @@ class SpecialLinkProcessor(imageResources: Resources, site: Site, suffix: String
     })
   }
 
-  def resolve(pageURI: URI, destination: String, tpe: String, allowPage: Boolean, allowResources: Boolean): String = {
+  def resolve(pageURI: URI, destination: String, tpe: String, allowPage: Boolean, allowResources: Boolean, unchecked: Boolean = false): String = {
     if(destination.startsWith("abs:")) {
       val dest = destination.substring(4)
       logger.debug(s"Page $pageURI: Rewriting $tpe $destination to $dest")
       dest
+    } else if(destination.startsWith("unchecked:")) {
+      resolve(pageURI, destination.substring(10), tpe, allowPage, allowResources, unchecked = true)
     } else {
       val uri = pageURI.resolve(destination)
       uri.getScheme match {
@@ -37,7 +39,7 @@ class SpecialLinkProcessor(imageResources: Resources, site: Site, suffix: String
               val turi2 = new URI(turi.getScheme, turi.getAuthority, turi.getPath, uri.getQuery, uri.getFragment)
               Util.relativeSiteURI(pageURI, turi2)
             case None =>
-              if(!resourcePaths.contains(uri.getPath)) {
+              if(!unchecked && !resourcePaths.contains(uri.getPath)) {
                 val what = if(allowPage) "page or resource" else "resource"
                 logger.error(s"Page $pageURI: No $what found for $tpe $destination (resolved to $uri)")
               }
