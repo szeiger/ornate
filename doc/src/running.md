@@ -24,10 +24,18 @@ Only the location of the config file is required. The base / source / resource /
 
 ## Command Line
 
-You need to get the Ornate core package and its dependencies in order to run Ornate from the command line. In sbt's syntax the dependency is:
+You need to get the Ornate core package and its dependencies in order to run Ornate from the command line:
 
-```scala expandVars=true
-"com.novocode" %% "ornate" % "{{version}}"
+```scala expandVars=true tab=sbt
+libraryDependencies += "com.novocode" %% "ornate" % "{{version}}"
+```
+
+```xml expandVars=true tab=Maven
+<dependency>
+  <groupId>com.novocode</groupId>
+  <artifactId>ornate_2.11</artifactId>
+  <version>{{version}}</version>
+</dependency>
 ```
 
 > {.note}

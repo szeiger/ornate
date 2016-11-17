@@ -7,7 +7,7 @@ Ornate extends the use of standard Markdown image elements to non-image objects.
 `toctree` URIs represent the generated Table of Contents. They can be used in image elements or parts of the theme configuration. URIs are of the form `toctree:key=value,key=value,...` with case-insentive keys. The following keys are supported:
 
 - `maxLevel`: The maximum nesting level to show in the TOC. Pages have level 0, heading elements have levels 1 to 6. When unset, this defaults to the configuration setting `global.tocMaxLevel`.
-- `mergeFirst`: Whether to merge the page and the first heading (`true` or `false`). Usually pages have a single level-1 heading at the top and no separate title, so it does not make sense to show them in the TOC. With `mergeFirst=true` the first heading is shown as the title but the link goes to the page. When unset, this defaults to the configuration setting `global.toxMergeFirst`.
+- `mergeFirst`: Whether to merge the page and the first heading (`true` or `false`). Usually pages have a single level-1 heading at the top and no separate title, so it does not make sense to show them in the TOC. With `mergeFirst=true` the first heading is shown as the title but the link goes to the page. When unset, this defaults to the configuration setting `global.tocMergeFirst`.
 - `local`: Whether to include only TOC entries from the current page. Defaults to `false`.
 - `focusMaxLevel`: A separate maximum nesting level for the current page. When unset, this is the same as `maxLevel`.
 

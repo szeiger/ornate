@@ -159,6 +159,11 @@ This gets rendered as:
 
 Is this feature :thumbsup: or :thumbsdown:?
 
+The format can be changed in the configuration:
+
+```yaml src=../../core/src/main/resources/ornate-reference.conf#--doc-emoji
+```
+
 ## `globalRefs`
 
 This extension allows you to prepend reference targets that are defined in the site config or page config to every page. This is useful for targets that are either computed from other config values or used on many pages. This is the default configuration:
