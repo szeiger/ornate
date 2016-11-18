@@ -22,10 +22,10 @@ class Global(startDir: File, confFile: Option[File], overrides: Config = ConfigF
     val refC = new ReferenceConfig(ref.resolve(), this)
     confFile.flatMap { f =>
       if(f.exists) {
-        logger.info(s"Using configuration file $confFile")
+        logger.info(s"Using configuration file $f")
         Some(f)
       } else {
-        logger.info(s"Configuration file $confFile not found, using defaults from ornate-reference.conf")
+        logger.info(s"Configuration file $f not found, using defaults from ornate-reference.conf")
         None
       }
     } match {
@@ -129,6 +129,15 @@ class UserConfig(raw: Config, startDir: File, global: Global) extends ReferenceC
 class ConfiguredObject(val prefix: String, val name: String, val className: String, rootConfig: Config, val global: Global) {
   def getConfig(pageConfig: Config): Config = pageConfig.getConfigOr(s"$prefix.$name")
   lazy val config: Config = getConfig(rootConfig)
+
+  /** Create a memoization of a parsed site config which avoids reparsing when the page config is identical */
+  def memoizeParsed[T](f: Config => T): (Config => T) = new Function[Config, T] {
+    lazy val siteConfig = f(config)
+    def apply(pageConfig: Config): T = {
+      val c = getConfig(pageConfig)
+      if(c eq config) siteConfig else f(c)
+    }
+  }
 }
 
 class ConfiguredObjectKind(val prefix: String, aliases: Map[String, String], rootConfig: Config, global: Global) {

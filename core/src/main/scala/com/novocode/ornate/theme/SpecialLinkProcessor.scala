@@ -28,7 +28,7 @@ class SpecialLinkProcessor(imageResources: Resources, site: Site, suffix: String
       dest
     } else if(destination.startsWith("unchecked:")) {
       resolve(pageURI, destination.substring(10), tpe, allowPage, allowResources, unchecked = true)
-    } else {
+    } else try {
       val uri = pageURI.resolve(destination)
       uri.getScheme match {
         case "site" =>
@@ -54,6 +54,9 @@ class SpecialLinkProcessor(imageResources: Resources, site: Site, suffix: String
           }
         case _ => destination
       }
+    } catch { case ex: Exception =>
+      logger.error(s"Page $pageURI: Error processing link: $destination", ex)
+      destination
     }
   }
 }

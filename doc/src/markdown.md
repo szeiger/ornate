@@ -192,12 +192,18 @@ Each key in the configuration (in this case only one, `api`) adds a URI scheme. 
 
 Example source:
 
-```markdown
-The [](api:com.novocode.ornate.highlight.Highlighter) trait
+```text
+- [named link](api:com.novocode.ornate.highlight.Highlighter)
+- [](api:com.novocode.ornate.highlight.Highlighter)
+- <api:com.novocode.ornate.highlight.Highlighter>
+- <api:com.novocode.ornate.Extension@preProcessors(pageConfig:com.typesafe.config.Config):Seq[com.novocode.ornate.PreProcessor]>
 ```
 
 This gets rendered as:
 
-The [](api:com.novocode.ornate.highlight.Highlighter) trait
+- [named link](api:com.novocode.ornate.highlight.Highlighter)
+- [](api:com.novocode.ornate.highlight.Highlighter)
+- <api:com.novocode.ornate.highlight.Highlighter>
+- <api:com.novocode.ornate.Extension@preProcessors(pageConfig:com.typesafe.config.Config):Seq[com.novocode.ornate.PreProcessor]>
 
-When the link text is left empty (such as in this example), it is automatically derived from the link target.
+When the link text is left empty or is identical to the link target (which is the case when using the `<scheme:scheme-specific-part>` link syntax), it is automatically derived from the link target.

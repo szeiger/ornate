@@ -10,15 +10,23 @@ import scala.collection.JavaConverters._
 
 /** Translate scaladoc links */
 class ScaladocLinksExtension(co: ConfiguredObject) extends Extension with Logging {
-  lazy val siteSchemes = parseSchemes(co.config)
-
   case class Scheme(prefix: String, indexUri: String)
+
+  val schemesConfig = co.memoizeParsed { c =>
+    c.root.entrySet().iterator().asScala.map { e =>
+      e.getValue match {
+        case v: ConfigObject =>
+          val c = v.toConfig
+          Scheme(e.getKey, c.getString("index"))
+        case v =>
+          Scheme(e.getKey, String.valueOf(v.unwrapped()))
+      }
+    }.toVector
+  }
 
   override def pageProcessors(site: Site) = Seq(new PageProcessor {
     def apply(p: Page): Unit = {
-      val c = co.getConfig(p.config)
-      // Schemes are usually defined in the site config. Reuse a cached site config unless the page config differs:
-      val schemes = if(c eq co.config) siteSchemes else parseSchemes(c)
+      val schemes = schemesConfig(p.config)
       if(schemes.nonEmpty) process(p, schemes)
     }
   })
@@ -31,28 +39,30 @@ class ScaladocLinksExtension(co: ConfiguredObject) extends Extension with Loggin
           logger.debug(s"Processing scaladoc link <$dest> with $scheme")
           val fragment = dest.substring(scheme.prefix.length+1)
           n.setDestination(scheme.indexUri + "#" + fragment)
-          if(n.getFirstChild eq null) {
-            val t = new Text()
-            t.setLiteral(autoName(fragment))
-            n.appendChild(t)
-          }
+          val ch = n.getFirstChild
+          if(n.getFirstChild eq null)
+            n.appendChild(new Text(autoName(fragment)))
+          else if(ch.isInstanceOf[Text] && ch.getNext == null && ch.asInstanceOf[Text].getLiteral == dest)
+            ch.asInstanceOf[Text].setLiteral(autoName(fragment))
         }
         super.visit(n)
       }
     })
   }
 
-  def autoName(fragment: String): String =
-    fragment.split('.').filter(_.nonEmpty).lastOption.flatMap(_.split('$').filter(_.nonEmpty).lastOption).getOrElse(fragment)
-
-  def parseSchemes(c: Config): Seq[Scheme] =
-    c.root.entrySet().iterator().asScala.map { e =>
-      e.getValue match {
-        case v: ConfigObject =>
-          val c = v.toConfig
-          Scheme(e.getKey, c.getString("index"))
-        case v =>
-          Scheme(e.getKey, String.valueOf(v.unwrapped()))
-      }
-    }.toVector
+  def autoName(fragment: String): String = {
+    fragment.indexOf('@') match {
+      case -1 =>
+        fragment.split('.').filter(_.nonEmpty).lastOption.flatMap(_.split('$').filter(_.nonEmpty).lastOption).getOrElse(fragment)
+      case i =>
+        val member = fragment.substring(i+1)
+        val memberName = Seq(member.indexOf(':'), member.indexOf('['), member.indexOf('(')).filter(_ >= 0) match {
+          case Seq() => member
+          case s => member.substring(0, s.min)
+        }
+        if(memberName.nonEmpty) memberName
+        else if(member.nonEmpty) member
+        else fragment
+    }
+  }
 }

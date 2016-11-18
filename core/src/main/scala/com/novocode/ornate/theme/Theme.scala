@@ -32,7 +32,7 @@ abstract class Theme(global: Global) extends Logging {
     val etp = new ExpandTocProcessor(toc)
     pages.foreach(etp)
 
-    logger.info("Rendering site")
+    logger.info("Rendering site to "+global.userConfig.targetDir)
     render(site)
   }
 
