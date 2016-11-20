@@ -117,6 +117,15 @@ This gets rendered as:
 ```yaml src=../../core/src/main/resources/ornate-reference.conf#--doc-includeCode
 ```
 
+Links to the snippet sources can ge generated automatically if a mapping is defined. For example, this manual has the following configuration under `extension.includeCode`:
+
+```yaml src=../../doc/ornate.conf#--doc-sourceLinks
+```
+
+Each `sourceLinks` entry maps a `file:` URI (relative to `global.sourceDir`) denoting a base directory under which snippets referenced from the pages can be found to a base URI for the link destination. All snippets from the configured source directory get a corresponding `sourceLinkURI` attribute (unless one was specified manually). It is up to the [theme](default-theme.md#snippet-source-links) to make use of it.
+
+If the link destination has the special fragment `#ghLines`, github-style line highlighting fragments are appended to the generated URIs for snippets which include only parts of a file. Note that github can only highlight one continuous region. If the snippet consists of multiple blocks, the first line of the first block and the last line of the last block are used.
+
 ## `expandVars`
 
 This extension allows expansion of variables that reference configuration keys. The delimiters for variables are configurable, the default style being `{{variable}}`. Variable substutions are performed *after* Markdown parsing, so there is no way to escape delimiters. Global expansion for different node types can also be enabled in the configuration. By default this extension is enabled but all expansion options are disabled, so expansion is only performed in fenced code blocks with an explicit `expandVars=true` attribute. This is the default configuration:

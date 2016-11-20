@@ -1,6 +1,6 @@
 package com.novocode.ornate.theme.default.html
 
-import java.net.URI
+import java.net.{URLDecoder, URI}
 import java.util.Collections
 
 import com.novocode.ornate.commonmark._
@@ -11,7 +11,7 @@ import com.novocode.ornate.{PageSection, PageParser, Page, Util}
 import com.novocode.ornate.theme.HtmlTheme
 import org.commonmark.ext.gfm.tables.TableBlock
 import org.commonmark.html.renderer.{NodeRendererFactory, NodeRendererContext}
-import org.commonmark.node.Document
+import org.commonmark.node.{Node, Document}
 
 import scala.collection.JavaConverters._
 
@@ -47,14 +47,33 @@ class Theme(global: Global) extends HtmlTheme(global) {
     wr.line
   } else super.renderAttributedHeading(n, c)
 
-  override def renderCode(hlr: HighlightResult, c: NodeRendererContext, block: Boolean): Unit = if(block) {
+  override def renderCode(n: Node, hlr: HighlightResult, c: NodeRendererContext, block: Boolean): Unit = if(block) {
     val wr = c.getHtmlWriter
     wr.line
-    wr.raw("<div class=\"row\">")
-    super.renderCode(hlr.copy(preClasses = hlr.preClasses ++ Seq("small-expand", "columns", "a_xscroll")), c, block)
-    wr.raw("</div>")
+    wr.raw("<div class=\"row\"><div class=\"a_linked small-expand columns a_xscroll a_codeblock\">")
+    super.renderCode(n, hlr, c, block)
+    n match {
+      case attr: Attributed =>
+        attr.defAttrs.get("sourceLinkURI").foreach { uri =>
+          val text = attr.defAttrs.get("sourceLinkText").getOrElse(generateSourceLinkText(uri))
+          wr.tag("a", Map("href" -> uri, "class" -> "a_sourcelink").asJava)
+          wr.text(text)
+          wr.tag("/a")
+        }
+      case _ =>
+    }
+    wr.raw("</div></div>")
     wr.line
-  } else super.renderCode(hlr, c, block)
+  } else super.renderCode(n, hlr, c, block)
+
+  def generateSourceLinkText(uri: String): String = try {
+    val p = new URI(uri).getPath
+    val fname = URLDecoder.decode(p.substring(p.lastIndexOf('/')+1), "UTF-8")
+    if(fname.nonEmpty) fname else uri
+  } catch { case ex: Exception =>
+    logger.warn("Error generating source link text for URI: "+uri, ex)
+    uri
+  }
 
   override def renderTabView(pc: PageContext)(n: TabView, c: NodeRendererContext): Unit = {
     val id = pc.newID()

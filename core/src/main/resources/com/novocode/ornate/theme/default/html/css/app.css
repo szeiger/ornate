@@ -220,6 +220,25 @@ pre, pre.hljs {
   border: 1px solid #ddd;
 }
 
+.a_codeblock {
+  padding: 0;
+  position: relative;
+}
+
+.a_codeblock .a_sourcelink {
+  position: absolute;
+  top: 0.5rem;
+  right: 1.5rem;
+  border: 1px solid #ddd;
+  padding: 0.1rem 0.5rem;
+  visibility: hidden;
+  background-color: white;
+}
+
+.a_codeblock:hover .a_sourcelink {
+  visibility: visible;
+}
+
 .a_xscroll {
   width: 0;
   overflow-x: auto;

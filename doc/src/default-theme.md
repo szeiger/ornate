@@ -30,3 +30,23 @@ Minification is turned off by default for better performance when building the s
 
 ```yaml src=../../core/src/main/resources/ornate-reference.conf#--doc-minify
 ```
+
+## Snippet Source Links
+
+Snippets from fenced code blocks can show links to an appropriate source file by setting the `sourceLinkURI` attribute. If `sourceLinkText` is also set, it is used as the link text, otherwise the file name from the URI is used.
+
+Example:
+
+````markdown
+```text sourceLinkURI=https://github.com/szeiger/ornate/blob/v0.2/README.md
+*Ornate* is a tool for building multi-page HTML sites from Markdown sources.
+```
+````
+
+This gets rendered as (link shown on mouse-over):
+
+```text sourceLinkURI=https://github.com/szeiger/ornate/blob/v0.2/README.md
+*Ornate* is a tool for building multi-page HTML sites from Markdown sources.
+```
+
+The [includeCode](markdown.md#includecode) extension can generate link targets for included snippets automatically.

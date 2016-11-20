@@ -21,7 +21,9 @@ lazy val root = project.in(file("."))
   )))
   .settings(
     makeDoc := (Def.taskDyn {
-      val args = s""" com.novocode.ornate.Main "-Dversion=${version.value}" doc/ornate.conf"""
+      val v = version.value
+      val tag = if(v.endsWith("-SNAPSHOT")) "master" else "v"+v
+      val args = s""" com.novocode.ornate.Main "-Dversion=$v" "-Dtag=$tag" doc/ornate.conf"""
       (runMain in Compile).toTask(args)
     }).value,
     publishArtifact := false,

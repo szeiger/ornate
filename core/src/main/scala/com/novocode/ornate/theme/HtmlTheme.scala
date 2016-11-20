@@ -85,7 +85,7 @@ class HtmlTheme(global: Global) extends Theme(global) { self =>
 
   /** Render code that was run through the highlighter. This method is called for all fenced code blocks,
     * indented code blocks and inline code. It can be overridden in subclasses as needed. */
-  def renderCode(hlr: HighlightResult, c: NodeRendererContext, block: Boolean): Unit = {
+  def renderCode(n: Node, hlr: HighlightResult, c: NodeRendererContext, block: Boolean): Unit = {
     val langCode = hlr.language.map("language-" + _)
     val codeClasses = (if(block) hlr.preCodeClasses else hlr.codeClasses) ++ langCode
     val codeAttrs: Map[String, String] = (if(codeClasses.nonEmpty) Map("class" -> codeClasses.mkString(" ")) else Map.empty)
@@ -109,19 +109,19 @@ class HtmlTheme(global: Global) extends Theme(global) { self =>
     val lang = info.headOption
     val hlr = global.highlighter.highlightTextAsHTML(n.getLiteral, lang, HighlightTarget.FencedCodeBlock, page)
     hlr.css.foreach(u => css.getURI(u, null, u.getPath.endsWith(".css")))
-    renderCode(hlr.copy(language = lang.orElse(hlr.language)), c, true)
+    renderCode(n, hlr.copy(language = lang.orElse(hlr.language)), c, true)
   }
 
   def indentedCodeBlockRenderer(page: Page, css: ThemeResources) = SimpleHtmlNodeRenderer { (n: IndentedCodeBlock, c: NodeRendererContext) =>
     val hlr = global.highlighter.highlightTextAsHTML(n.getLiteral, None, HighlightTarget.IndentedCodeBlock, page)
     hlr.css.foreach(u => css.getURI(u, null, u.getPath.endsWith(".css")))
-    renderCode(hlr, c, true)
+    renderCode(n, hlr, c, true)
   }
 
   def inlineCodeRenderer(page: Page, css: ThemeResources) = SimpleHtmlNodeRenderer { (n: Code, c: NodeRendererContext) =>
     val hlr = global.highlighter.highlightTextAsHTML(n.getLiteral, None, HighlightTarget.InlineCode, page)
     hlr.css.foreach(u => css.getURI(u, null, u.getPath.endsWith(".css")))
-    renderCode(hlr, c, false)
+    renderCode(n, hlr, c, false)
   }
 
   def emojiRenderer(pc: PageContext) = SimpleHtmlNodeRenderer { (n: Emoji, c: NodeRendererContext) =>

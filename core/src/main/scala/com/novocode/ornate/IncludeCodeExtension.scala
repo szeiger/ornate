@@ -1,7 +1,7 @@
 package com.novocode.ornate
 
 import java.io.{FileNotFoundException, InputStreamReader, BufferedReader}
-import java.net.URI
+import java.net.{URLDecoder, URI}
 import java.util.regex.Pattern
 
 import com.novocode.ornate.commonmark.Attributed
@@ -19,29 +19,44 @@ import scala.collection.mutable.ArrayBuffer
 import scala.io.Codec
 
 /** Include code snippets from external files in fenced code blocks. */
-class IncludeCodeExtension(co: ConfiguredObject) extends Extension {
-  override def pageProcessors(site: Site) = Seq(new IncludeCodeProcessor(co))
-}
+class IncludeCodeExtension(co: ConfiguredObject) extends Extension with Logging {
+  case class SourceLink(dir: URI, uri: URI)
+  case class Parsed(removePatterns: Map[String, String], sourceLinks: Vector[SourceLink])
+  case class Snippet(content: String, lines: Option[Seq[(Int, Int)]])
 
-class IncludeCodeProcessor(co: ConfiguredObject) extends PageProcessor with Logging {
-  class IncludeCodeVisitor(p: Page) extends AbstractVisitor {
-    lazy val removePatterns = co.getConfig(p.config).getConfigMapOr("remove").iterator.collect {
+  val parse = co.memoizeParsed { c =>
+    val removePatterns = c.getConfigMapOr("remove").iterator.collect {
       case (k, v) if v.valueType != ConfigValueType.NULL => (k, v.unwrapped.toString)
     }.toMap
+    val base = co.global.userConfig.sourceDir.uri
+    val sourceLinks = c.getConfigMapOr("sourceLinks").iterator.collect {
+      case (k, v) if v.valueType != ConfigValueType.NULL => SourceLink(base.resolve(k), new URI(v.unwrapped.toString))
+    }.toVector
+    Parsed(removePatterns, sourceLinks)
+  }
 
+  override def pageProcessors(site: Site) = Seq(new PageProcessor {
+    def apply(p: Page): Unit = p.doc.accept(new IncludeCodeVisitor(p, parse(p.config)))
+  })
+
+  class IncludeCodeVisitor(p: Page, parsed: Parsed) extends AbstractVisitor {
     override def visit(n: FencedCodeBlock): Unit = {
-      val attr = n match {
-        case n: AttributedFencedCodeBlock => n
-        case n => Attributed.parse(n.getInfo)
-      }
+      val attr = n.asInstanceOf[AttributedFencedCodeBlock]
       attr.defAttrs.get("src").foreach { src =>
         try {
           p.sourceFileURI match {
             case Some(baseURI) =>
               logger.debug(s"Including snippet $src on page ${p.uri}")
               val snippetURI = baseURI.resolve(src)
-              getSnippet(snippetURI) match {
-                case Some(s) => n.setLiteral(s)
+              getSnippet(snippetURI, parsed) match {
+                case Some(snippet) =>
+                  n.setLiteral(snippet.content)
+                  if(!attr.defAttrs.contains("sourceLinkURI")) {
+                    getSourceLink(snippetURI, parsed, snippet.lines).foreach { link =>
+                      attr.defAttrs.put("sourceLinkURI", link.toString)
+                      logger.debug(s"Setting sourceLinkURI for snippet $src to $link")
+                    }
+                  }
                 case None =>
                   logger.error(s"No content found for snippet $src on page ${p.uri}")
               }
@@ -55,9 +70,23 @@ class IncludeCodeProcessor(co: ConfiguredObject) extends PageProcessor with Logg
       }
     }
 
-    def getSnippet(snippetURI: URI): Option[String] = {
+    def getSourceLink(snippetURI: URI, parsed: Parsed, lines: Option[Seq[(Int, Int)]]): Option[URI] = {
+      val fileURI = new URI(snippetURI.getScheme, snippetURI.getUserInfo, snippetURI.getHost,
+        snippetURI.getPort, snippetURI.getPath, null, null)
+      val o = parsed.sourceLinks.iterator.map(sl => (sl, sl.dir.relativize(fileURI))).find(t => !t._2.isAbsolute)
+      o.map { case (sl, rel) =>
+        val u = sl.uri.resolve(rel)
+        if(sl.uri.getFragment == "ghLines" && lines.map(_.nonEmpty).getOrElse(false)) {
+          val first = lines.get.head._1
+          val last = lines.get.last._2
+          new URI(u.getScheme, u.getUserInfo, u.getHost, u.getPort, u.getPath, null, s"L$first-L$last")
+        } else u
+      }
+    }
+
+    def getSnippet(snippetURI: URI, parsed: Parsed): Option[Snippet] = {
       val snippetPath = snippetURI.getPath
-      val remove: Option[Pattern] = removePatterns.find { case (ext, re) =>
+      val remove: Option[Pattern] = parsed.removePatterns.find { case (ext, re) =>
         snippetPath.endsWith(s".$ext")
       }.map { case (ext, re) => Pattern.compile(re) }
       val fileURI = new URI(snippetURI.getScheme, snippetURI.getUserInfo, snippetURI.getHost,
@@ -76,19 +105,21 @@ class IncludeCodeProcessor(co: ConfiguredObject) extends PageProcessor with Logg
         val first = trimmed.indexWhere(_.nonEmpty)
         val last = trimmed.lastIndexWhere(_.nonEmpty)
         val content = trimmed.slice(first, last+1)
-        Some(content.mkString("\n"))
+        Some(Snippet(content.mkString("\n"), None))
       } else {
         val suffix = "#" + fragment
         logger.debug("Building snippet for fragement "+suffix)
         var found = false
         val buf = new ArrayBuffer[String]
+        var linenos = new ArrayBuffer[(Int, Int)]
         var blockBuf: ArrayBuffer[String] = null
         var inBlock = false
-        var startOffset = 0
+        var startOffset, line, startLine = 0
         def startBlock(offset: Int): Unit = {
           found = true
           inBlock = true
           blockBuf = new ArrayBuffer[String]
+          startLine = line
           startOffset = offset
         }
         def endBlock(endOffset: Int): Unit = {
@@ -99,8 +130,11 @@ class IncludeCodeProcessor(co: ConfiguredObject) extends PageProcessor with Logg
             if(soff >= 0) offset = math.min(offset, soff)
           }
           blockBuf.foreach(s => buf += s.substring(math.min(offset, s.length)))
+          if(line-startLine > 2)
+            linenos += (((startLine+1), (line-1)))
         }
-        trimmed.foreach { s =>
+        trimmed.iterator.zipWithIndex.foreach { case (s, idx) =>
+          line = idx+1
           if(s.endsWith(suffix)) {
             val offset = s.length - suffix.length
             if(inBlock) endBlock(offset)
@@ -108,10 +142,8 @@ class IncludeCodeProcessor(co: ConfiguredObject) extends PageProcessor with Logg
           } else if(inBlock && !remove.exists(p => p.matcher(s).matches())) blockBuf += s
         }
         if(inBlock) endBlock(0)
-        if(found) Some(buf.mkString("\n")) else None
+        if(found) Some(Snippet(buf.mkString("\n"), Some(linenos))) else None
       }
     }
   }
-
-  def apply(p: Page): Unit = p.doc.accept(new IncludeCodeVisitor(p))
 }

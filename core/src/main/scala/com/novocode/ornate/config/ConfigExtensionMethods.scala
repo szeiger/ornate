@@ -12,6 +12,7 @@ class ConfigExtensionMethods(val c: Config) extends AnyVal {
   def getStringOr(path: String, default: => String = null) = if(c.hasPath(path)) c.getString(path) else default
   def getConfigOr(path: String, default: => Config = ConfigFactory.empty()) = if(c.hasPath(path)) c.getConfig(path) else default
   def getStringListOr(path: String, default: => Seq[String] = Vector.empty): Seq[String] = if(c.hasPath(path)) c.getStringList(path).asScala else default
+  def getConfigListOr(path: String, default: => Seq[Config] = Vector.empty): Seq[Config] = if(c.hasPath(path)) c.getConfigList(path).asScala else default
   def getConfigMapOr(path: String, default: => Map[String, ConfigValue] = Map.empty): Map[String, ConfigValue] =
     if(c.hasPath(path)) c.getObject(path).entrySet().asScala.iterator.map(e => (e.getKey, e.getValue)).toMap else default
 
