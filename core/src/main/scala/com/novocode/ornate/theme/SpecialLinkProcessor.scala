@@ -36,12 +36,15 @@ class SpecialLinkProcessor(imageResources: Resources, site: Site, suffix: String
             case Some(t) =>
               logger.debug(s"Page $pageURI: Resolved $tpe $destination to page ${t.uri}")
               val turi = t.uriWithSuffix(suffix)
-              val turi2 = new URI(turi.getScheme, turi.getAuthority, turi.getPath, uri.getQuery, uri.getFragment)
+              val frag = uri.getFragment
+              if(!unchecked && (frag ne null) && !t.headingIDs.contains(frag))
+                logger.error(s"Page $pageURI: Fragment #$frag for $tpe $destination (resolved to $uri) not found")
+              val turi2 = new URI(turi.getScheme, turi.getAuthority, turi.getPath, uri.getQuery, frag)
               Util.relativeSiteURI(pageURI, turi2)
             case None =>
               if(!unchecked && !resourcePaths.contains(uri.getPath)) {
                 val what = if(allowPage) "page or resource" else "resource"
-                logger.error(s"Page $pageURI: No $what found for $tpe $destination (resolved to $uri)")
+                logger.warn(s"Page $pageURI: No $what found for $tpe $destination (resolved to $uri)")
               }
               Util.relativeSiteURI(pageURI, uri)
           }

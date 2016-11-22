@@ -33,6 +33,8 @@ class Page(val sourceFileURI: Option[URI], val uri: URI, val suffix: String, val
     processors.foreach(_.apply(snippetPage))
     snippetPage
   }
+
+  lazy val headingIDs: Set[String] = section.allHeadings.map(_.id).toSet
 }
 
 sealed abstract class Section {
