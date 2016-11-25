@@ -67,6 +67,9 @@
             <div class="row">
               @****************************** Content ******************************@
               <main class="columns large-order-2 sections" id="_sections">
+                @if(p.needsJavaScript) {
+                  @for(h <- p.stringHtml("noScript")) { <noscript> @h </noscript> }
+                }
                 @content
               </main>
               @****************************** Site Navigation ******************************@

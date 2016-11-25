@@ -2,7 +2,9 @@
 @main(p) {
   @p.content
 
-  @for(h <- p.stringHtml("noScript")) { <noscript> @h </noscript> }
+  @if(!p.needsJavaScript) { @* if p.needsJavaScript is set, the content above already contains a warning *@
+    @for(h <- p.stringHtml("noScript")) { <noscript> @h </noscript> }
+  }
 
   <div id="_main_search" style="display: none">
     <form action="site-search.html" method="get" class="a_search">
@@ -45,7 +47,7 @@
       if(query !== "") {
         res = index.search(query, { fields: { t: {boost: 2}, k: {boost: 2}, b: {boost: 1} }, bool: "AND" });
         count = res.length;
-        for(var i=0; i<count; i++) {
+        for(var i=0; i < count; i++) {
           var data = indexData[parseInt(res[i].ref)]
           var li = document.createElement("li");
           var a = document.createElement("a");

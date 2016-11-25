@@ -15,3 +15,6 @@ limitations under the License.
 
 This product bundles Foundation 6, which is available under an MIT license.
 For details, see https://github.com/zurb/foundation-sites/blob/v6.2.2/LICENSE
+
+This product bundles Mermaid, which is available under an MIT license.
+For details, see https://github.com/knsv/mermaid/blob/0.5.8/LICENSE

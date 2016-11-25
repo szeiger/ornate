@@ -33,10 +33,13 @@ class HtmlTheme(global: Global) extends Theme(global) { self =>
 
   class PageContext(val page: Page, val slp: SpecialLinkProcessor) {
     private[this] var last = -1
+    private[this] var _needsJavaScript = false
     def newID(): String = {
       last += 1
       s"_id$last"
     }
+    def needsJavaScript: Boolean = _needsJavaScript
+    def requireJavaScript(): Unit = _needsJavaScript = true
   }
 
   def targetFile(uri: URI, base: File): File =
@@ -104,10 +107,13 @@ class HtmlTheme(global: Global) extends Theme(global) { self =>
     }
   }
 
-  def fencedCodeBlockRenderer(page: Page, css: ThemeResources) = SimpleHtmlNodeRenderer { (n: AttributedFencedCodeBlock, c: NodeRendererContext) =>
+  def fencedCodeBlockRenderer(pc: PageContext, css: ThemeResources, js: ThemeResources) = SimpleHtmlNodeRenderer { (n: AttributedFencedCodeBlock, c: NodeRendererContext) =>
     val info = if(n.getInfo eq null) Vector.empty else n.getInfo.split(' ').filter(_.nonEmpty).toVector
-    val lang = info.headOption
-    val hlr = global.highlighter.highlightTextAsHTML(n.getLiteral, lang, HighlightTarget.FencedCodeBlock, page)
+    renderFencedCodeBlock(n, c, pc, css, js, info.headOption)
+  }
+
+  def renderFencedCodeBlock(n: AttributedFencedCodeBlock, c: NodeRendererContext, pc: PageContext, css: ThemeResources, js: ThemeResources, lang: Option[String]): Unit = {
+    val hlr = global.highlighter.highlightTextAsHTML(n.getLiteral, lang, HighlightTarget.FencedCodeBlock, pc.page)
     hlr.css.foreach(u => css.getURI(u, null, u.getPath.endsWith(".css")))
     renderCode(n, hlr.copy(language = lang.orElse(hlr.language)), c, true)
   }
@@ -169,12 +175,15 @@ class HtmlTheme(global: Global) extends Theme(global) { self =>
     def mappings: Iterable[ResourceSpec] = buf
   }
 
-  class PageModelImpl(p: Page, site: Site, slp: SpecialLinkProcessor,
-                      val renderer: HtmlRenderer, val css: ThemeResources, val image: ThemeResources) extends PageModel {
+  class PageModelImpl(pc: PageContext, site: Site,
+                      val renderer: HtmlRenderer,
+                      val css: ThemeResources,
+                      val image: ThemeResources,
+                      val js: ThemeResources) extends PageModel {
+    private[this] val p = pc.page
     def theme = self
     val title = HtmlFormat.escape(p.section.title.getOrElse(""))
     val content = HtmlFormat.raw(renderer.render(p.doc))
-    val js = new ThemeResources(p, "js")
     private lazy val pageTC = global.userConfig.theme.getConfig(p.config)
     def pageConfig(path: String): Option[String] = p.config.getStringOpt(path)
     def themeConfig(path: String): Option[String] = pageTC.getStringOpt(path)
@@ -186,10 +195,10 @@ class HtmlTheme(global: Global) extends Theme(global) { self =>
         Some(ExpandTocProcessor.buildTocTree(tocBlock, site.toc, p))
       case None => None
     }
-    def resolveLink(dest: String): String = slp.resolve(p.uri, dest, "link", true, false)
+    def resolveLink(dest: String): String = pc.slp.resolve(p.uri, dest, "link", true, false)
     private def string(name: String): Option[Node] = themeConfig(s"strings.$name").map { md =>
       val snippet = p.parseAndProcessSnippet(md)
-      slp(snippet)
+      pc.slp(snippet)
       snippet.doc
     }
     def stringHtml(name: String): Option[Html] = string(name).map(n => HtmlFormat.raw(renderer.render(n)))
@@ -200,6 +209,7 @@ class HtmlTheme(global: Global) extends Theme(global) { self =>
     def searchIndex: Option[String] = tc.getStringOpt("global.searchIndex").map { uri =>
       Util.relativeSiteURI(p.uri, Util.siteRootURI.resolve(uri)).toString
     }
+    def needsJavaScript: Boolean = pc.needsJavaScript
   }
 
   def renderers(pc: PageContext): Seq[NodeRendererFactory] = Seq(
@@ -224,16 +234,17 @@ class HtmlTheme(global: Global) extends Theme(global) { self =>
         logger.debug(s"Rendering page ${p.uri} to file $file with template ${templateName}")
         val imageRes = new ThemeResources(p, "image")
         val cssRes = new ThemeResources(p, "css")
+        val jsRes = new ThemeResources(p, "js")
         val slp = new SpecialLinkProcessor(imageRes, site, suffix, indexPage, staticResourceURIs)
         slp(p)
         val pc = new PageContext(p, slp)
         val template = getTemplate(templateName)
         val renderer = renderers(pc).foldLeft(HtmlRenderer.builder()) { case (z, n) => z.nodeRendererFactory(n) }
-          .nodeRendererFactory(fencedCodeBlockRenderer(p, cssRes))
+          .nodeRendererFactory(fencedCodeBlockRenderer(pc, cssRes, jsRes))
           .nodeRendererFactory(indentedCodeBlockRenderer(p, cssRes))
           .nodeRendererFactory(inlineCodeRenderer(p, cssRes))
           .extensions(p.extensions.htmlRenderer.asJava).build()
-        val pm = new PageModelImpl(p, site, slp, renderer, cssRes, imageRes)
+        val pm = new PageModelImpl(pc, site, renderer, cssRes, imageRes, jsRes)
         val formatted = template.render(pm).body.trim
         siteResources ++= (pm.css.mappings ++ pm.js.mappings ++ pm.image.mappings).map(r => (r.sourceURL, r))
         file.parent.createDirectories()
@@ -262,13 +273,13 @@ class HtmlTheme(global: Global) extends Theme(global) { self =>
       logger.debug(s"Copying theme resource ${rs.sourceURL} to file $file")
       try {
         rs.minifiableType match {
-          case Some("css") => Util.copyToFileWithTextTransform(rs.sourceURL, file) { s =>
+          case Some("css") if minifyCSS => Util.copyToFileWithTextTransform(rs.sourceURL, file) { s =>
             try CSSO.minify(s) catch { case ex: Exception =>
               logger.error(s"Error minifying theme CSS file ${rs.sourceURI} with CSSO", ex)
               s
             }
           }
-          case Some("js") => Util.copyToFileWithTextTransform(rs.sourceURL, file) { s =>
+          case Some("js") if minifyJS => Util.copyToFileWithTextTransform(rs.sourceURL, file) { s =>
             try Util.closureMinimize(s, rs.sourceURI.toString) catch { case ex: Exception =>
               logger.error(s"Error minifying theme JS file ${rs.sourceURI} with Closure Compiler", ex)
               s
@@ -346,5 +357,6 @@ object HtmlTheme {
     def stringText(name: String): Option[Html]
     def searchLink: Option[String]
     def searchIndex: Option[String]
+    def needsJavaScript: Boolean
   }
 }

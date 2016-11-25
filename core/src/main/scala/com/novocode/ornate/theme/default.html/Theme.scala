@@ -16,6 +16,7 @@ import org.commonmark.node.{Node, Document}
 import scala.collection.JavaConverters._
 
 class Theme(global: Global) extends HtmlTheme(global) {
+  val MermaidJS = "js/mermaidAPI-0.5.8.min.js"
 
   override def synthesizePages: Vector[Page] = {
     syntheticPageURIs.flatMap {
@@ -46,6 +47,24 @@ class Theme(global: Global) extends HtmlTheme(global) {
     wr.tag('/' + htag)
     wr.line
   } else super.renderAttributedHeading(n, c)
+
+  override def renderFencedCodeBlock(n: AttributedFencedCodeBlock, c: NodeRendererContext, pc: PageContext, css: ThemeResources, js: ThemeResources, lang: Option[String]): Unit = {
+    lang match {
+      case Some("mermaid") =>
+        js.get(MermaidJS, createLink = true)
+        css.get("css/mermaid.custom.css", createLink = true)
+        val wr = c.getHtmlWriter
+        val id = pc.newID()
+        wr.tag("div", Map("class" -> "mermaid", "id" -> id).asJava)
+        wr.tag("div", Map("class" -> "mermaid_src", "style" -> "display: none").asJava)
+        wr.text(n.getLiteral)
+        wr.tag("/div")
+        wr.tag("/div")
+        pc.requireJavaScript()
+      case _ =>
+        super.renderFencedCodeBlock(n, c, pc, css, js, lang)
+    }
+  }
 
   override def renderCode(n: Node, hlr: HighlightResult, c: NodeRendererContext, block: Boolean): Unit = if(block) {
     val wr = c.getHtmlWriter
