@@ -8,7 +8,7 @@ import com.novocode.ornate.commonmark.NodeExtensionMethods._
 import com.novocode.ornate.config.Global
 import com.novocode.ornate.highlight.HighlightResult
 import com.novocode.ornate.{Page, PageParser, PageSection, Util}
-import com.novocode.ornate.theme.{HtmlTheme, PageResources}
+import com.novocode.ornate.theme.{HtmlPageContext, HtmlTheme, PageResources}
 import org.commonmark.ext.gfm.tables.TableBlock
 import org.commonmark.html.renderer.{NodeRendererContext, NodeRendererFactory}
 import org.commonmark.node.{Document, Node}
@@ -48,7 +48,7 @@ class Theme(global: Global) extends HtmlTheme(global) {
     wr.line
   } else super.renderAttributedHeading(n, c)
 
-  override def renderFencedCodeBlock(n: AttributedFencedCodeBlock, c: NodeRendererContext, pc: PageContext, lang: Option[String]): Unit = {
+  override def renderFencedCodeBlock(n: AttributedFencedCodeBlock, c: NodeRendererContext, pc: HtmlPageContext, lang: Option[String]): Unit = {
     lang match {
       case Some("mermaid") =>
         pc.res.get(MermaidJS, createLink = true)
@@ -93,7 +93,7 @@ class Theme(global: Global) extends HtmlTheme(global) {
     uri
   }
 
-  override def renderTabView(pc: PageContext)(n: TabView, c: NodeRendererContext): Unit = {
+  override def renderTabView(pc: HtmlPageContext)(n: TabView, c: NodeRendererContext): Unit = {
     val id = pc.newID()
     val items = n.children.collect { case i: TabItem => (i, pc.newID()) }.zipWithIndex.toVector
     val wr = c.getHtmlWriter
@@ -130,6 +130,6 @@ class Theme(global: Global) extends HtmlTheme(global) {
     wr.line()
   }
 
-  override def renderers(pc: PageContext): Seq[NodeRendererFactory] =
+  override def renderers(pc: HtmlPageContext): Seq[NodeRendererFactory] =
     SimpleHtmlNodeRenderer(renderTableBlock _) +: super.renderers(pc)
 }

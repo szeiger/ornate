@@ -26,21 +26,12 @@ import scala.io.Codec
 
 /** Base class for Twirl-based HTML themes */
 class HtmlTheme(global: Global) extends Theme(global) { self =>
-  import HtmlTheme._
   val tc = global.userConfig.theme.config
   val suffix = ".html"
   val indexPage = tc.getStringOpt("global.indexPage")
-
-  class PageContext(val page: Page, val slp: SpecialLinkProcessor, val res: PageResources) {
-    private[this] var last = -1
-    private[this] var _needsJavaScript = false
-    def newID(): String = {
-      last += 1
-      s"_id$last"
-    }
-    def needsJavaScript: Boolean = _needsJavaScript
-    def requireJavaScript(): Unit = _needsJavaScript = true
-  }
+  val minifyCSS = tc.getBooleanOr("global.minify.css")
+  val minifyJS = tc.getBooleanOr("global.minify.js")
+  val minifyHTML = tc.getBooleanOr("global.minify.html")
 
   def targetFile(uri: URI, base: File): File =
     uri.getPath.split('/').filter(_.nonEmpty).foldLeft(base) { case (f, s) => f / s }
@@ -78,7 +69,7 @@ class HtmlTheme(global: Global) extends Theme(global) { self =>
   /** Render a tab view. The default implementation simply renders the content so that merged code blocks
     * look no different than regular code blocks. Themes can override this method to render the actual
     * tab view. */
-  def renderTabView(pc: PageContext)(n: TabView, c: NodeRendererContext): Unit = {
+  def renderTabView(pc: HtmlPageContext)(n: TabView, c: NodeRendererContext): Unit = {
     n.children.toVector.foreach {
       case i: TabItem =>
         i.children.toVector.foreach(c.render)
@@ -107,30 +98,30 @@ class HtmlTheme(global: Global) extends Theme(global) { self =>
     }
   }
 
-  def fencedCodeBlockRenderer(pc: PageContext) = SimpleHtmlNodeRenderer { (n: AttributedFencedCodeBlock, c: NodeRendererContext) =>
+  def fencedCodeBlockRenderer(pc: HtmlPageContext) = SimpleHtmlNodeRenderer { (n: AttributedFencedCodeBlock, c: NodeRendererContext) =>
     val info = if(n.getInfo eq null) Vector.empty else n.getInfo.split(' ').filter(_.nonEmpty).toVector
     renderFencedCodeBlock(n, c, pc, info.headOption)
   }
 
-  def renderFencedCodeBlock(n: AttributedFencedCodeBlock, c: NodeRendererContext, pc: PageContext, lang: Option[String]): Unit = {
+  def renderFencedCodeBlock(n: AttributedFencedCodeBlock, c: NodeRendererContext, pc: HtmlPageContext, lang: Option[String]): Unit = {
     val hlr = global.highlighter.highlightTextAsHTML(n.getLiteral, lang, HighlightTarget.FencedCodeBlock, pc.page)
     hlr.css.foreach(u => pc.res.getURI(u, null, u.getPath.endsWith(".css")))
     renderCode(n, hlr.copy(language = lang.orElse(hlr.language)), c, true)
   }
 
-  def indentedCodeBlockRenderer(pc: PageContext) = SimpleHtmlNodeRenderer { (n: IndentedCodeBlock, c: NodeRendererContext) =>
+  def indentedCodeBlockRenderer(pc: HtmlPageContext) = SimpleHtmlNodeRenderer { (n: IndentedCodeBlock, c: NodeRendererContext) =>
     val hlr = global.highlighter.highlightTextAsHTML(n.getLiteral, None, HighlightTarget.IndentedCodeBlock, pc.page)
     hlr.css.foreach(u => pc.res.getURI(u, null, u.getPath.endsWith(".css")))
     renderCode(n, hlr, c, true)
   }
 
-  def inlineCodeRenderer(pc: PageContext) = SimpleHtmlNodeRenderer { (n: Code, c: NodeRendererContext) =>
+  def inlineCodeRenderer(pc: HtmlPageContext) = SimpleHtmlNodeRenderer { (n: Code, c: NodeRendererContext) =>
     val hlr = global.highlighter.highlightTextAsHTML(n.getLiteral, None, HighlightTarget.InlineCode, pc.page)
     hlr.css.foreach(u => pc.res.getURI(u, null, u.getPath.endsWith(".css")))
     renderCode(n, hlr, c, false)
   }
 
-  def emojiRenderer(pc: PageContext) = SimpleHtmlNodeRenderer { (n: Emoji, c: NodeRendererContext) =>
+  def emojiRenderer(pc: HtmlPageContext) = SimpleHtmlNodeRenderer { (n: Emoji, c: NodeRendererContext) =>
     val wr = c.getHtmlWriter
     if(n.uri ne null) {
       wr.raw(s"""<img class="emoji" title="${n.name}" alt="""")
@@ -145,42 +136,7 @@ class HtmlTheme(global: Global) extends Theme(global) { self =>
     }
   }
 
-  class PageModelImpl(pc: PageContext, site: Site,
-                      val renderer: HtmlRenderer) extends PageModel {
-    private[this] val p = pc.page
-    def res = pc.res
-    def theme = self
-    val title = HtmlFormat.escape(p.section.title.getOrElse(""))
-    val content = HtmlFormat.raw(renderer.render(p.doc))
-    private lazy val pageTC = global.userConfig.theme.getConfig(p.config)
-    def pageConfig(path: String): Option[String] = p.config.getStringOpt(path)
-    def themeConfig(path: String): Option[String] = pageTC.getStringOpt(path)
-    def themeConfigBoolean(path: String): Option[Boolean] = pageTC.getBooleanOpt(path)
-    def sections: Vector[Section] = p.section.children
-    lazy val siteNav: Option[Vector[ExpandTocProcessor.TocItem]] = themeConfig("siteNav") match {
-      case Some(uri) =>
-        val tocBlock = SpecialImageProcessor.parseTocURI(uri, global.userConfig)
-        Some(ExpandTocProcessor.buildTocTree(tocBlock, site.toc, p))
-      case None => None
-    }
-    def resolveLink(dest: String): String = pc.slp.resolve(p.uri, dest, "link", true, false)
-    private def string(name: String): Option[Node] = themeConfig(s"strings.$name").map { md =>
-      val snippet = p.parseAndProcessSnippet(md)
-      pc.slp(snippet)
-      snippet.doc
-    }
-    def stringHtml(name: String): Option[Html] = string(name).map(n => HtmlFormat.raw(renderer.render(n)))
-    def stringText(name: String): Option[Html] = string(name).map(n => HtmlFormat.escape(NodeUtil.extractText(n)))
-    def searchLink: Option[String] = tc.getStringOpt("global.pages.search").map { uri =>
-      Util.rewriteIndexPageLink(Util.relativeSiteURI(p.uri, Util.replaceSuffix(Util.siteRootURI.resolve(uri), ".md", ".html")), indexPage).toString
-    }
-    def searchIndex: Option[String] = tc.getStringOpt("global.searchIndex").map { uri =>
-      Util.relativeSiteURI(p.uri, Util.siteRootURI.resolve(uri)).toString
-    }
-    def needsJavaScript: Boolean = pc.needsJavaScript
-  }
-
-  def renderers(pc: PageContext): Seq[NodeRendererFactory] = Seq(
+  def renderers(pc: HtmlPageContext): Seq[NodeRendererFactory] = Seq(
     emojiRenderer(pc),
     SimpleHtmlNodeRenderer(renderAttributedBlockQuote _),
     SimpleHtmlNodeRenderer(renderAttributedHeading _),
@@ -191,9 +147,6 @@ class HtmlTheme(global: Global) extends Theme(global) { self =>
     val staticResources = global.findStaticResources
     val staticResourceURIs = staticResources.iterator.map(_._2.getPath).toSet
     val siteResources = new mutable.HashMap[URL, ResourceSpec]
-    val minifyCSS = tc.getBooleanOr("global.minify.css")
-    val minifyJS = tc.getBooleanOr("global.minify.js")
-    val minifyHTML = tc.getBooleanOr("global.minify.html")
 
     site.pages.foreach { p =>
       val file = targetFile(p.uriWithSuffix(suffix), global.userConfig.targetDir)
@@ -207,16 +160,15 @@ class HtmlTheme(global: Global) extends Theme(global) { self =>
         val pres = new PageResources(p, this, resourceBaseURI)
         val slp = new SpecialLinkProcessor(pres, site, suffix, indexPage, staticResourceURIs)
         slp(p)
-        val pc = new PageContext(p, slp, pres)
+        val pc = new HtmlPageContext(this, site, p, slp, pres)
         val template = getTemplate(templateName)
         val renderer = renderers(pc).foldLeft(HtmlRenderer.builder()) { case (z, n) => z.nodeRendererFactory(n) }
           .nodeRendererFactory(fencedCodeBlockRenderer(pc))
           .nodeRendererFactory(indentedCodeBlockRenderer(pc))
           .nodeRendererFactory(inlineCodeRenderer(pc))
           .extensions(p.extensions.htmlRenderer.asJava).build()
-        val pm = new PageModelImpl(pc, site, renderer)
-        val formatted = template.render(pm).body.trim
-        siteResources ++= pm.res.mappings.map(r => (r.sourceURL, r))
+        val formatted = template.render(new HtmlPageModel(pc, renderer)).body.trim
+        siteResources ++= pc.res.mappings.map(r => (r.sourceURL, r))
         file.parent.createDirectories()
         val min =
           if(minifyHTML) Util.htmlCompressorMinimize(formatted, minimizeCss = minifyCSS, minimizeJs = minifyJS) else formatted+'\n'
@@ -297,6 +249,7 @@ class HtmlTheme(global: Global) extends Theme(global) { self =>
     }
   }
 
+  type Template = Template1[HtmlPageModel, HtmlFormat.Appendable]
   private[this] val templateBase = getClass.getName.replaceAll("\\.[^\\.]*$", "")
   private[this] val templates = new mutable.HashMap[String, Template]
   def getTemplate(name: String) = templates.getOrElseUpdate(name, {
@@ -306,25 +259,49 @@ class HtmlTheme(global: Global) extends Theme(global) { self =>
   })
 }
 
-object HtmlTheme {
-  type Template = Template1[PageModel, HtmlFormat.Appendable]
-
-  trait PageModel {
-    def renderer: HtmlRenderer
-    def theme: HtmlTheme
-    def title: Html
-    def content: Html
-    def res: PageResources
-    def pageConfig(path: String): Option[String]
-    def themeConfig(path: String): Option[String]
-    def themeConfigBoolean(path: String): Option[Boolean]
-    def sections: Vector[Section]
-    def siteNav: Option[Vector[ExpandTocProcessor.TocItem]]
-    def resolveLink(dest: String): String
-    def stringHtml(name: String): Option[Html]
-    def stringText(name: String): Option[Html]
-    def searchLink: Option[String]
-    def searchIndex: Option[String]
-    def needsJavaScript: Boolean
+/** The page context is available for preprocessing a page */
+class HtmlPageContext(theme: HtmlTheme, site: Site, val page: Page, val slp: SpecialLinkProcessor, val res: PageResources) {
+  private[this] var last = -1
+  private[this] var _needsJavaScript = false
+  def newID(): String = {
+    last += 1
+    s"_id$last"
   }
+  def needsJavaScript: Boolean = _needsJavaScript
+  def requireJavaScript(): Unit = _needsJavaScript = true
+
+  private lazy val pageTC = theme.global.userConfig.theme.getConfig(page.config)
+  def pageConfig(path: String): Option[String] = page.config.getStringOpt(path)
+  def themeConfig(path: String): Option[String] = pageTC.getStringOpt(path)
+  def themeConfigBoolean(path: String): Option[Boolean] = pageTC.getBooleanOpt(path)
+  lazy val siteNav: Option[Vector[ExpandTocProcessor.TocItem]] = themeConfig("siteNav") match {
+    case Some(uri) =>
+      val tocBlock = SpecialImageProcessor.parseTocURI(uri, theme.global.userConfig)
+      Some(ExpandTocProcessor.buildTocTree(tocBlock, site.toc, page))
+    case None => None
+  }
+
+  def searchLink: Option[String] = theme.tc.getStringOpt("global.pages.search").map { uri =>
+    Util.rewriteIndexPageLink(Util.relativeSiteURI(page.uri, Util.replaceSuffix(Util.siteRootURI.resolve(uri), ".md", ".html")), theme.indexPage).toString
+  }
+  def searchIndex: Option[String] = theme.tc.getStringOpt("global.searchIndex").map { uri =>
+    Util.relativeSiteURI(page.uri, Util.siteRootURI.resolve(uri)).toString
+  }
+  def resolveLink(dest: String): String = slp.resolve(page.uri, dest, "link", true, false)
+
+  def sections: Vector[Section] = page.section.children
+
+  def stringNode(name: String): Option[Node] = themeConfig(s"strings.$name").map { md =>
+    val snippet = page.parseAndProcessSnippet(md)
+    slp(snippet)
+    snippet.doc
+  }
+}
+
+/** The page model is available for rendering a preprocessed page with a template */
+class HtmlPageModel(val pc: HtmlPageContext, renderer: HtmlRenderer) {
+  val title = HtmlFormat.escape(pc.page.section.title.getOrElse(""))
+  val content = HtmlFormat.raw(renderer.render(pc.page.doc))
+  def stringHtml(name: String): Option[Html] = pc.stringNode(name).map(n => HtmlFormat.raw(renderer.render(n)))
+  def stringText(name: String): Option[Html] = pc.stringNode(name).map(n => HtmlFormat.escape(NodeUtil.extractText(n)))
 }
