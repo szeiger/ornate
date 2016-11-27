@@ -7,7 +7,7 @@ import com.novocode.ornate.{Logging, Util, Page, Site}
 import org.commonmark.node.{Image, Link, AbstractVisitor}
 
 /** Resolve links and image targets to the proper destination. */
-class SpecialLinkProcessor(imageResources: Resources, site: Site, suffix: String, indexPage: Option[String], resourcePaths: Set[String]) extends PageProcessor with Logging {
+class SpecialLinkProcessor(imageResources: PageResources, site: Site, suffix: String, indexPage: Option[String], resourcePaths: Set[String]) extends PageProcessor with Logging {
   def apply(p: Page): Unit = {
     p.doc.accept(new AbstractVisitor {
       override def visit(n: Link): Unit = {
@@ -50,7 +50,7 @@ class SpecialLinkProcessor(imageResources: Resources, site: Site, suffix: String
           }
           Util.rewriteIndexPageLink(rel, indexPage).toString
         case "theme" | "webjar" | "classpath" if allowResources =>
-          try imageResources.get(uri.toString, null, false).toString
+          try imageResources.get(uri.toString, "images/").toString
           catch { case ex: Exception =>
             logger.error(s"Page $pageURI: Error resolving $tpe with resource URI", ex)
             destination

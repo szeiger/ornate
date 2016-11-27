@@ -31,7 +31,7 @@ class HtmlTheme(global: Global) extends Theme(global) { self =>
   val suffix = ".html"
   val indexPage = tc.getStringOpt("global.indexPage")
 
-  class PageContext(val page: Page, val slp: SpecialLinkProcessor) {
+  class PageContext(val page: Page, val slp: SpecialLinkProcessor, val res: PageResources) {
     private[this] var last = -1
     private[this] var _needsJavaScript = false
     def newID(): String = {
@@ -107,26 +107,26 @@ class HtmlTheme(global: Global) extends Theme(global) { self =>
     }
   }
 
-  def fencedCodeBlockRenderer(pc: PageContext, css: ThemeResources, js: ThemeResources) = SimpleHtmlNodeRenderer { (n: AttributedFencedCodeBlock, c: NodeRendererContext) =>
+  def fencedCodeBlockRenderer(pc: PageContext) = SimpleHtmlNodeRenderer { (n: AttributedFencedCodeBlock, c: NodeRendererContext) =>
     val info = if(n.getInfo eq null) Vector.empty else n.getInfo.split(' ').filter(_.nonEmpty).toVector
-    renderFencedCodeBlock(n, c, pc, css, js, info.headOption)
+    renderFencedCodeBlock(n, c, pc, info.headOption)
   }
 
-  def renderFencedCodeBlock(n: AttributedFencedCodeBlock, c: NodeRendererContext, pc: PageContext, css: ThemeResources, js: ThemeResources, lang: Option[String]): Unit = {
+  def renderFencedCodeBlock(n: AttributedFencedCodeBlock, c: NodeRendererContext, pc: PageContext, lang: Option[String]): Unit = {
     val hlr = global.highlighter.highlightTextAsHTML(n.getLiteral, lang, HighlightTarget.FencedCodeBlock, pc.page)
-    hlr.css.foreach(u => css.getURI(u, null, u.getPath.endsWith(".css")))
+    hlr.css.foreach(u => pc.res.getURI(u, null, u.getPath.endsWith(".css")))
     renderCode(n, hlr.copy(language = lang.orElse(hlr.language)), c, true)
   }
 
-  def indentedCodeBlockRenderer(page: Page, css: ThemeResources) = SimpleHtmlNodeRenderer { (n: IndentedCodeBlock, c: NodeRendererContext) =>
-    val hlr = global.highlighter.highlightTextAsHTML(n.getLiteral, None, HighlightTarget.IndentedCodeBlock, page)
-    hlr.css.foreach(u => css.getURI(u, null, u.getPath.endsWith(".css")))
+  def indentedCodeBlockRenderer(pc: PageContext) = SimpleHtmlNodeRenderer { (n: IndentedCodeBlock, c: NodeRendererContext) =>
+    val hlr = global.highlighter.highlightTextAsHTML(n.getLiteral, None, HighlightTarget.IndentedCodeBlock, pc.page)
+    hlr.css.foreach(u => pc.res.getURI(u, null, u.getPath.endsWith(".css")))
     renderCode(n, hlr, c, true)
   }
 
-  def inlineCodeRenderer(page: Page, css: ThemeResources) = SimpleHtmlNodeRenderer { (n: Code, c: NodeRendererContext) =>
-    val hlr = global.highlighter.highlightTextAsHTML(n.getLiteral, None, HighlightTarget.InlineCode, page)
-    hlr.css.foreach(u => css.getURI(u, null, u.getPath.endsWith(".css")))
+  def inlineCodeRenderer(pc: PageContext) = SimpleHtmlNodeRenderer { (n: Code, c: NodeRendererContext) =>
+    val hlr = global.highlighter.highlightTextAsHTML(n.getLiteral, None, HighlightTarget.InlineCode, pc.page)
+    hlr.css.foreach(u => pc.res.getURI(u, null, u.getPath.endsWith(".css")))
     renderCode(n, hlr, c, false)
   }
 
@@ -145,42 +145,10 @@ class HtmlTheme(global: Global) extends Theme(global) { self =>
     }
   }
 
-  class ThemeResources(val page: Page, tpe: String) extends Resources(tpe) {
-    private[this] val baseURI = {
-      val dir = tc.getString(s"global.dirs.$tpe")
-      Util.siteRootURI.resolve(if(dir.endsWith("/")) dir else dir + "/")
-    }
-    private[this] val buf = new mutable.ArrayBuffer[ResourceSpec]
-    private[this] val map = new mutable.HashMap[URL, ResourceSpec]
-
-    def getURI(sourceURI: URI, targetFile: String, createLink: Boolean): URI = {
-      try {
-        val url = resolveResource(sourceURI)
-        map.getOrElseUpdate(url, {
-          val targetURI =
-            if(sourceURI.getScheme == "site") sourceURI // link to site resources at their original location
-            else {
-              val tname = (if(targetFile eq null) suggestRelativePath(sourceURI, tpe) else targetFile).replaceAll("^/*", "")
-              baseURI.resolve(tname)
-            }
-          val spec = ResourceSpec(sourceURI, url, targetURI, createLink, this)
-          buf += spec
-          spec
-        }).targetURI
-      } catch { case ex: Exception =>
-        logger.error(s"Error resolving theme resource URI $sourceURI -- Skipping resource and using original link")
-        sourceURI
-      }
-    }
-    def mappings: Iterable[ResourceSpec] = buf
-  }
-
   class PageModelImpl(pc: PageContext, site: Site,
-                      val renderer: HtmlRenderer,
-                      val css: ThemeResources,
-                      val image: ThemeResources,
-                      val js: ThemeResources) extends PageModel {
+                      val renderer: HtmlRenderer) extends PageModel {
     private[this] val p = pc.page
+    def res = pc.res
     def theme = self
     val title = HtmlFormat.escape(p.section.title.getOrElse(""))
     val content = HtmlFormat.raw(renderer.render(p.doc))
@@ -232,21 +200,23 @@ class HtmlTheme(global: Global) extends Theme(global) { self =>
       try {
         val templateName = global.userConfig.theme.getConfig(p.config).getString("template")
         logger.debug(s"Rendering page ${p.uri} to file $file with template ${templateName}")
-        val imageRes = new ThemeResources(p, "image")
-        val cssRes = new ThemeResources(p, "css")
-        val jsRes = new ThemeResources(p, "js")
-        val slp = new SpecialLinkProcessor(imageRes, site, suffix, indexPage, staticResourceURIs)
+        val resourceBaseURI = {
+          val dir = tc.getString(s"global.resourceDir")
+          Util.siteRootURI.resolve(if(dir.endsWith("/")) dir else dir + "/")
+        }
+        val pres = new PageResources(p, this, resourceBaseURI)
+        val slp = new SpecialLinkProcessor(pres, site, suffix, indexPage, staticResourceURIs)
         slp(p)
-        val pc = new PageContext(p, slp)
+        val pc = new PageContext(p, slp, pres)
         val template = getTemplate(templateName)
         val renderer = renderers(pc).foldLeft(HtmlRenderer.builder()) { case (z, n) => z.nodeRendererFactory(n) }
-          .nodeRendererFactory(fencedCodeBlockRenderer(pc, cssRes, jsRes))
-          .nodeRendererFactory(indentedCodeBlockRenderer(p, cssRes))
-          .nodeRendererFactory(inlineCodeRenderer(p, cssRes))
+          .nodeRendererFactory(fencedCodeBlockRenderer(pc))
+          .nodeRendererFactory(indentedCodeBlockRenderer(pc))
+          .nodeRendererFactory(inlineCodeRenderer(pc))
           .extensions(p.extensions.htmlRenderer.asJava).build()
-        val pm = new PageModelImpl(pc, site, renderer, cssRes, imageRes, jsRes)
+        val pm = new PageModelImpl(pc, site, renderer)
         val formatted = template.render(pm).body.trim
-        siteResources ++= (pm.css.mappings ++ pm.js.mappings ++ pm.image.mappings).map(r => (r.sourceURL, r))
+        siteResources ++= pm.res.mappings.map(r => (r.sourceURL, r))
         file.parent.createDirectories()
         val min =
           if(minifyHTML) Util.htmlCompressorMinimize(formatted, minimizeCss = minifyCSS, minimizeJs = minifyJS) else formatted+'\n'
@@ -344,9 +314,7 @@ object HtmlTheme {
     def theme: HtmlTheme
     def title: Html
     def content: Html
-    def css: Resources
-    def js: Resources
-    def image: Resources
+    def res: PageResources
     def pageConfig(path: String): Option[String]
     def themeConfig(path: String): Option[String]
     def themeConfigBoolean(path: String): Option[Boolean]

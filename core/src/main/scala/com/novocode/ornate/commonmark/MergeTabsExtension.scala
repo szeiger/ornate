@@ -2,7 +2,6 @@ package com.novocode.ornate.commonmark
 
 import com.novocode.ornate.{Logging, Extension, Page, Site}
 import com.novocode.ornate.config.Global
-import com.novocode.ornate.theme.Resources
 import org.commonmark.node.{CustomBlock, FencedCodeBlock, AbstractVisitor}
 
 import NodeExtensionMethods._

@@ -2,6 +2,7 @@ package com.novocode.ornate.theme
 
 import java.io.FileNotFoundException
 import java.net.{URL, URI}
+import scala.collection.mutable
 
 import com.novocode.ornate._
 import com.novocode.ornate.commonmark.{ExpandTocProcessor, AttributeFencedCodeBlocksProcessor, SpecialImageProcessor}
@@ -12,7 +13,7 @@ import com.novocode.ornate.js.NashornSupport
 import better.files._
 
 /** Base class for themes. */
-abstract class Theme(global: Global) extends Logging {
+abstract class Theme(val global: Global) extends Logging {
 
   /** The full pipeline for building the site. */
   def build: Unit = {
@@ -76,28 +77,50 @@ abstract class Theme(global: Global) extends Logging {
   }
 
   /** Get a default relative path for a resource URI */
-  def suggestRelativePath(uri: URI, tpe: String): String = {
-    val s = uri.getScheme match {
-      case "file" => uri.getPath.split('/').last
-      case "site" => global.userConfig.resourceDir.path.toUri.resolve(uri.getPath).getPath.replaceFirst("^/*", "")
-      case _ => uri.getPath.replaceFirst("^/*", "")
-    }
-    val prefix = tpe + "/"
-    if(s.startsWith(prefix) && s.length > prefix.length) s.substring(prefix.length)
-    else s
+  def suggestRelativePath(uri: URI): String = uri.getScheme match {
+    case "file" => uri.getPath.split('/').last
+    case "site" => global.userConfig.resourceDir.path.toUri.resolve(uri.getPath).getPath.replaceFirst("^/*", "")
+    case _ => uri.getPath.replaceFirst("^/*", "")
   }
 }
 
-abstract class Resources(val resourceType: String) {
-  protected def mappings: Iterable[ResourceSpec]
-  protected def page: Page
-  protected def getURI(uri: URI, targetFile: String, createLink: Boolean): URI
+class PageResources(val page: Page, theme: Theme, baseURI: URI) {
+  private[this] val buf = new mutable.ArrayBuffer[ResourceSpec]
+  private[this] val map = new mutable.HashMap[URL, ResourceSpec]
+
   final def get(path: String, targetFile: String = null, createLink: Boolean = false): URI =
     Util.relativeSiteURI(page.uri, getURI(Util.themeRootURI.resolve(path), targetFile, createLink))
-  final def require(path: String, targetFile: String = null, createLink: Boolean = true): Unit =
-    get(path, targetFile, createLink)
-  final def links: Iterable[URI] =
-    mappings.collect { case r: ResourceSpec if r.createLink => Util.relativeSiteURI(page.uri, r.targetURI) }
+
+  final def getLinks(suffix: String): Iterable[URI] =
+    mappings.collect { case r: ResourceSpec if r.createLink && r.targetURI.toString.endsWith("."+suffix) => Util.relativeSiteURI(page.uri, r.targetURI) }
+
+  def mappings: Iterable[ResourceSpec] = buf
+
+  def getURI(sourceURI: URI, targetFile: String, createLink: Boolean): URI = {
+    try {
+      val url = theme.resolveResource(sourceURI)
+      map.getOrElseUpdate(url, {
+        val targetURI =
+          if(sourceURI.getScheme == "site") sourceURI // link to site resources at their original location
+          else {
+            val tname =
+              if(targetFile eq null) {
+                theme.suggestRelativePath(sourceURI).replaceAll("^/*", "")
+              } else if(targetFile.endsWith("/")) {
+                val s = theme.suggestRelativePath(sourceURI).replaceAll("^/*", "")
+                if(s.startsWith(targetFile)) s else targetFile + s
+              } else targetFile.replaceAll("^/*", "")
+            baseURI.resolve(tname)
+          }
+        val spec = ResourceSpec(sourceURI, url, targetURI, createLink, this)
+        buf += spec
+        spec
+      }).targetURI
+    } catch { case ex: Exception =>
+      theme.logger.error(s"Error resolving theme resource URI $sourceURI -- Skipping resource and using original link")
+      sourceURI
+    }
+  }
 }
 
 /** Resource to include in the generated site.
@@ -108,10 +131,14 @@ abstract class Resources(val resourceType: String) {
   * @param createLink whether to create a link to the resource (e.g. "script" or "style" tag)
   * @param resources the `Resources` object which created this ResourceSpec
   */
-case class ResourceSpec(sourceURI: URI, sourceURL: URL, targetURI: URI, createLink: Boolean, resources: Resources) {
+case class ResourceSpec(sourceURI: URI, sourceURL: URL, targetURI: URI, createLink: Boolean, resources: PageResources) {
   def minifiableType: Option[String] = {
-    val rtp = resources.resourceType
     val p = sourceURI.getPath
-    if(p.endsWith(s".$rtp") && !p.endsWith(s".min.$rtp")) Some(rtp) else None
+    val sep = p.lastIndexOf('.')
+    if(sep <= 0 || sep >= p.length-1) None
+    else {
+      if(p.substring(0, sep).endsWith(".min")) None
+      else Some(p.substring(sep+1))
+    }
   }
 }

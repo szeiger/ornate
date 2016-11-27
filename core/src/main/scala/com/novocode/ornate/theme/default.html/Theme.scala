@@ -1,17 +1,17 @@
 package com.novocode.ornate.theme.default.html
 
-import java.net.{URLDecoder, URI}
+import java.net.{URI, URLDecoder}
 import java.util.Collections
 
 import com.novocode.ornate.commonmark._
 import com.novocode.ornate.commonmark.NodeExtensionMethods._
 import com.novocode.ornate.config.Global
 import com.novocode.ornate.highlight.HighlightResult
-import com.novocode.ornate.{PageSection, PageParser, Page, Util}
-import com.novocode.ornate.theme.HtmlTheme
+import com.novocode.ornate.{Page, PageParser, PageSection, Util}
+import com.novocode.ornate.theme.{HtmlTheme, PageResources}
 import org.commonmark.ext.gfm.tables.TableBlock
-import org.commonmark.html.renderer.{NodeRendererFactory, NodeRendererContext}
-import org.commonmark.node.{Node, Document}
+import org.commonmark.html.renderer.{NodeRendererContext, NodeRendererFactory}
+import org.commonmark.node.{Document, Node}
 
 import scala.collection.JavaConverters._
 
@@ -48,11 +48,11 @@ class Theme(global: Global) extends HtmlTheme(global) {
     wr.line
   } else super.renderAttributedHeading(n, c)
 
-  override def renderFencedCodeBlock(n: AttributedFencedCodeBlock, c: NodeRendererContext, pc: PageContext, css: ThemeResources, js: ThemeResources, lang: Option[String]): Unit = {
+  override def renderFencedCodeBlock(n: AttributedFencedCodeBlock, c: NodeRendererContext, pc: PageContext, lang: Option[String]): Unit = {
     lang match {
       case Some("mermaid") =>
-        js.get(MermaidJS, createLink = true)
-        css.get("css/mermaid.custom.css", createLink = true)
+        pc.res.get(MermaidJS, createLink = true)
+        pc.res.get("css/mermaid.custom.css", createLink = true)
         val wr = c.getHtmlWriter
         val id = pc.newID()
         wr.tag("div", Map("class" -> "mermaid", "id" -> id).asJava)
@@ -61,8 +61,7 @@ class Theme(global: Global) extends HtmlTheme(global) {
         wr.tag("/div")
         wr.tag("/div")
         pc.requireJavaScript()
-      case _ =>
-        super.renderFencedCodeBlock(n, c, pc, css, js, lang)
+      case _ => super.renderFencedCodeBlock(n, c, pc, lang)
     }
   }
 
