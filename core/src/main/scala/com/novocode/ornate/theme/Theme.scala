@@ -62,9 +62,9 @@ abstract class Theme(val global: Global) extends Logging {
     case "site" => global.userConfig.resourceDir.path.toUri.resolve(uri.getPath.replaceFirst("^/*", "")).toURL
     case "webjar" =>
       val parts = uri.getPath.split('/').filter(_.nonEmpty)
-      val path = NashornSupport.locator.getFullPathExact(parts.head, parts.tail.mkString("/"))
-      if(path eq null) throw new FileNotFoundException("WebJar resource not found: "+uri)
-      getClass.getClassLoader.getResource(path)
+      val path = NashornSupport.getFullPathExact(parts.head, parts.tail.mkString("/"))
+      if(path.isEmpty) throw new FileNotFoundException("WebJar resource not found: "+uri)
+      getClass.getClassLoader.getResource(path.get)
     case "theme" =>
       val url = getClass.getResource(uri.getPath.replaceFirst("^/*", ""))
       if(url eq null) throw new FileNotFoundException("Theme resource not found: "+uri)

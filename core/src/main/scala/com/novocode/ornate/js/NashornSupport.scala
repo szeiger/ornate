@@ -50,24 +50,10 @@ trait NashornSupport {
     //val js2 = if(js.startsWith(""""use strict";""")) js.substring(13) else js
   }
 
-  def loadAsset(webjar: String, exactPath: String): Option[String] = {
-    val path = locator.getFullPathExact(webjar, exactPath)
-    if(path eq null) {
-      //logger.debug(s"WebJar asset not found: $webjar/$exactPath")
-      None
-    } else {
-      logger.debug(s"Loading WebJar asset: $webjar/$exactPath")
-      val in = getClass.getClassLoader.getResourceAsStream(path)
-      try Some(in.content(Codec.UTF8).mkString) finally in.close()
-    }
-  }
-
-  def listAssets(webjar: String, path: String): Vector[String] = {
-    val maybeVersion = locator.getWebJars.get(webjar)
-    val prefix = WebJarAssetLocator.WEBJARS_PATH_PREFIX + "/" + webjar + (if(maybeVersion eq null) "" else s"/$maybeVersion")
-    val absPath = if(path.startsWith("/")) path else "/"+path
-    val prefixedPath = prefix + absPath
-    locator.listAssets(prefixedPath).asScala.iterator.map(_.substring(prefixedPath.length)).toVector
+  def loadAsset(webjar: String, exactPath: String): Option[String] = getFullPathExact(webjar, exactPath).map { path =>
+    logger.debug(s"Loading WebJar asset: $webjar/$exactPath")
+    val in = getClass.getClassLoader.getResourceAsStream(path)
+    try in.content(Codec.UTF8).mkString finally in.close()
   }
 
   def call[T](thiz: AnyRef, name: String, args: Any*)(implicit ev: JSResultConverter[T]): T =
@@ -114,8 +100,24 @@ object NashornSupport {
     )
   }
 
-  lazy val locator = {
+  private lazy val fullPathIndex = {
     val loader = Option(Thread.currentThread.getContextClassLoader).getOrElse(getClass.getClassLoader)
-    new WebJarAssetLocator(WebJarAssetLocator.getFullPathIndex(Pattern.compile(".*"), loader))
+    val fpi = WebJarAssetLocator.getFullPathIndex(Pattern.compile(".*"), loader)
+    val offset = WebJarAssetLocator.WEBJARS_PATH_PREFIX.length + 1
+    fpi.asScala.valuesIterator.map { s =>
+      val sep1 = s.indexOf('/', offset+1)
+      val sep2 = s.indexOf('/', sep1+1)
+      val noVer = s.substring(offset, sep1) + s.substring(sep2)
+      (noVer, s)
+    }.toMap
+  }
+
+  /* This is orders of magnitude faster than WebJarLocator.getFullPathExact: */
+  def getFullPathExact(webjar: String, exactPath: String): Option[String] =
+    fullPathIndex.get(webjar + "/" + exactPath)
+
+  def listAssets(webjar: String, path: String): Vector[String] = {
+    val prefix = if(path.startsWith("/")) webjar+path else webjar+"/"+path
+    fullPathIndex.keysIterator.filter(_.startsWith(prefix)).map(_.substring(prefix.length)).toVector
   }
 }

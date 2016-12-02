@@ -38,6 +38,15 @@
     <link rel="stylesheet" href="@{p.pc.res.get("css/foundation.min.css")}">
     <link rel="stylesheet" href="@{p.pc.res.get("css/app.css")}">
     @for(href <- p.pc.res.getLinks("css")) { <link rel="stylesheet" href="@href"> }
+    @for(mathJax <- p.mathJaxMain) {
+      @for(inline <- p.mathJaxInline) {
+        <script type="text/x-mathjax-config">
+          MathJax.Hub.Config(@inline);
+          @if(p.mathJaxSkipStartupTypeset) { MathJax.Hub.Queue(["Process",MathJax.Hub]); }
+        </script>
+      }
+      <script type="text/javascript" async src="@mathJax"></script>
+    }
   </head>
   <body>
     <div class="expanded row">

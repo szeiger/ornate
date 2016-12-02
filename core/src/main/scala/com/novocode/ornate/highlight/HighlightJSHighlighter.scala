@@ -14,7 +14,7 @@ import scala.collection.mutable
 class HighlightJSHighlighter(global: Global, conf: ConfiguredObject) extends Highlighter with NashornSupport with Logging {
   logger.debug("Loading highlight.js...")
   val hljs = mainModule.require("highlight.js/lib/highlight.js")
-  val supportedLanguages = listAssets("highlight.js", "lib/languages/").map(_.replaceAll("\\.js$", ""))
+  val supportedLanguages = NashornSupport.listAssets("highlight.js", "lib/languages/").map(_.replaceAll("\\.js$", ""))
   logger.debug("Supported languages: "+supportedLanguages.mkString(", "))
 
   val tried, loaded = new mutable.HashSet[String]

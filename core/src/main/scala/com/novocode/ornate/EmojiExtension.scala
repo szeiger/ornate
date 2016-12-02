@@ -53,7 +53,7 @@ class EmojiParserExtension(co: ConfiguredObject) extends Parser.ParserExtension 
   def shortnameToImage(n: String): Option[URI] = emojiOneData.get(n).flatMap { e =>
     val pathOpt = e.unicode.reverseIterator.map { n =>
       val path = s"assets/$format/$n.$formatSuffix"
-      if(NashornSupport.locator.getFullPathExact("emojione", path) eq null) null else path
+      if(NashornSupport.getFullPathExact("emojione", path).isEmpty) null else path
     }.find(_ ne null)
     pathOpt.map { path => new URI(s"webjar:/emojione/$path") }
   }

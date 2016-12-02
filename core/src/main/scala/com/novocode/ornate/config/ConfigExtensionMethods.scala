@@ -3,6 +3,8 @@ package com.novocode.ornate.config
 import java.util.Properties
 
 import com.typesafe.config._
+import play.api.libs.json.Json
+
 import scala.collection.JavaConverters._
 
 /** Extension methods to make Typesafe Config easier to use */
@@ -20,6 +22,7 @@ class ConfigExtensionMethods(val c: Config) extends AnyVal {
   def getBooleanOpt(path: String): Option[Boolean] = if(c.hasPath(path)) Some(c.getBoolean(path)) else None
   def getIntOpt(path: String): Option[Int] = if(c.hasPath(path)) Some(c.getInt(path)) else None
   def getStringOpt(path: String) = Option(getStringOr(path))
+  def getConfigOpt(path: String): Option[Config] = Option(getConfigOr(path, null))
   def getListOpt(path: String): Option[Seq[ConfigValue]] = if(c.hasPath(path)) Some(c.getList(path).asScala) else None
   def getStringListOpt(path: String): Option[Seq[String]] = Option(getStringListOr(path, null))
 

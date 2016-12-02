@@ -1,23 +1,23 @@
 package com.novocode.ornate.theme
 
-import java.net.{URL, URI}
+import java.net.{URI, URL}
 import java.util.Collections
 
 import better.files.File.OpenOptions
 import com.novocode.ornate._
 import com.novocode.ornate.commonmark.NodeExtensionMethods._
-
 import better.files._
 import com.novocode.ornate.commonmark._
 import com.novocode.ornate.config.ConfigExtensionMethods.configExtensionMethods
 import com.novocode.ornate.config.Global
 import com.novocode.ornate.highlight.{HighlightResult, HighlightTarget}
-import com.novocode.ornate.js.{CSSO, ElasticlunrSearch}
+import com.novocode.ornate.js.{CSSO, ElasticlunrSearch, NashornSupport}
+import com.typesafe.config.{ConfigObject, ConfigRenderOptions}
 import org.commonmark.html.HtmlRenderer
 import org.commonmark.html.HtmlRenderer.HtmlRendererExtension
-import org.commonmark.html.renderer.{NodeRendererFactory, NodeRendererContext, NodeRenderer}
+import org.commonmark.html.renderer.{NodeRenderer, NodeRendererContext, NodeRendererFactory}
 import org.commonmark.node._
-import play.twirl.api.{Html, Template1, HtmlFormat}
+import play.twirl.api.{Html, HtmlFormat, Template1}
 
 import scala.StringBuilder
 import scala.collection.JavaConverters._
@@ -26,6 +26,10 @@ import scala.io.Codec
 
 /** Base class for Twirl-based HTML themes */
 class HtmlTheme(global: Global) extends Theme(global) { self =>
+  val mathJaxExclude = new FileMatcher(Seq(
+    "/config/local/", "/docs/", "/test/", "/unpacked/", "*.md", "*.html", "*.txt", "*.json", ".*"
+  ))
+
   val tc = global.userConfig.theme.config
   val suffix = ".html"
   val indexPage = tc.getStringOpt("global.indexPage")
@@ -103,10 +107,43 @@ class HtmlTheme(global: Global) extends Theme(global) { self =>
     renderFencedCodeBlock(n, c, pc, info.headOption)
   }
 
-  def renderFencedCodeBlock(n: AttributedFencedCodeBlock, c: NodeRendererContext, pc: HtmlPageContext, lang: Option[String]): Unit = {
+  def renderFencedCodeBlock(n: AttributedFencedCodeBlock, c: NodeRendererContext, pc: HtmlPageContext, lang: Option[String]): Unit = lang match {
+    case Some("mermaid") => renderMermaid(n, c, pc)
+    case Some("texmath") => renderMath(n, c, pc, "math/tex", true)
+    case Some("asciimath") => renderMath(n, c, pc, "math/asciimath", true)
+    case Some("mathml") => renderMath(n, c, pc, "math/mml", true)
+    case _ => renderRegularFencedCodeBlock(n, c, pc, lang)
+  }
+
+  def renderRegularFencedCodeBlock(n: AttributedFencedCodeBlock, c: NodeRendererContext, pc: HtmlPageContext, lang: Option[String]): Unit = {
     val hlr = global.highlighter.highlightTextAsHTML(n.getLiteral, lang, HighlightTarget.FencedCodeBlock, pc.page)
     hlr.css.foreach(u => pc.res.getURI(u, null, u.getPath.endsWith(".css")))
     renderCode(n, hlr.copy(language = lang.orElse(hlr.language)), c, true)
+  }
+
+  /** Render a Mermaid diagram block. This does not add any dependency on Mermaid to the generated site.
+    * The method should be overwritten accordingly (unless a theme always adds it anyway). */
+  def renderMermaid(n: AttributedFencedCodeBlock, c: NodeRendererContext, pc: HtmlPageContext): Unit = {
+    val wr = c.getHtmlWriter
+    wr.tag("div", Map("class" -> "mermaid", "id" -> pc.newID()).asJava)
+    wr.text(n.getLiteral)
+    wr.tag("/div")
+  }
+
+  /** Render a TeX math, MML or ASCIIMath block or inline element. The default implementation puts the code into a
+    * "script" element with the proper language code (which should be one of "math/tex", "math/asciimath", "math/mml").
+    * Inline elements get a preceding "MathJax_Preview" span element, for block elements this is created as a div and
+    * a "mode=display" annotation is added to the script. */
+  def renderMath(n: AttributedFencedCodeBlock, c: NodeRendererContext, pc: HtmlPageContext, mathType: String, block: Boolean): Unit = {
+    pc.requireMathJax()
+    val wr = c.getHtmlWriter
+    wr.tag(if(block) "div" else "span", Map("class" -> "MathJax_Preview").asJava)
+    wr.text("[math]")
+    wr.tag(if(block) "/div" else "/span")
+    wr.tag("script", Map("type" -> (mathType + (if(block) "; mode=display" else ""))).asJava)
+    if(mathType == "math/mml") wr.raw(n.getLiteral)
+    else wr.raw(Util.encodeScriptContent(n.getLiteral))
+    wr.tag("/script")
   }
 
   def indentedCodeBlockRenderer(pc: HtmlPageContext) = SimpleHtmlNodeRenderer { (n: IndentedCodeBlock, c: NodeRendererContext) =>
@@ -143,6 +180,18 @@ class HtmlTheme(global: Global) extends Theme(global) { self =>
     SimpleHtmlNodeRenderer(renderTabView(pc) _)
   )
 
+  /** If MathJAX is needed by the page, add all resources and return the resolved main script URI and inline config. */
+  def addMathJaxResources(pc: HtmlPageContext): Option[(URI, Option[ConfigObject])] = if(pc.needsMathJax) {
+    val loadConfig = tc.getStringListOr("global.mathJax.loadConfig").mkString(",")
+    val inlineConfig = tc.getConfigOpt("global.mathJax.inlineConfig").map(_.root())
+    for(path <- NashornSupport.listAssets("mathjax", "/"))
+      if(!mathJaxExclude.matchesPath(path))
+        pc.res.get(s"webjar:/mathjax/$path", "mathjax/")
+    val u = pc.res.get(s"webjar:/mathjax/MathJax.js", "mathjax/")
+    val u2 = if(loadConfig.isEmpty) u else new URI(u.getScheme, u.getUserInfo, u.getHost, u.getPort, u.getPath, "config="+loadConfig, u.getFragment)
+    Some(u2, inlineConfig)
+  } else None
+
   def render(site: Site): Unit = {
     val staticResources = global.findStaticResources
     val staticResourceURIs = staticResources.iterator.map(_._2.getPath).toSet
@@ -161,13 +210,13 @@ class HtmlTheme(global: Global) extends Theme(global) { self =>
         val slp = new SpecialLinkProcessor(pres, site, suffix, indexPage, staticResourceURIs)
         slp(p)
         val pc = new HtmlPageContext(this, site, p, slp, pres)
-        val template = getTemplate(templateName)
         val renderer = renderers(pc).foldLeft(HtmlRenderer.builder()) { case (z, n) => z.nodeRendererFactory(n) }
           .nodeRendererFactory(fencedCodeBlockRenderer(pc))
           .nodeRendererFactory(indentedCodeBlockRenderer(pc))
           .nodeRendererFactory(inlineCodeRenderer(pc))
           .extensions(p.extensions.htmlRenderer.asJava).build()
-        val formatted = template.render(new HtmlPageModel(pc, renderer)).body.trim
+        val pm = new HtmlPageModel(pc, renderer)
+        val formatted = getTemplate(templateName).render(pm).body.trim
         siteResources ++= pc.res.mappings.map(r => (r.sourceURL, r))
         file.parent.createDirectories()
         val min =
@@ -260,15 +309,17 @@ class HtmlTheme(global: Global) extends Theme(global) { self =>
 }
 
 /** The page context is available for preprocessing a page */
-class HtmlPageContext(theme: HtmlTheme, site: Site, val page: Page, val slp: SpecialLinkProcessor, val res: PageResources) {
+class HtmlPageContext(val theme: HtmlTheme, site: Site, val page: Page, val slp: SpecialLinkProcessor, val res: PageResources) {
   private[this] var last = -1
-  private[this] var _needsJavaScript = false
+  private[this] var _needsJavaScript, _needsMathJax = false
   def newID(): String = {
     last += 1
     s"_id$last"
   }
   def needsJavaScript: Boolean = _needsJavaScript
   def requireJavaScript(): Unit = _needsJavaScript = true
+  def needsMathJax: Boolean = _needsMathJax
+  def requireMathJax(): Unit = _needsMathJax = true
 
   private lazy val pageTC = theme.global.userConfig.theme.getConfig(page.config)
   def pageConfig(path: String): Option[String] = page.config.getStringOpt(path)
@@ -298,10 +349,19 @@ class HtmlPageContext(theme: HtmlTheme, site: Site, val page: Page, val slp: Spe
   }
 }
 
-/** The page model is available for rendering a preprocessed page with a template */
+/** The page model is available for rendering a preprocessed page with a template. Creating the HtmlPageModel
+  * forces the content to be rendered. */
 class HtmlPageModel(val pc: HtmlPageContext, renderer: HtmlRenderer) {
   val title = HtmlFormat.escape(pc.page.section.title.getOrElse(""))
   val content = HtmlFormat.raw(renderer.render(pc.page.doc))
+  private[this] val mathJaxResources = pc.theme.addMathJaxResources(pc)
+  val mathJaxMain: Option[URI] = mathJaxResources.map(_._1)
+  val mathJaxInline: Option[Html] = mathJaxResources.flatMap(_._2).flatMap { cv =>
+    if(cv.isEmpty) None
+    else Some(HtmlFormat.raw(cv.render(ConfigRenderOptions.concise())))
+  }
+  val mathJaxSkipStartupTypeset =
+    mathJaxResources.flatMap(_._2).map(_.toConfig.getBooleanOr("skipStartupTypeset")).getOrElse(false)
   def stringHtml(name: String): Option[Html] = pc.stringNode(name).map(n => HtmlFormat.raw(renderer.render(n)))
   def stringText(name: String): Option[Html] = pc.stringNode(name).map(n => HtmlFormat.escape(NodeUtil.extractText(n)))
 }

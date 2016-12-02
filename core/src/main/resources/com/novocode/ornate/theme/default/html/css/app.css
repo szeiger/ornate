@@ -498,3 +498,17 @@ img.emoji {
     padding-bottom: 1rem;
   }
 }
+
+/********** MathJax customization **********/
+
+#MathJax_Message {
+  height: auto;
+}
+
+.MathJax_Preview {
+  color: #999;
+}
+
+div.MathJax_Preview {
+  margin: 1rem 0;
+}

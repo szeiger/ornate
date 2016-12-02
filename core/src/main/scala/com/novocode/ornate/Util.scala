@@ -133,4 +133,19 @@ object Util {
     }
     c.compress(source)
   }
+
+  /** Remove empty lines from the beginning and end of a string, plus any trailing CR or LF */
+  def trimLines(s: String): String = {
+    val len = s.length
+    var start = 0
+    while(start < len && (s.charAt(start) == '\r' || s.charAt(start) == '\n')) start += 1
+    var end = len-1
+    while(end > 0 && (s.charAt(end) == '\r' || s.charAt(end) == '\n')) end -= 1
+    if(end >= start) s.substring(start, end+1) else ""
+  }
+
+  /** Encode a string for use inside an HTML script tag, as recommended in
+    * https://www.w3.org/TR/html5/scripting-1.html#restrictions-for-contents-of-script-elements */
+  def encodeScriptContent(s: String): String =
+    s.replace("<!--", "<\\!--").replace("<script", "<\\script").replace("</script", "<\\/script")
 }

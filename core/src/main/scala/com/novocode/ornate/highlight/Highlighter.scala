@@ -2,9 +2,9 @@ package com.novocode.ornate.highlight
 
 import java.net.URI
 
-import com.novocode.ornate.Page
+import com.novocode.ornate.{Page, Util}
 import com.novocode.ornate.config.{ConfiguredObject, Global}
-import play.twirl.api.{HtmlFormat, Html}
+import play.twirl.api.{Html, HtmlFormat}
 
 trait Highlighter {
   /** Convert source code or other plain text to HTML with highlighting applied. Use the
@@ -18,7 +18,7 @@ case class HighlightResult(html: Html, language: Option[String],
 
 class NoHighlighter(global: Global, conf: ConfiguredObject) extends Highlighter {
   def highlightTextAsHTML(text: String, lang: Option[String], target: HighlightTarget, page: Page): HighlightResult =
-    HighlightResult(HtmlFormat.escape(text), None)
+    HighlightResult(HtmlFormat.escape(Util.trimLines(text)), None)
 }
 
 sealed trait HighlightTarget

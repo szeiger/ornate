@@ -7,7 +7,7 @@ import com.novocode.ornate.commonmark._
 import com.novocode.ornate.commonmark.NodeExtensionMethods._
 import com.novocode.ornate.config.Global
 import com.novocode.ornate.highlight.HighlightResult
-import com.novocode.ornate.{Page, PageParser, PageSection, Util}
+import com.novocode.ornate._
 import com.novocode.ornate.theme.{HtmlPageContext, HtmlTheme, PageResources}
 import org.commonmark.ext.gfm.tables.TableBlock
 import org.commonmark.html.renderer.{NodeRendererContext, NodeRendererFactory}
@@ -16,7 +16,7 @@ import org.commonmark.node.{Document, Node}
 import scala.collection.JavaConverters._
 
 class Theme(global: Global) extends HtmlTheme(global) {
-  val MermaidJS = "js/mermaidAPI-0.5.8.min.js"
+  val mermaidJS = "js/mermaidAPI-0.5.8.min.js"
 
   override def synthesizePages: Vector[Page] = {
     syntheticPageURIs.flatMap {
@@ -48,21 +48,16 @@ class Theme(global: Global) extends HtmlTheme(global) {
     wr.line
   } else super.renderAttributedHeading(n, c)
 
-  override def renderFencedCodeBlock(n: AttributedFencedCodeBlock, c: NodeRendererContext, pc: HtmlPageContext, lang: Option[String]): Unit = {
-    lang match {
-      case Some("mermaid") =>
-        pc.res.get(MermaidJS, createLink = true)
-        pc.res.get("css/mermaid.custom.css", createLink = true)
-        val wr = c.getHtmlWriter
-        val id = pc.newID()
-        wr.tag("div", Map("class" -> "mermaid", "id" -> id).asJava)
-        wr.tag("div", Map("class" -> "mermaid_src", "style" -> "display: none").asJava)
-        wr.text(n.getLiteral)
-        wr.tag("/div")
-        wr.tag("/div")
-        pc.requireJavaScript()
-      case _ => super.renderFencedCodeBlock(n, c, pc, lang)
-    }
+  override def renderMermaid(n: AttributedFencedCodeBlock, c: NodeRendererContext, pc: HtmlPageContext): Unit = {
+    pc.res.get(mermaidJS, createLink = true)
+    pc.res.get("css/mermaid.custom.css", createLink = true)
+    val wr = c.getHtmlWriter
+    wr.tag("div", Map("class" -> "mermaid", "id" -> pc.newID()).asJava)
+    wr.tag("div", Map("class" -> "mermaid_src", "style" -> "display: none").asJava)
+    wr.text(n.getLiteral)
+    wr.tag("/div")
+    wr.tag("/div")
+    pc.requireJavaScript()
   }
 
   override def renderCode(n: Node, hlr: HighlightResult, c: NodeRendererContext, block: Boolean): Unit = if(block) {
