@@ -5,14 +5,14 @@ The following extensions are provided out of the box.
 ```yaml src=../../core/src/main/resources/ornate-reference.conf#--doc-extension-aliases
 ```
 
-Except for `autolink` they are all enabled by default. This can be configured on a per-page basis through the `extensions` setting:
+Except for `autolink` and `ins` they are all enabled by default. This can be configured on a per-page basis through the `extensions` setting:
 
 ```yaml src=../../core/src/main/resources/ornate-reference.conf#--doc-extensions
 ```
 
 ## commonmark-java extensions
 
-See the [commonmark-java documentation](https://github.com/atlassian/commonmark-java#extensions) for `autolink`, `strikethrough` and `tables`.
+See the [commonmark-java documentation](https://github.com/atlassian/commonmark-java#extensions) for `autolink`, `ins`, `strikethrough` and `tables`.
 
 ## `headerAttributes` and `autoIdentifiers` {#header_attributes}
 

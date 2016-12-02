@@ -6,7 +6,7 @@ import com.novocode.ornate.highlight.{NoHighlighter, Highlighter}
 import com.novocode.ornate._
 import com.novocode.ornate.theme.Theme
 import com.novocode.ornate.config.ConfigExtensionMethods.configExtensionMethods
-import org.commonmark.html.HtmlRenderer.HtmlRendererExtension
+import org.commonmark.renderer.html.HtmlRenderer.HtmlRendererExtension
 import org.commonmark.parser.Parser.ParserExtension
 
 import scala.collection.JavaConverters._

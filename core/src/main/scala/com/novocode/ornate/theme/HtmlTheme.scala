@@ -13,9 +13,10 @@ import com.novocode.ornate.config.Global
 import com.novocode.ornate.highlight.{HighlightResult, HighlightTarget}
 import com.novocode.ornate.js.{CSSO, ElasticlunrSearch, NashornSupport}
 import com.typesafe.config.{ConfigObject, ConfigRenderOptions}
-import org.commonmark.html.HtmlRenderer
-import org.commonmark.html.HtmlRenderer.HtmlRendererExtension
-import org.commonmark.html.renderer.{NodeRenderer, NodeRendererContext, NodeRendererFactory}
+import org.commonmark.renderer.NodeRenderer
+import org.commonmark.renderer.html.HtmlRenderer
+import org.commonmark.renderer.html.HtmlRenderer.HtmlRendererExtension
+import org.commonmark.renderer.html.{HtmlNodeRendererContext, HtmlNodeRendererFactory}
 import org.commonmark.node._
 import play.twirl.api.{Html, HtmlFormat, Template1}
 
@@ -41,13 +42,13 @@ class HtmlTheme(global: Global) extends Theme(global) { self =>
     uri.getPath.split('/').filter(_.nonEmpty).foldLeft(base) { case (f, s) => f / s }
 
   /** Render a heading with an ID. It can be overridden in subclasses as needed. */
-  def renderAttributedHeading(n: AttributedHeading, c: NodeRendererContext): Unit = {
+  def renderAttributedHeading(n: AttributedHeading, c: HtmlNodeRendererContext): Unit = {
     val htag = s"h${n.getLevel}"
     val attrs = c.extendAttributes(n, Collections.emptyMap[String, String])
     if(n.id ne null) attrs.put("id", n.id)
     val classes = n.simpleAttrs.filter(_.startsWith(".")).map(_.drop(1))
     if(classes.nonEmpty) attrs.put("class", classes.mkString(" "))
-    val wr = c.getHtmlWriter
+    val wr = c.getWriter
     wr.line
     wr.tag(htag, attrs)
     n.children.toVector.foreach(c.render)
@@ -55,12 +56,12 @@ class HtmlTheme(global: Global) extends Theme(global) { self =>
     wr.line
   }
 
-  def renderAttributedBlockQuote(n: AttributedBlockQuote, c: NodeRendererContext): Unit = {
+  def renderAttributedBlockQuote(n: AttributedBlockQuote, c: HtmlNodeRendererContext): Unit = {
     val attrs = c.extendAttributes(n, Collections.emptyMap[String, String])
     if(n.id ne null) attrs.put("id", n.id)
     val classes = n.simpleAttrs.filter(_.startsWith(".")).map(_.drop(1))
     if(classes.nonEmpty) attrs.put("class", classes.mkString(" "))
-    val wr = c.getHtmlWriter
+    val wr = c.getWriter
     wr.line
     wr.tag("blockquote", attrs)
     wr.line
@@ -73,7 +74,7 @@ class HtmlTheme(global: Global) extends Theme(global) { self =>
   /** Render a tab view. The default implementation simply renders the content so that merged code blocks
     * look no different than regular code blocks. Themes can override this method to render the actual
     * tab view. */
-  def renderTabView(pc: HtmlPageContext)(n: TabView, c: NodeRendererContext): Unit = {
+  def renderTabView(pc: HtmlPageContext)(n: TabView, c: HtmlNodeRendererContext): Unit = {
     n.children.toVector.foreach {
       case i: TabItem =>
         i.children.toVector.foreach(c.render)
@@ -83,12 +84,12 @@ class HtmlTheme(global: Global) extends Theme(global) { self =>
 
   /** Render code that was run through the highlighter. This method is called for all fenced code blocks,
     * indented code blocks and inline code. It can be overridden in subclasses as needed. */
-  def renderCode(n: Node, hlr: HighlightResult, c: NodeRendererContext, block: Boolean): Unit = {
+  def renderCode(n: Node, hlr: HighlightResult, c: HtmlNodeRendererContext, block: Boolean): Unit = {
     val langCode = hlr.language.map("language-" + _)
     val codeClasses = (if(block) hlr.preCodeClasses else hlr.codeClasses) ++ langCode
     val codeAttrs: Map[String, String] = (if(codeClasses.nonEmpty) Map("class" -> codeClasses.mkString(" ")) else Map.empty)
     val preAttrs: Map[String, String] = (if(hlr.preClasses.nonEmpty) Map("class" -> hlr.preClasses.mkString(" ")) else Map.empty)
-    val wr = c.getHtmlWriter
+    val wr = c.getWriter
     if(block) {
       wr.line
       wr.tag("pre", preAttrs.asJava)
@@ -102,12 +103,12 @@ class HtmlTheme(global: Global) extends Theme(global) { self =>
     }
   }
 
-  def fencedCodeBlockRenderer(pc: HtmlPageContext) = SimpleHtmlNodeRenderer { (n: AttributedFencedCodeBlock, c: NodeRendererContext) =>
+  def fencedCodeBlockRenderer(pc: HtmlPageContext) = SimpleHtmlNodeRenderer { (n: AttributedFencedCodeBlock, c: HtmlNodeRendererContext) =>
     val info = if(n.getInfo eq null) Vector.empty else n.getInfo.split(' ').filter(_.nonEmpty).toVector
     renderFencedCodeBlock(n, c, pc, info.headOption)
   }
 
-  def renderFencedCodeBlock(n: AttributedFencedCodeBlock, c: NodeRendererContext, pc: HtmlPageContext, lang: Option[String]): Unit = lang match {
+  def renderFencedCodeBlock(n: AttributedFencedCodeBlock, c: HtmlNodeRendererContext, pc: HtmlPageContext, lang: Option[String]): Unit = lang match {
     case Some("mermaid") => renderMermaid(n, c, pc)
     case Some("texmath") => renderMath(n, c, pc, "math/tex", true)
     case Some("asciimath") => renderMath(n, c, pc, "math/asciimath", true)
@@ -115,7 +116,7 @@ class HtmlTheme(global: Global) extends Theme(global) { self =>
     case _ => renderRegularFencedCodeBlock(n, c, pc, lang)
   }
 
-  def renderRegularFencedCodeBlock(n: AttributedFencedCodeBlock, c: NodeRendererContext, pc: HtmlPageContext, lang: Option[String]): Unit = {
+  def renderRegularFencedCodeBlock(n: AttributedFencedCodeBlock, c: HtmlNodeRendererContext, pc: HtmlPageContext, lang: Option[String]): Unit = {
     val hlr = global.highlighter.highlightTextAsHTML(n.getLiteral, lang, HighlightTarget.FencedCodeBlock, pc.page)
     hlr.css.foreach(u => pc.res.getURI(u, null, u.getPath.endsWith(".css")))
     renderCode(n, hlr.copy(language = lang.orElse(hlr.language)), c, true)
@@ -123,8 +124,8 @@ class HtmlTheme(global: Global) extends Theme(global) { self =>
 
   /** Render a Mermaid diagram block. This does not add any dependency on Mermaid to the generated site.
     * The method should be overwritten accordingly (unless a theme always adds it anyway). */
-  def renderMermaid(n: AttributedFencedCodeBlock, c: NodeRendererContext, pc: HtmlPageContext): Unit = {
-    val wr = c.getHtmlWriter
+  def renderMermaid(n: AttributedFencedCodeBlock, c: HtmlNodeRendererContext, pc: HtmlPageContext): Unit = {
+    val wr = c.getWriter
     wr.tag("div", Map("class" -> "mermaid", "id" -> pc.newID()).asJava)
     wr.text(n.getLiteral)
     wr.tag("/div")
@@ -134,9 +135,9 @@ class HtmlTheme(global: Global) extends Theme(global) { self =>
     * "script" element with the proper language code (which should be one of "math/tex", "math/asciimath", "math/mml").
     * Inline elements get a preceding "MathJax_Preview" span element, for block elements this is created as a div and
     * a "mode=display" annotation is added to the script. */
-  def renderMath(n: AttributedFencedCodeBlock, c: NodeRendererContext, pc: HtmlPageContext, mathType: String, block: Boolean): Unit = {
+  def renderMath(n: AttributedFencedCodeBlock, c: HtmlNodeRendererContext, pc: HtmlPageContext, mathType: String, block: Boolean): Unit = {
     pc.requireMathJax()
-    val wr = c.getHtmlWriter
+    val wr = c.getWriter
     wr.tag(if(block) "div" else "span", Map("class" -> "MathJax_Preview").asJava)
     wr.text("[math]")
     wr.tag(if(block) "/div" else "/span")
@@ -146,20 +147,20 @@ class HtmlTheme(global: Global) extends Theme(global) { self =>
     wr.tag("/script")
   }
 
-  def indentedCodeBlockRenderer(pc: HtmlPageContext) = SimpleHtmlNodeRenderer { (n: IndentedCodeBlock, c: NodeRendererContext) =>
+  def indentedCodeBlockRenderer(pc: HtmlPageContext) = SimpleHtmlNodeRenderer { (n: IndentedCodeBlock, c: HtmlNodeRendererContext) =>
     val hlr = global.highlighter.highlightTextAsHTML(n.getLiteral, None, HighlightTarget.IndentedCodeBlock, pc.page)
     hlr.css.foreach(u => pc.res.getURI(u, null, u.getPath.endsWith(".css")))
     renderCode(n, hlr, c, true)
   }
 
-  def inlineCodeRenderer(pc: HtmlPageContext) = SimpleHtmlNodeRenderer { (n: Code, c: NodeRendererContext) =>
+  def inlineCodeRenderer(pc: HtmlPageContext) = SimpleHtmlNodeRenderer { (n: Code, c: HtmlNodeRendererContext) =>
     val hlr = global.highlighter.highlightTextAsHTML(n.getLiteral, None, HighlightTarget.InlineCode, pc.page)
     hlr.css.foreach(u => pc.res.getURI(u, null, u.getPath.endsWith(".css")))
     renderCode(n, hlr, c, false)
   }
 
-  def emojiRenderer(pc: HtmlPageContext) = SimpleHtmlNodeRenderer { (n: Emoji, c: NodeRendererContext) =>
-    val wr = c.getHtmlWriter
+  def emojiRenderer(pc: HtmlPageContext) = SimpleHtmlNodeRenderer { (n: Emoji, c: HtmlNodeRendererContext) =>
+    val wr = c.getWriter
     if(n.uri ne null) {
       wr.raw(s"""<img class="emoji" title="${n.name}" alt="""")
       wr.text(n.unicode)
@@ -173,7 +174,7 @@ class HtmlTheme(global: Global) extends Theme(global) { self =>
     }
   }
 
-  def renderers(pc: HtmlPageContext): Seq[NodeRendererFactory] = Seq(
+  def renderers(pc: HtmlPageContext): Seq[HtmlNodeRendererFactory] = Seq(
     emojiRenderer(pc),
     SimpleHtmlNodeRenderer(renderAttributedBlockQuote _),
     SimpleHtmlNodeRenderer(renderAttributedHeading _),

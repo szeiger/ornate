@@ -40,7 +40,7 @@ lazy val root = project.in(file("."))
     }
   )
 
-val commonMarkVersion = "0.6.0"
+val commonMarkVersion = "0.7.1"
 
 lazy val core = project.in(file("core"))
   .enablePlugins(SbtTwirl)
@@ -51,6 +51,7 @@ lazy val core = project.in(file("core"))
       "com.atlassian.commonmark" % "commonmark-ext-gfm-tables" % commonMarkVersion,
       "com.atlassian.commonmark" % "commonmark-ext-gfm-strikethrough" % commonMarkVersion,
       "com.atlassian.commonmark" % "commonmark-ext-autolink" % commonMarkVersion,
+      "com.atlassian.commonmark" % "commonmark-ext-ins" % commonMarkVersion,
       "com.typesafe" % "config" % "1.3.0",
       "org.slf4j" % "slf4j-api" % "1.7.18",
       "org.scala-lang.modules" %% "scala-xml" % "1.0.5",

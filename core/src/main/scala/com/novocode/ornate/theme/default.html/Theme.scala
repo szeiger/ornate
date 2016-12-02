@@ -10,7 +10,7 @@ import com.novocode.ornate.highlight.HighlightResult
 import com.novocode.ornate._
 import com.novocode.ornate.theme.{HtmlPageContext, HtmlTheme, PageResources}
 import org.commonmark.ext.gfm.tables.TableBlock
-import org.commonmark.html.renderer.{NodeRendererContext, NodeRendererFactory}
+import org.commonmark.renderer.html.{HtmlNodeRendererContext, HtmlNodeRendererFactory}
 import org.commonmark.node.{Document, Node}
 
 import scala.collection.JavaConverters._
@@ -36,8 +36,8 @@ class Theme(global: Global) extends HtmlTheme(global) {
     }
   }
 
-  override def renderAttributedHeading(n: AttributedHeading, c: NodeRendererContext): Unit = if(n.id ne null) {
-    val wr = c.getHtmlWriter
+  override def renderAttributedHeading(n: AttributedHeading, c: HtmlNodeRendererContext): Unit = if(n.id ne null) {
+    val wr = c.getWriter
     val htag = s"h${n.getLevel}"
     wr.line
     val attrs = Map[String, String]("id" -> n.id, "class" -> "a_section", "data-magellan-target" -> n.id)
@@ -48,10 +48,10 @@ class Theme(global: Global) extends HtmlTheme(global) {
     wr.line
   } else super.renderAttributedHeading(n, c)
 
-  override def renderMermaid(n: AttributedFencedCodeBlock, c: NodeRendererContext, pc: HtmlPageContext): Unit = {
+  override def renderMermaid(n: AttributedFencedCodeBlock, c: HtmlNodeRendererContext, pc: HtmlPageContext): Unit = {
     pc.res.get(mermaidJS, createLink = true)
     pc.res.get("css/mermaid.custom.css", createLink = true)
-    val wr = c.getHtmlWriter
+    val wr = c.getWriter
     wr.tag("div", Map("class" -> "mermaid", "id" -> pc.newID()).asJava)
     wr.tag("div", Map("class" -> "mermaid_src", "style" -> "display: none").asJava)
     wr.text(n.getLiteral)
@@ -60,8 +60,8 @@ class Theme(global: Global) extends HtmlTheme(global) {
     pc.requireJavaScript()
   }
 
-  override def renderCode(n: Node, hlr: HighlightResult, c: NodeRendererContext, block: Boolean): Unit = if(block) {
-    val wr = c.getHtmlWriter
+  override def renderCode(n: Node, hlr: HighlightResult, c: HtmlNodeRendererContext, block: Boolean): Unit = if(block) {
+    val wr = c.getWriter
     wr.line
     wr.raw("<div class=\"row\"><div class=\"a_linked small-expand columns a_xscroll a_codeblock\">")
     super.renderCode(n, hlr, c, block)
@@ -88,10 +88,10 @@ class Theme(global: Global) extends HtmlTheme(global) {
     uri
   }
 
-  override def renderTabView(pc: HtmlPageContext)(n: TabView, c: NodeRendererContext): Unit = {
+  override def renderTabView(pc: HtmlPageContext)(n: TabView, c: HtmlNodeRendererContext): Unit = {
     val id = pc.newID()
     val items = n.children.collect { case i: TabItem => (i, pc.newID()) }.zipWithIndex.toVector
-    val wr = c.getHtmlWriter
+    val wr = c.getWriter
     wr.line
     wr.raw(s"""<ul class="tabs" data-tabs id="$id">""")
     items.foreach { case ((item, itemID), idx) =>
@@ -114,8 +114,8 @@ class Theme(global: Global) extends HtmlTheme(global) {
     wr.line
   }
 
-  def renderTableBlock(n: TableBlock, c: NodeRendererContext): Unit = {
-    val wr = c.getHtmlWriter
+  def renderTableBlock(n: TableBlock, c: HtmlNodeRendererContext): Unit = {
+    val wr = c.getWriter
     wr.line
     wr.raw("""<div class="row"><div class="small-expand columns a_xscroll a_table">""")
     wr.tag("table", c.extendAttributes(n, Collections.emptyMap[String, String]))
@@ -125,6 +125,6 @@ class Theme(global: Global) extends HtmlTheme(global) {
     wr.line()
   }
 
-  override def renderers(pc: HtmlPageContext): Seq[NodeRendererFactory] =
+  override def renderers(pc: HtmlPageContext): Seq[HtmlNodeRendererFactory] =
     SimpleHtmlNodeRenderer(renderTableBlock _) +: super.renderers(pc)
 }
