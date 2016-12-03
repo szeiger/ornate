@@ -6,15 +6,17 @@ import com.novocode.ornate.commonmark.Attributed
 import com.novocode.ornate.commonmark.NodeExtensionMethods._
 import com.novocode.ornate.config.ConfiguredObject
 import com.novocode.ornate.js.NashornSupport
-import org.commonmark.node.{CustomNode, Text, Node, AbstractVisitor}
-import org.commonmark.parser.{PostProcessor, Parser}
-import play.api.libs.json.{JsString, JsObject, JsArray, Json}
+import com.typesafe.config.Config
+import org.commonmark.node.{AbstractVisitor, CustomNode, Node, Text}
+import org.commonmark.parser.{Parser, PostProcessor}
+import play.api.libs.json.{JsArray, JsObject, JsString, Json}
 
 import scala.collection.mutable.ArrayBuffer
 
 /** Replace emoji names with images. */
 class EmojiExtension(co: ConfiguredObject) extends Extension {
-  override val parserExtensions = Seq(new EmojiParserExtension(co))
+  val ext = Seq(new EmojiParserExtension(co))
+  override def parserExtensions(pageConfig: Config) = ext
 }
 
 class EmojiParserExtension(co: ConfiguredObject) extends Parser.ParserExtension with NashornSupport with Logging {

@@ -43,6 +43,10 @@
         <script type="text/x-mathjax-config">
           MathJax.Hub.Config(@inline);
           @if(p.mathJaxSkipStartupTypeset) { MathJax.Hub.Queue(["Process",MathJax.Hub]); }
+          MathJax.Hub.Queue(function() {
+            var sticky = $('.sticky');
+            if(sticky.foundation) sticky.foundation('_calc', true); // recalculate sticky positions if Foundation is already initialized
+          });
         </script>
       }
       <script type="text/javascript" async src="@mathJax"></script>

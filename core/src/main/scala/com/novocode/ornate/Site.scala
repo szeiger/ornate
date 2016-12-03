@@ -2,10 +2,9 @@ package com.novocode.ornate
 
 import java.net.URI
 
-import com.novocode.ornate.commonmark.PageProcessor
+import com.novocode.ornate.commonmark.{CustomParser, PageProcessor}
 import com.typesafe.config.Config
 import org.commonmark.node._
-import org.commonmark.parser.Parser
 
 class Site(val pages: Vector[Page], val toc: Vector[TocEntry]) {
   private[this] val pageMap: Map[String, Page] = pages.map(p => (p.uri.getPath, p)).toMap
@@ -18,7 +17,7 @@ class Site(val pages: Vector[Page], val toc: Vector[TocEntry]) {
 }
 
 class Page(val sourceFileURI: Option[URI], val uri: URI, val suffix: String, val doc: Node, val config: Config,
-           val section: PageSection, val extensions: Extensions, parser: Parser) {
+           val section: PageSection, val extensions: Extensions, parser: CustomParser) {
   override def toString: String = s"Page($uri)"
 
   def uriWithSuffix(ext: String): URI = Util.replaceSuffix(uri, suffix, ext)

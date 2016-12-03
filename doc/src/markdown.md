@@ -216,3 +216,7 @@ This gets rendered as:
 - <api:com.novocode.ornate.Extension@preProcessors(pageConfig:com.typesafe.config.Config):Seq[com.novocode.ornate.PreProcessor]>
 
 When the link text is left empty or is identical to the link target (which is the case when using the `<scheme:scheme-specific-part>` link syntax), it is automatically derived from the link target.
+
+## `mathSyntax`
+
+This extensions enables common notation for inline and display (block) math. See [mathSyntax extension](math.md#mathSyntax) for details.

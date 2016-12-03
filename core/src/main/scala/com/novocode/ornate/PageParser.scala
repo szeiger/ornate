@@ -2,15 +2,13 @@ package com.novocode.ornate
 
 import java.net.URI
 
-import com.novocode.ornate.commonmark.{AttributedHeading, NodeUtil}
+import com.novocode.ornate.commonmark.{AttributedHeading, CustomParser, CustomParserBuilder, NodeUtil}
 import com.novocode.ornate.commonmark.NodeExtensionMethods._
 import com.novocode.ornate.config.ConfigExtensionMethods.configExtensionMethods
-import com.novocode.ornate.config.{ReferenceConfig, Global}
+import com.novocode.ornate.config.{Global, ReferenceConfig}
 import com.typesafe.config.Config
-
-import org.commonmark.node.{Document, Node, Heading}
+import org.commonmark.node.{Document, Heading, Node}
 import org.commonmark.parser.Parser
-
 import better.files._
 
 import scala.annotation.tailrec
@@ -57,7 +55,7 @@ object PageParser extends Logging {
     val extensions = appConfig.getExtensions(pageConfig.getStringList("extensions").asScala)
     if(logger.isDebugEnabled) logger.debug("Page extensions: " + extensions)
 
-    val parser = Parser.builder().extensions(extensions.parser.asJava).build()
+    val parser = new CustomParser((new CustomParserBuilder).extensions(extensions.parser(pageConfig).asJava).asInstanceOf[CustomParserBuilder])
     val pre = extensions.ornate.flatMap(_.preProcessors(pageConfig))
     val (doc, sections) = content match {
       case Some(s) =>

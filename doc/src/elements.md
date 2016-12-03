@@ -2,6 +2,7 @@
 highlight.highlightjs.fenced = null
 highlight.highlightjs.indented = scala
 highlight.highlightjs.inline = scala
+extension.mathSyntax.dollarInlineCode = asciimath
 ---
 # All Elements
 
@@ -52,7 +53,7 @@ Here is a math block that gets rendered with MathJax:
 \end{array}
 ```
 
-A paragraph following the math block.
+Here is a paragraph with embedded math: Lorem ipsum dolor sit amet `$a+b$`, consectetur adipiscing elit. Donec erat sem, ultrices ac rhoncus ut, pharetra sed velit. Quisque eu est sed nisl porta placerat et tempor mi. Aenean porta turpis sed `$sum_(i=1)^n i^3=((n(n+1))/2)^2$` erat vestibulum blandit. Morbi dapibus eros enim, non dignissim augue posuere ac. Etiam facilisis mauris tempus euismod imperdiet. Ut ultricies libero tellus, in porttitor lorem tincidunt in. Praesent nulla lectus, consectetur ac bibendum eu, consectetur nec massa.
 
 ## Code Blocks
 

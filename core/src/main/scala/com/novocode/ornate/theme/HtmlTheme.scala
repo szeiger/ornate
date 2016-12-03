@@ -110,9 +110,9 @@ class HtmlTheme(global: Global) extends Theme(global) { self =>
 
   def renderFencedCodeBlock(n: AttributedFencedCodeBlock, c: HtmlNodeRendererContext, pc: HtmlPageContext, lang: Option[String]): Unit = lang match {
     case Some("mermaid") => renderMermaid(n, c, pc)
-    case Some("texmath") => renderMath(n, c, pc, "math/tex", true)
-    case Some("asciimath") => renderMath(n, c, pc, "math/asciimath", true)
-    case Some("mathml") => renderMath(n, c, pc, "math/mml", true)
+    case Some("texmath") => renderMath(n.getLiteral, c, pc, "tex", true)
+    case Some("asciimath" | "math") => renderMath(n.getLiteral, c, pc, "asciimath", true)
+    case Some("mathml") => renderMath(n.getLiteral, c, pc, "mml", true)
     case _ => renderRegularFencedCodeBlock(n, c, pc, lang)
   }
 
@@ -131,20 +131,29 @@ class HtmlTheme(global: Global) extends Theme(global) { self =>
     wr.tag("/div")
   }
 
+  def renderInlineMath(pc: HtmlPageContext)(n: InlineMath, c: HtmlNodeRendererContext): Unit =
+    renderMath(n.literal, c, pc, n.language, false)
+
+  def renderMathBlock(pc: HtmlPageContext)(n: MathBlock, c: HtmlNodeRendererContext): Unit =
+    renderMath(n.literal, c, pc, n.language, true)
+
   /** Render a TeX math, MML or ASCIIMath block or inline element. The default implementation puts the code into a
-    * "script" element with the proper language code (which should be one of "math/tex", "math/asciimath", "math/mml").
+    * "script" element with the proper language code (which should be one of "tex", "asciimath" and "mml").
     * Inline elements get a preceding "MathJax_Preview" span element, for block elements this is created as a div and
     * a "mode=display" annotation is added to the script. */
-  def renderMath(n: AttributedFencedCodeBlock, c: HtmlNodeRendererContext, pc: HtmlPageContext, mathType: String, block: Boolean): Unit = {
+  def renderMath(code: String, c: HtmlNodeRendererContext, pc: HtmlPageContext, mathType: String, block: Boolean): Unit = {
     pc.requireMathJax()
     val wr = c.getWriter
+    if(block && mathType == "asciimath") // Work around a MathJax bug: AsciiMath is always displayed inline
+      wr.tag("div", Map("class" -> "MJXc-display", "style" -> "text-align: center").asJava)
     wr.tag(if(block) "div" else "span", Map("class" -> "MathJax_Preview").asJava)
     wr.text("[math]")
     wr.tag(if(block) "/div" else "/span")
-    wr.tag("script", Map("type" -> (mathType + (if(block) "; mode=display" else ""))).asJava)
-    if(mathType == "math/mml") wr.raw(n.getLiteral)
-    else wr.raw(Util.encodeScriptContent(n.getLiteral))
+    wr.tag("script", Map("type" -> ("math/" + mathType + (if(block) "; mode=display" else ""))).asJava)
+    if(mathType == "math/mml") wr.raw(code)
+    else wr.raw(Util.encodeScriptContent(code))
     wr.tag("/script")
+    if(block && mathType == "asciimath") wr.tag("/div")
   }
 
   def indentedCodeBlockRenderer(pc: HtmlPageContext) = SimpleHtmlNodeRenderer { (n: IndentedCodeBlock, c: HtmlNodeRendererContext) =>
@@ -178,7 +187,9 @@ class HtmlTheme(global: Global) extends Theme(global) { self =>
     emojiRenderer(pc),
     SimpleHtmlNodeRenderer(renderAttributedBlockQuote _),
     SimpleHtmlNodeRenderer(renderAttributedHeading _),
-    SimpleHtmlNodeRenderer(renderTabView(pc) _)
+    SimpleHtmlNodeRenderer(renderTabView(pc) _),
+    SimpleHtmlNodeRenderer(renderInlineMath(pc) _),
+    SimpleHtmlNodeRenderer(renderMathBlock(pc) _)
   )
 
   /** If MathJAX is needed by the page, add all resources and return the resolved main script URI and inline config. */

@@ -10,7 +10,7 @@ import com.novocode.ornate.config.{ReferenceConfig, ConfiguredObject, Global}
 trait Extension {
   def preProcessors(pageConfig: Config): Seq[PreProcessor] = Nil
   def pageProcessors(site: Site): Seq[PageProcessor] = Nil
-  def parserExtensions: Seq[ParserExtension] = Nil
+  def parserExtensions(pageConfig: Config): Seq[ParserExtension] = Nil
   def htmlRendererExtensions: Seq[HtmlRendererExtension] = Nil
 }
 
@@ -26,10 +26,10 @@ class Extensions(extensions: Vector[(ConfiguredObject, Option[AnyRef])]) {
       if(types.isEmpty) co.name else types.mkString(s"${co.name}[", ",", "]")
   }.mkString(", ")
 
-  def parser: Vector[ParserExtension] =
+  def parser(pageConfig: Config): Vector[ParserExtension] =
     extensions.flatMap {
       case (_, Some(e: ParserExtension)) => Vector(e)
-      case (_, Some(e: Extension)) => e.parserExtensions
+      case (_, Some(e: Extension)) => e.parserExtensions(pageConfig)
       case _ => None
     }
 

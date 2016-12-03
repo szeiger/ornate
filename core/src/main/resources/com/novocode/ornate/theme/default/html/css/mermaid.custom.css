@@ -222,6 +222,7 @@ div.mermaid .node text {
 /* Site integration */
 div.mermaid {
   margin-bottom: 1rem;
+  text-align: center;
 }
 div.mermaid, div.mermaid .label {
   font-size: 1rem;
