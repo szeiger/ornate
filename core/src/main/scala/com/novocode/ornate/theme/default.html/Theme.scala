@@ -53,9 +53,9 @@ class Theme(global: Global) extends HtmlTheme(global) {
     pc.res.get("css/mermaid.custom.css", createLink = true)
     val wr = c.getWriter
     wr.tag("div", Map("class" -> "mermaid", "id" -> pc.newID()).asJava)
-    wr.tag("div", Map("class" -> "mermaid_src", "style" -> "display: none").asJava)
+    wr.tag("pre", Map("class" -> "mermaid_src", "style" -> "display: none").asJava)
     wr.text(n.getLiteral)
-    wr.tag("/div")
+    wr.tag("/pre")
     wr.tag("/div")
     pc.requireJavaScript()
   }

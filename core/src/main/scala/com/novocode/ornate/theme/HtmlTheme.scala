@@ -118,7 +118,7 @@ class HtmlTheme(global: Global) extends Theme(global) { self =>
 
   def renderRegularFencedCodeBlock(n: AttributedFencedCodeBlock, c: HtmlNodeRendererContext, pc: HtmlPageContext, lang: Option[String]): Unit = {
     val hlr = global.highlighter.highlightTextAsHTML(n.getLiteral, lang, HighlightTarget.FencedCodeBlock, pc.page)
-    hlr.css.foreach(u => pc.res.getURI(u, null, u.getPath.endsWith(".css")))
+    hlr.css.foreach(u => pc.res.getURI(u, null, u.getPath.endsWith(".css"), false))
     renderCode(n, hlr.copy(language = lang.orElse(hlr.language)), c, true)
   }
 
@@ -158,13 +158,13 @@ class HtmlTheme(global: Global) extends Theme(global) { self =>
 
   def indentedCodeBlockRenderer(pc: HtmlPageContext) = SimpleHtmlNodeRenderer { (n: IndentedCodeBlock, c: HtmlNodeRendererContext) =>
     val hlr = global.highlighter.highlightTextAsHTML(n.getLiteral, None, HighlightTarget.IndentedCodeBlock, pc.page)
-    hlr.css.foreach(u => pc.res.getURI(u, null, u.getPath.endsWith(".css")))
+    hlr.css.foreach(u => pc.res.getURI(u, null, u.getPath.endsWith(".css"), false))
     renderCode(n, hlr, c, true)
   }
 
   def inlineCodeRenderer(pc: HtmlPageContext) = SimpleHtmlNodeRenderer { (n: Code, c: HtmlNodeRendererContext) =>
     val hlr = global.highlighter.highlightTextAsHTML(n.getLiteral, None, HighlightTarget.InlineCode, pc.page)
-    hlr.css.foreach(u => pc.res.getURI(u, null, u.getPath.endsWith(".css")))
+    hlr.css.foreach(u => pc.res.getURI(u, null, u.getPath.endsWith(".css"), false))
     renderCode(n, hlr, c, false)
   }
 
@@ -198,8 +198,8 @@ class HtmlTheme(global: Global) extends Theme(global) { self =>
     val inlineConfig = tc.getConfigOpt("global.mathJax.inlineConfig").map(_.root())
     for(path <- NashornSupport.listAssets("mathjax", "/"))
       if(!mathJaxExclude.matchesPath(path))
-        pc.res.get(s"webjar:/mathjax/$path", "mathjax/")
-    val u = pc.res.get(s"webjar:/mathjax/MathJax.js", "mathjax/")
+        pc.res.get(s"webjar:/mathjax/$path", "mathjax/", minified=true)
+    val u = pc.res.get(s"webjar:/mathjax/MathJax.js", "mathjax/", minified=true)
     val u2 = if(loadConfig.isEmpty) u else new URI(u.getScheme, u.getUserInfo, u.getHost, u.getPort, u.getPath, "config="+loadConfig, u.getFragment)
     Some(u2, inlineConfig)
   } else None
@@ -231,8 +231,9 @@ class HtmlTheme(global: Global) extends Theme(global) { self =>
         val formatted = getTemplate(templateName).render(pm).body.trim
         siteResources ++= pc.res.mappings.map(r => (r.sourceURL, r))
         file.parent.createDirectories()
+        val minifyInlineJS = minifyJS && !pc.needsMathJax // HtmlCompressor cannot handle non-JavaScript <script> tags
         val min =
-          if(minifyHTML) Util.htmlCompressorMinimize(formatted, minimizeCss = minifyCSS, minimizeJs = minifyJS) else formatted+'\n'
+          if(minifyHTML) Util.htmlCompressorMinimize(formatted, minimizeCss = minifyCSS, minimizeJs = minifyInlineJS) else formatted+'\n'
         file.write(min)(codec = Codec.UTF8)
       } catch { case ex: Exception =>
         logger.error(s"Error rendering page ${p.uri} to $file", ex)

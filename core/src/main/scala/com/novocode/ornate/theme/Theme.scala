@@ -88,15 +88,15 @@ class PageResources(val page: Page, theme: Theme, baseURI: URI) {
   private[this] val buf = new mutable.ArrayBuffer[ResourceSpec]
   private[this] val map = new mutable.HashMap[URL, ResourceSpec]
 
-  final def get(path: String, targetFile: String = null, createLink: Boolean = false): URI =
-    Util.relativeSiteURI(page.uri, getURI(Util.themeRootURI.resolve(path), targetFile, createLink))
+  final def get(path: String, targetFile: String = null, createLink: Boolean = false, minified: Boolean = false): URI =
+    Util.relativeSiteURI(page.uri, getURI(Util.themeRootURI.resolve(path), targetFile, createLink, minified))
 
   final def getLinks(suffix: String): Iterable[URI] =
     mappings.collect { case r: ResourceSpec if r.createLink && r.targetURI.toString.endsWith("."+suffix) => Util.relativeSiteURI(page.uri, r.targetURI) }
 
   def mappings: Iterable[ResourceSpec] = buf
 
-  def getURI(sourceURI: URI, targetFile: String, createLink: Boolean): URI = {
+  def getURI(sourceURI: URI, targetFile: String, createLink: Boolean, minified: Boolean): URI = {
     try {
       val url = theme.resolveResource(sourceURI)
       map.getOrElseUpdate(url, {
@@ -112,7 +112,7 @@ class PageResources(val page: Page, theme: Theme, baseURI: URI) {
               } else targetFile.replaceAll("^/*", "")
             baseURI.resolve(tname)
           }
-        val spec = ResourceSpec(sourceURI, url, targetURI, createLink, this)
+        val spec = ResourceSpec(sourceURI, url, targetURI, createLink, this, minified)
         buf += spec
         spec
       }).targetURI
@@ -130,9 +130,11 @@ class PageResources(val page: Page, theme: Theme, baseURI: URI) {
   * @param targetURI the target `site:` URI
   * @param createLink whether to create a link to the resource (e.g. "script" or "style" tag)
   * @param resources the `Resources` object which created this ResourceSpec
+  * @param minified whether the resource is already minified. In addition, all resources whose sourceURI path ends
+  *                 with ".min" before the actual suffix are also considered minified.
   */
-case class ResourceSpec(sourceURI: URI, sourceURL: URL, targetURI: URI, createLink: Boolean, resources: PageResources) {
-  def minifiableType: Option[String] = {
+case class ResourceSpec(sourceURI: URI, sourceURL: URL, targetURI: URI, createLink: Boolean, resources: PageResources, minified: Boolean) {
+  def minifiableType: Option[String] = if(minified) None else {
     val p = sourceURI.getPath
     val sep = p.lastIndexOf('.')
     if(sep <= 0 || sep >= p.length-1) None
