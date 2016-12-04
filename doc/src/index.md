@@ -10,6 +10,26 @@
 - Modular design: Themes, templates, [highlighters](highlighting.md), extensions - everything can be customized with Scala code.
 - Clean, modern [default theme](default-theme.md) using responsive design for a good user experience on all devices from mobile phones to desktop PCs.
 
+## Release Notes
+
+### v0.3
+
+- [Math support via MathJax](math.md)
+- [Mermaid diagrams support](diagrams.md)
+- [Minification of HTML, CSS and JavaScript](default-theme.md#minification)
+- [Scaladoc links support](markdown.md#scaladoclinks)
+- [Snippet source links](default-theme.md#snippet-source-links)
+- [Target directory cleaning](running.md#cleaning)
+
+### v0.2
+
+- [Elasticlunr-based search](default-theme.md#search)
+- [Global reference targets](markdown.md#globalrefs)
+
+### v0.1
+
+- First published release
+
 ## Terminology
 
 - **Page**: A page comes from a single CommonMark source file. It has a source URI and a page URI in the `site:` namespace. Themes can also create synthetic pages which are not associated with any source file.
