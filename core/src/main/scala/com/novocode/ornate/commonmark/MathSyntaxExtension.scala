@@ -28,13 +28,12 @@ class MathSyntaxParserExtension(co: ConfiguredObject, pageConfig: Config) extend
   val singleBackslash  = co.getConfig(pageConfig).getStringOr("singleBackslash")
   val doubleBackslash  = co.getConfig(pageConfig).getStringOr("doubleBackslash")
   val dollarInlineCode = co.getConfig(pageConfig).getStringOr("dollarInlineCode")
-
-  val anyBackslash = (singleBackslash ne null) || (doubleBackslash ne null)
+  val dollarFenced     = co.getConfig(pageConfig).getStringOr("dollarFenced")
 
   def extend(builder: Parser.Builder): Unit = {
     if(dollarInline != null || singleBackslash != null || doubleBackslash != null) { // Add inline parsers
       builder.asInstanceOf[CustomParserBuilder].addInlineDecorator { i => new InlineParser {
-        def parse(input: String, node: Node): Unit = i.parse(processInline(input), node)
+        def parse(input: String, node: Node): Unit = i.parse(encodeInline(input), node)
       }}
       builder.postProcessor(new PostProcessor {
         def process(node: Node): Node = {
@@ -80,12 +79,33 @@ class MathSyntaxParserExtension(co: ConfiguredObject, pageConfig: Config) extend
       builder.customBlockParserFactory(new MathBlockParserFactory("\\\\[", "\\\\]", doubleBackslash))
     if(singleBackslash != null)
       builder.customBlockParserFactory(new MathBlockParserFactory("\\[", "\\]", singleBackslash))
-    // Add inline code postprocessor
-    if(dollarInlineCode != null) {
-      builder.postProcessor(new PostProcessor {
-        def process(node: Node): Node = {
+    // Add postprocessor for fenced code blocks and inline code
+    builder.postProcessor(new PostProcessor {
+      def process(node: Node): Node = {
+        try {
           node.accept(new AbstractVisitor {
-            override def visit(n: Code): Unit = {
+            override def visit(_n: FencedCodeBlock): Unit = {
+              val n = AttributeFencedCodeBlocksProcessor.lift(_n)
+              val syntax = n.defAttrs.get("dollarMath").map {
+                case "null" => null
+                case s => s
+              }.getOrElse(dollarFenced)
+              if(syntax ne null) {
+                val lit = n.getLiteral
+                val parts = processInline(lit, syntax, null, null).map {
+                  case i: InlineMath => (i, n.nextSubstitutionId())
+                  case s => s
+                }
+                n.setLiteral(parts.map {
+                  case (_, id) => id
+                  case s => s
+                }.mkString)
+                val mathParts: Seq[(InlineMath, String)] = parts.collect { case t @ (im: InlineMath, id: String) => (im, id) }
+                n.postHighlightSubstitutions ++= mathParts.map(_._2)
+                mathParts.foreach { case (im, _) => n.appendChild(im) }
+              }
+            }
+            override def visit(n: Code): Unit = if(dollarInlineCode ne null) {
               val s = n.getLiteral
               if(s.length > 2 && s.charAt(0) == '$' && s.charAt(s.length-1) == '$') {
                 val im = new InlineMath
@@ -97,10 +117,12 @@ class MathSyntaxParserExtension(co: ConfiguredObject, pageConfig: Config) extend
               }
             }
           })
-          node
+        } catch {
+          case ex: Exception => logger.warn("Error post-processing math notation in code blocks", ex)
         }
-      })
-    }
+        node
+      }
+    })
   }
 
   class MathBlockParserFactory(startDelim: String, endDelim: String, lang: String) extends AbstractBlockParserFactory {
@@ -133,55 +155,71 @@ class MathSyntaxParserExtension(co: ConfiguredObject, pageConfig: Config) extend
   def encodeAsHtml(s: String, lang: String): String = htmlPrefix+lang+"\" code=\""+HtmlFormat.escape(s)+"\" />"
 
   /** Encode inline math sequences into intermediate inline HTML. */
-  def processInline(s: String): String = {
+  def encodeInline(s: String): String = {
+    processInline(s, dollarInline, singleBackslash, doubleBackslash).map {
+      case i: InlineMath => encodeAsHtml(i.literal, i.language)
+      case s => s.toString
+    }.mkString
+  }
+
+  def processInline(s: String, dollarInline: String, singleBackslash: String, doubleBackslash: String): Seq[AnyRef] = {
     val len = s.length
-    var i = s.indexOf('$')
-    if(i == -1 || i == len-1) s else {
-      val b = new mutable.StringBuilder(s.length + 128)
-      b.append(s.substring(0, i))
-      var start = -1 // set to the pos after the delimiter
-      var delim = 0 // dollar = 1, singleBackslash = 2, doubleBackslash = 3 (doubles as the length of the delimiter)
-      def isDollarStart = (i == 0 || s.charAt(i-1) != '\\') && i < len-1 && !Character.isWhitespace(s.charAt(i+1))
-      def isDollarEnd = !Character.isWhitespace(s.charAt(i-1)) && s.charAt(i-1) != '\\' && (i == len-1 || !Character.isDigit(s.charAt(i+1)))
-      def isSingleBackslashDelim = i >= 1 && s.charAt(i-1) == '\\' && (i == 1 || s.charAt(i-2) != '\\')
-      def isDoubleBackslashDelim = i >= 2 && s.charAt(i-1) == '\\' && s.charAt(i-2) == '\\' && (i == 2 || s.charAt(i-3) != '\\')
-      while(i < len) {
-        s.charAt(i) match {
-          case '$' if dollarInline ne null =>
-            if(start == -1) { // check for start
-              if(isDollarStart) {
-                start = i+1
-                delim = 1
-              } else b.append('$')
-            } else if(delim == 1 && isDollarEnd) { // check for end
-              if(i == start) b.append("$$") // no empty blocks allowed
-              else b.append(encodeAsHtml(s.substring(start, i), dollarInline))
-              start = -1
-            }
-          case '(' if anyBackslash && start == -1 =>
-            if((doubleBackslash ne null) && isDoubleBackslashDelim) {
-              start = i+1
-              delim = 3
-            } else if((singleBackslash ne null) && isSingleBackslashDelim) {
-              start = i+1
-              delim = 2
-            } else b.append('(')
-          case ')' if anyBackslash && start != -1 =>
-            if(delim == 3 && isDoubleBackslashDelim) {
-              b.append(encodeAsHtml(s.substring(start, i+2), doubleBackslash))
-              start = -1
-            } else if(delim == 2 && isSingleBackslashDelim) {
-              b.append(encodeAsHtml(s.substring(start, i+1), singleBackslash))
-              start = -1
-            }
-          case c =>
-            if(start == -1) b.append(c)
-        }
-        i += 1
+    val res = new mutable.ArrayBuffer[AnyRef]
+    val b = new mutable.StringBuilder
+    def appendMath(s: String, lang: String): Unit = {
+      if(b.nonEmpty) {
+        res += b.result()
+        b.clear()
       }
-      if(start != -1) b.append(s.substring(start-delim)) // unterminated sequence
-      b.toString
+      val im = new InlineMath
+      im.literal = s
+      im.language = lang
+      res += im
     }
+    var i = 0
+    var start = -1 // set to the pos after the delimiter
+    var delim = 0 // dollar = 1, singleBackslash = 2, doubleBackslash = 3 (doubles as the length of the delimiter)
+    def isDollarStart = (i == 0 || s.charAt(i-1) != '\\') && i < len-1 && !Character.isWhitespace(s.charAt(i+1))
+    def isDollarEnd = !Character.isWhitespace(s.charAt(i-1)) && s.charAt(i-1) != '\\' && (i == len-1 || !Character.isDigit(s.charAt(i+1)))
+    def isSingleBackslashDelim = i >= 1 && s.charAt(i-1) == '\\' && (i == 1 || s.charAt(i-2) != '\\')
+    def isDoubleBackslashDelim = i >= 2 && s.charAt(i-1) == '\\' && s.charAt(i-2) == '\\' && (i == 2 || s.charAt(i-3) != '\\')
+    while(i < len) {
+      s.charAt(i) match {
+        case '$' if dollarInline ne null =>
+          if(start == -1) { // check for start
+            if(isDollarStart) {
+              start = i+1
+              delim = 1
+            } else b.append('$')
+          } else if(delim == 1 && isDollarEnd) { // check for end
+            if(i == start) b.append("$$") // no empty blocks allowed
+            else appendMath(s.substring(start, i), dollarInline)
+            start = -1
+          }
+        case '(' if ((singleBackslash ne null) || (doubleBackslash ne null)) && start == -1 =>
+          if((doubleBackslash ne null) && isDoubleBackslashDelim) {
+            start = i+1
+            delim = 3
+          } else if((singleBackslash ne null) && isSingleBackslashDelim) {
+            start = i+1
+            delim = 2
+          } else b.append('(')
+        case ')' if ((singleBackslash ne null) || (doubleBackslash ne null)) && start != -1 =>
+          if(delim == 3 && isDoubleBackslashDelim) {
+            appendMath(s.substring(start, i+2), doubleBackslash)
+            start = -1
+          } else if(delim == 2 && isSingleBackslashDelim) {
+            appendMath(s.substring(start, i+1), singleBackslash)
+            start = -1
+          }
+        case c =>
+          if(start == -1) b.append(c)
+      }
+      i += 1
+    }
+    if(start != -1) b.append(s.substring(start-delim)) // unterminated sequence
+    if(b.nonEmpty) res += b.result()
+    res
   }
 }
 

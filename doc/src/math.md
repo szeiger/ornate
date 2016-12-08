@@ -96,3 +96,19 @@ The `mathSyntax` extension enables special syntax for inline and display (block)
 - `doubleBackslash`: MultiMarkdown's adaptation of LaTeX notation for `\\(inline\\)` and `\\[display\\]` math.
 
 - `dollarInlineCode`: Inline code blocks with `$` characters at the beginning and end like `` `$a+b$` `` are parsed as inline math. The initial `$` can be escaped as `\$` to prevent math parsing.
+
+- `dollarFenced`: Standard TeX inline math notation (like with `dollarInline`) in fenced code blocks. The usual [highlighting](highlighting.md) will be applied to such blocks. In order to minimize unwanted interaction of the highlighter with the unexpected math notation, inline math appears as a regular ASCII identifier to the highlighter. The real math notation is spliced back in after highlighting. This setting can be configured individually for each fenced code block with `dollarMath=tex|asciimath|null` in the info string.
+
+  For example:
+
+  ````markdown
+  ```scala dollarMath=tex
+  def copy[$\mathit{tps}\,$]($\mathit{ps}'_1\,$)$\ldots$($\mathit{ps}'_n$): $c$[$\mathit{tps}\,$] = new $c$[$\mathit{Ts}\,$]($\mathit{xs}_1\,$)$\ldots$($\mathit{xs}_n$)
+  ```
+  ````
+
+  This is rendered as:
+
+  ```scala dollarMath=tex
+  def copy[$\mathit{tps}\,$]($\mathit{ps}'_1\,$)$\ldots$($\mathit{ps}'_n$): $c$[$\mathit{tps}\,$] = new $c$[$\mathit{Ts}\,$]($\mathit{xs}_1\,$)$\ldots$($\mathit{xs}_n$)
+  ```

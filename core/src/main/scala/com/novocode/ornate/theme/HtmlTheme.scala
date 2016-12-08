@@ -95,7 +95,17 @@ class HtmlTheme(global: Global) extends Theme(global) { self =>
       wr.tag("pre", preAttrs.asJava)
     }
     wr.tag("code", codeAttrs.asJava)
-    wr.raw(hlr.html.toString)
+    n match {
+      case n: AttributedFencedCodeBlock if n.postHighlightSubstitutions.nonEmpty =>
+        val ch = n.children.toVector
+        n.splitProcessed(hlr.html.toString).foreach {
+          case Left(s) => wr.raw(s)
+          case Right(idx) =>
+            c.render(ch(idx))
+        }
+      case n =>
+        wr.raw(hlr.html.toString)
+    }
     wr.tag("/code")
     if(block) {
       wr.tag("/pre")
