@@ -70,7 +70,7 @@ abstract class Theme(val global: Global) extends Logging {
       if(url eq null) throw new FileNotFoundException("Theme resource not found: "+uri)
       url
     case "classpath" =>
-      val url = getClass.getClassLoader.getResource(uri.getPath)
+      val url = getClass.getClassLoader.getResource(uri.getPath.replaceFirst("^/*", ""))
       if(url eq null) throw new FileNotFoundException("Classpath resource not found: "+uri)
       url
     case _ => throw new IllegalArgumentException("Unsupported scheme in resource URI "+uri)
@@ -117,7 +117,7 @@ class PageResources(val page: Page, theme: Theme, baseURI: URI) {
         spec
       }).targetURI
     } catch { case ex: Exception =>
-      theme.logger.error(s"Error resolving theme resource URI $sourceURI -- Skipping resource and using original link")
+      theme.logger.error(s"Error resolving theme resource URI $sourceURI -- Skipping resource and using original link", ex)
       sourceURI
     }
   }
