@@ -512,3 +512,15 @@ img.emoji {
 div.MathJax_Preview {
   margin: 1rem 0;
 }
+
+/********** Print styles **********/
+
+@media print {
+  div.a_sitenav_container, nav, header, footer, .a_sourcelink { display: none; }
+  main, div.row, div.columns { display: block; max-width: none; }
+  body > div { height: auto; }
+  .a_xscroll { width: auto; overflow: hidden; }
+  pre, .hljs, pre.hljs, code.hljs { overflow: hidden; }
+  .MJXc-display { page-break-inside: avoid; }
+  @page { margin-top: 2.5em; margin-bottom: 2.5em; }
+}
