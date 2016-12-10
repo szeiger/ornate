@@ -1,4 +1,4 @@
-package com.novocode.ornate.theme.default.html
+package com.novocode.ornate.theme.default
 
 import java.net.{URI, URLDecoder}
 import java.util.Collections
@@ -15,9 +15,7 @@ import org.commonmark.node.{Document, Node}
 
 import scala.collection.JavaConverters._
 
-class Theme(global: Global) extends HtmlTheme(global) {
-  val mermaidJS = "js/mermaidAPI-0.5.8.min.js"
-
+class DefaultTheme(global: Global) extends HtmlTheme(global) {
   override def synthesizePages: Vector[Page] = {
     syntheticPageURIs.flatMap {
       case ("toc", u) =>
@@ -49,8 +47,8 @@ class Theme(global: Global) extends HtmlTheme(global) {
   } else super.renderAttributedHeading(n, c)
 
   override def renderMermaid(n: AttributedFencedCodeBlock, c: HtmlNodeRendererContext, pc: HtmlPageContext): Unit = {
-    pc.res.get(mermaidJS, createLink = true)
-    pc.res.get("css/mermaid.custom.css", createLink = true)
+    pc.res.get(mermaidJS, "js/", createLink = true)
+    pc.res.get("mermaid.custom.css", "css/", createLink = true)
     val wr = c.getWriter
     wr.tag("div", Map("class" -> "mermaid", "id" -> pc.newID()).asJava)
     wr.tag("pre", Map("class" -> "mermaid_src", "style" -> "display: none").asJava)

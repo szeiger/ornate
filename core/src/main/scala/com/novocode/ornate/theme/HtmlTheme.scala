@@ -30,6 +30,7 @@ class HtmlTheme(global: Global) extends Theme(global) { self =>
   val mathJaxExclude = new FileMatcher(Seq(
     "/config/local/", "/docs/", "/test/", "/unpacked/", "*.md", "*.html", "*.txt", "*.json", ".*"
   ))
+  val mermaidJS = "classpath:/com/novocode/ornate/theme/mermaidAPI-0.5.8.min.js"
 
   val tc = global.userConfig.theme.config
   val suffix = ".html"
@@ -322,7 +323,7 @@ class HtmlTheme(global: Global) extends Theme(global) { self =>
   }
 
   type Template = Template1[HtmlPageModel, HtmlFormat.Appendable]
-  private[this] val templateBase = getClass.getName.replaceAll("\\.[^\\.]*$", "")
+  private[this] val templateBase = getClass.getName.replaceAll("\\.[^\\.]*$", "") + ".html"
   private[this] val templates = new mutable.HashMap[String, Template]
   def getTemplate(name: String) = templates.getOrElseUpdate(name, {
     val className = s"$templateBase.$name"

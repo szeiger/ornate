@@ -35,8 +35,8 @@
     <meta http-equiv="x-ua-compatible" content="ie=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>@p.title</title>
-    <link rel="stylesheet" href="@{p.pc.res.get("css/foundation.min.css")}">
-    <link rel="stylesheet" href="@{p.pc.res.get("css/app.css")}">
+    <link rel="stylesheet" href="@{p.pc.res.get("foundation.min.css", "css/")}">
+    <link rel="stylesheet" href="@{p.pc.res.get("app.css", "css/")}">
     @for(href <- p.pc.res.getLinks("css")) { <link rel="stylesheet" href="@href"> }
     @for(mathJax <- p.mathJaxMain) {
       @for(inline <- p.mathJaxInline) {
@@ -68,7 +68,7 @@
                   @for(link <- p.pc.searchLink) {
                     <form action="@link" method="get" class="align-right a_search">
                       <input name="q" type="search" @for(s <- p.stringText("searchPlaceholder")) { placeholder="@{s}" }>
-                      <button><img alt="&#1F50D;" src="@{p.pc.res.get("images/search.svg")}" /></button>
+                      <button><img alt="&#1F50D;" src="@{p.pc.res.get("search.svg", "images/")}" /></button>
                     </form>
                   }
                 </div>
@@ -127,9 +127,9 @@
     </div>
     <script src="@{p.pc.res.get("webjar:/jquery/dist/jquery.min.js", "js/jquery.min.js")}"></script>
     <script src="@{p.pc.res.get("webjar:/what-input/what-input.min.js", "js/what-input.min.js")}"></script>
-    <script src="@{p.pc.res.get("js/foundation.min.js")}"></script>
+    <script src="@{p.pc.res.get("foundation.min.js", "js/")}"></script>
     @for(href <- p.pc.res.getLinks("js")) { <script src="@href"></script> }
-    <script src="@{p.pc.res.get("js/app.js")}"></script>
+    <script src="@{p.pc.res.get("app.js", "js/")}"></script>
     @footer
   </body>
 </html>

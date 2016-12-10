@@ -106,6 +106,12 @@ Using the `includeCode` extension, code blocks can also come from included files
   Snippet Placeholder -- only rendered when snippet processing fails
 ```
 
+Code blocks can also contain math:
+
+```scala dollarMath=tex
+def copy[$\mathit{tps}\,$]($\mathit{ps}'_1\,$)$\ldots$($\mathit{ps}'_n$): $c$[$\mathit{tps}\,$] = new $c$[$\mathit{Ts}\,$]($\mathit{xs}_1\,$)$\ldots$($\mathit{xs}_n$)
+```
+
 ## Block Quotes
 
 This is a block quote:
