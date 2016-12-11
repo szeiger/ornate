@@ -1,0 +1,36 @@
+@(p: com.novocode.ornate.theme.pdf.PdfPageModel)
+
+<!DOCTYPE html>
+<html class="no-js" lang="@{p.pc.pageConfig("meta.lang").get}" dir="@{p.pc.pageConfig("meta.dir").get}">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="x-ua-compatible" content="ie=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>@p.title</title>
+    <link rel="stylesheet" href="@{p.pc.res.get("template:/app.css", "css/")}">
+    @for(href <- p.pc.res.getLinks("css")) { <link rel="stylesheet" href="@href"> }
+    <script type="text/javascript">
+      window.triggerCount = @{p.doneTriggerCount};
+      window.doneTrigger = function() {
+        window.triggerCount -= 1;
+        if(window.triggerCount <= 0) window.status = "done";
+      };
+    </script>
+    @for(mathJax <- p.mathJaxMain) {
+      @for(inline <- p.mathJaxInline) {
+        <script type="text/x-mathjax-config">
+          MathJax.Hub.Config(@inline);
+          @if(p.mathJaxSkipStartupTypeset) { MathJax.Hub.Queue(["Process",MathJax.Hub]); }
+          MathJax.Hub.Queue(function() { window.doneTrigger(); });
+        </script>
+      }
+      <script type="text/javascript" async src="@mathJax"></script>
+    }
+  </head>
+  <body>
+    @{p.content}
+    <script src="@{p.pc.res.get("webjar:/jquery/dist/jquery.min.js", "js/jquery.min.js")}"></script>
+    @for(href <- p.pc.res.getLinks("js")) { <script src="@href"></script> }
+    <script src="@{p.pc.res.get("app.js", "js/")}"></script>
+  </body>
+</html>

@@ -117,7 +117,7 @@ This gets rendered as:
 ```yaml src=../../core/src/main/resources/ornate-reference.conf#--doc-includeCode
 ```
 
-Links to the snippet sources can ge generated automatically if a mapping is defined. For example, this manual has the following configuration under `extension.includeCode`:
+Links to the snippet sources can be generated automatically if a mapping is defined. For example, this manual has the following configuration under `extension.includeCode`:
 
 ```yaml src=../../doc/ornate.conf#--doc-sourceLinks
 ```

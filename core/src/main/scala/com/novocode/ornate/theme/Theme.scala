@@ -54,25 +54,25 @@ abstract class Theme(val global: Global) extends Logging {
       (e._1, Util.siteRootURI.resolve(e._2.unwrapped.asInstanceOf[String]))
     ).toVector
 
-  /** Resolve a resource URI to a URL. Resource URIs can use use the following protocols:
-    * file, site (static site resources), webjar (absolute WebJar resource), theme (relative
-    * to theme class), classpath (relative to classpath root) */
-  def resolveResource(uri: URI): URL = uri.getScheme match {
-    case "file" => uri.toURL
-    case "site" => global.userConfig.resourceDir.path.toUri.resolve(uri.getPath.replaceFirst("^/*", "")).toURL
+  /** Resolve a resource URI to a source file location. Resource URIs can use use the following protocols:
+    * file, site (static site resources), webjar (absolute WebJar resource), theme (relative to theme class),
+    * classpath (relative to classpath root), template (generated from template) */
+  def resolveResource(uri: URI): URI = uri.getScheme match {
+    case "file" | "template" => uri
+    case "site" => global.userConfig.resourceDir.path.toUri.resolve(uri.getPath.replaceFirst("^/*", ""))
     case "webjar" =>
       val parts = uri.getPath.split('/').filter(_.nonEmpty)
       val path = NashornSupport.getFullPathExact(parts.head, parts.tail.mkString("/"))
       if(path.isEmpty) throw new FileNotFoundException("WebJar resource not found: "+uri)
-      getClass.getClassLoader.getResource(path.get)
+      getClass.getClassLoader.getResource(path.get).toURI
     case "theme" =>
       val url = getClass.getResource(uri.getPath.replaceFirst("^/*", ""))
       if(url eq null) throw new FileNotFoundException("Theme resource not found: "+uri)
-      url
+      url.toURI
     case "classpath" =>
       val url = getClass.getClassLoader.getResource(uri.getPath.replaceFirst("^/*", ""))
       if(url eq null) throw new FileNotFoundException("Classpath resource not found: "+uri)
-      url
+      url.toURI
     case _ => throw new IllegalArgumentException("Unsupported scheme in resource URI "+uri)
   }
 
@@ -86,7 +86,7 @@ abstract class Theme(val global: Global) extends Logging {
 
 class PageResources(val page: Page, theme: Theme, baseURI: URI) {
   private[this] val buf = new mutable.ArrayBuffer[ResourceSpec]
-  private[this] val map = new mutable.HashMap[URL, ResourceSpec]
+  private[this] val map = new mutable.HashMap[URI, ResourceSpec]
 
   final def get(path: String, targetFile: String = null, createLink: Boolean = false, minified: Boolean = false): URI =
     Util.relativeSiteURI(page.uri, getURI(Util.themeRootURI.resolve(path), targetFile, createLink, minified))
@@ -98,8 +98,8 @@ class PageResources(val page: Page, theme: Theme, baseURI: URI) {
 
   def getURI(sourceURI: URI, targetFile: String, createLink: Boolean, minified: Boolean): URI = {
     try {
-      val url = theme.resolveResource(sourceURI)
-      map.getOrElseUpdate(url, {
+      val resolved = theme.resolveResource(sourceURI)
+      map.getOrElseUpdate(resolved, {
         val targetURI =
           if(sourceURI.getScheme == "site") sourceURI // link to site resources at their original location
           else {
@@ -112,7 +112,7 @@ class PageResources(val page: Page, theme: Theme, baseURI: URI) {
               } else targetFile.replaceAll("^/*", "")
             baseURI.resolve(tname)
           }
-        val spec = ResourceSpec(sourceURI, url, targetURI, createLink, this, minified)
+        val spec = ResourceSpec(sourceURI, resolved, targetURI, createLink, this, minified)
         buf += spec
         spec
       }).targetURI
@@ -126,14 +126,14 @@ class PageResources(val page: Page, theme: Theme, baseURI: URI) {
 /** Resource to include in the generated site.
   *
   * @param sourceURI The source URI
-  * @param sourceURL the resolved source URL to locate the file
+  * @param resolvedSourceURI the resolved source URI to locate the file
   * @param targetURI the target `site:` URI
   * @param createLink whether to create a link to the resource (e.g. "script" or "style" tag)
   * @param resources the `Resources` object which created this ResourceSpec
   * @param minified whether the resource is already minified. In addition, all resources whose sourceURI path ends
   *                 with ".min" before the actual suffix are also considered minified.
   */
-case class ResourceSpec(sourceURI: URI, sourceURL: URL, targetURI: URI, createLink: Boolean, resources: PageResources, minified: Boolean) {
+case class ResourceSpec(sourceURI: URI, resolvedSourceURI: URI, targetURI: URI, createLink: Boolean, resources: PageResources, minified: Boolean) {
   def minifiableType: Option[String] = if(minified) None else {
     val p = sourceURI.getPath
     val sep = p.lastIndexOf('.')

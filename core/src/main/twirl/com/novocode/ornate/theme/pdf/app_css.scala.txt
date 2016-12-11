@@ -1,0 +1,185 @@
+@(m: com.novocode.ornate.theme.HtmlSiteModel)
+
+body {
+  background: white;
+  color: black;
+  font-family: "Times New Roman", Times, serif;
+  font-size: @{m.themeConfig("global.fontSize").get}pt;
+  /* L/R margin set here to allow overflow: */
+  margin: 0 @{m.themeConfig("global.margin.right").get} 0 @{m.themeConfig("global.margin.left").get};
+}
+
+p {
+  text-align: justify;
+}
+
+body > :first-child {
+  margin-top: 0;
+}
+
+body > :last-child {
+  margin-bottom: 0;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: Helvetica, "Helvetica Neue", Arial, "Source Sans Pro", "Segoe UI", Roboto, sans-serif;
+  margin: 2rem 0 1rem 0;
+  font-weight: 700 !important; /* even in inline code */
+  page-break-after: avoid;
+}
+
+h1 {
+  font-size: 2rem;
+  margin-bottom: 2.5rem;
+}
+
+h2 { font-size: 1.5rem; }
+
+h3 { font-size: 1.25rem; }
+
+h4 { font-size: 1.1875rem; }
+
+h5 { font-size: 1.125rem; }
+
+h6 { font-size: 1.0625rem; }
+
+.top-bar-right {
+  text-align: right;
+}
+
+blockquote {
+  margin: 1rem 0;
+  padding: 0.5rem 1rem;
+  border-left: 0.2rem solid #cacaca;
+  background-color: #f8f8f8;
+}
+
+blockquote, blockquote p {
+  line-height: 1.6;
+  color: black;
+}
+
+blockquote > :last-child {
+  margin-bottom: 0;
+}
+
+blockquote > :first-child {
+  margin-top: 0;
+}
+
+blockquote.note {
+  border-left-color: rgb(228,217,113);
+  background-color: rgba(228,217,113,0.2);
+}
+
+blockquote.warning {
+  border-left-color: rgb(255,117,0);
+  background-color: rgba(255,117,0,0.2);
+}
+
+hr {
+  height: 0;
+  border: 0;
+  border-bottom: 0.2rem solid #cacaca;
+}
+
+/********** highlight.js customization **********/
+
+pre, code, kbd, samp {
+  font-family: "Droid Sans Mono","Source Code Pro",Menlo,Monaco,Consolas,"DejaVu Sans Mono",Inconsolata,monospace;
+  border: 0;
+  color: black;
+  background-color: #f8f8f8;
+  font-size: 90%;
+}
+
+code.hljs {
+  display: inline;
+  padding: 0 0.2rem;
+}
+
+pre code, pre.hljs code {
+  background-color: inherit;
+  color: inherit;
+  border: 0;
+  padding: 0;
+  font-size: 100%;
+  display: block;
+}
+
+pre, pre.hljs, code.hljs {
+  /* Override hljs background color: */
+  background-color: #f8f8f8;
+}
+
+blockquote pre, blockquote pre.hljs, blockquote code.hljs, h1 code.hljs, h2 code.hljs, h3 code.hljs, h4 code.hljs, h5 code.hljs, h6 code.hljs {
+  background-color: white;
+}
+
+pre, pre.hljs {
+  padding: 0.5rem 1rem;
+  line-height: 1.5;
+  border: 1px solid #ddd;
+}
+
+/********** Custom style classes **********/
+
+.a_table {
+  overflow-x: hidden; /* Otherwise the whole document is scaled down to make the table fit: */
+}
+
+.a_table table th, .a_table table td {
+  border: 1px solid #ddd;
+}
+
+.a_table td, .a_table th {
+  padding: 0.2rem 0.7rem;
+}
+
+.a_table table {
+  border-collapse: collapse;
+}
+
+.a_table thead th, .a_table thead td {
+  border-bottom-color: #444;
+}
+
+/********** MathJax customization **********/
+
+#MathJax_Message {
+  height: auto;
+}
+
+.MathJax_Preview {
+  color: #999;
+}
+
+div.MathJax_Preview {
+  margin: 1rem 0;
+}
+
+/********** Print styles **********/
+
+.MJXc-display { page-break-inside: avoid; }
+
+div.a_code_block {
+  /*margin-right: -@{m.themeConfig("global.margin.right").get}; / * Allow code to overflow into the margin */
+  overflow-x: visible;
+}
+
+div.a_code_block > pre {
+  overflow-x: hidden;
+  margin: 0;
+}
+
+@@page {
+  margin: @{m.themeConfig("global.margin.top").get} 0 @{m.themeConfig("global.margin.bottom").get} 0;
+}
+
+img.emoji {
+  /* work around wrong scaling in wkhtml2pdf */
+  padding: 0;
+  margin: 0 -6pt;
+  width: 24pt;
+  height: 12pt;
+}
