@@ -4,6 +4,7 @@ import java.io.{FileNotFoundException, InputStreamReader, BufferedReader}
 import java.net.{URLDecoder, URI}
 import java.util.regex.Pattern
 
+import URIExtensionMethods._
 import com.novocode.ornate.commonmark.Attributed
 import com.novocode.ornate.commonmark.AttributedFencedCodeBlock
 import com.novocode.ornate.commonmark.NodeExtensionMethods
@@ -71,15 +72,14 @@ class IncludeCodeExtension(co: ConfiguredObject) extends Extension with Logging 
     }
 
     def getSourceLink(snippetURI: URI, parsed: Parsed, lines: Option[Seq[(Int, Int)]]): Option[URI] = {
-      val fileURI = new URI(snippetURI.getScheme, snippetURI.getUserInfo, snippetURI.getHost,
-        snippetURI.getPort, snippetURI.getPath, null, null)
+      val fileURI = snippetURI.copy(query = null, fragment = null)
       val o = parsed.sourceLinks.iterator.map(sl => (sl, sl.dir.relativize(fileURI))).find(t => !t._2.isAbsolute)
       o.map { case (sl, rel) =>
         val u = sl.uri.resolve(rel)
         if(sl.uri.getFragment == "ghLines" && lines.map(_.nonEmpty).getOrElse(false)) {
           val first = lines.get.head._1
           val last = lines.get.last._2
-          new URI(u.getScheme, u.getUserInfo, u.getHost, u.getPort, u.getPath, null, s"L$first-L$last")
+          u.copy(fragment = s"L$first-L$last")
         } else u
       }
     }
@@ -89,8 +89,7 @@ class IncludeCodeExtension(co: ConfiguredObject) extends Extension with Logging 
       val remove: Option[Pattern] = parsed.removePatterns.find { case (ext, re) =>
         snippetPath.endsWith(s".$ext")
       }.map { case (ext, re) => Pattern.compile(re) }
-      val fileURI = new URI(snippetURI.getScheme, snippetURI.getUserInfo, snippetURI.getHost,
-        snippetURI.getPort, snippetPath, snippetURI.getQuery, null)
+      val fileURI = snippetURI.copy(fragment = null)
       val fragment = snippetURI.getFragment
       val in = fileURI.toURL.openStream()
       val lines = try {

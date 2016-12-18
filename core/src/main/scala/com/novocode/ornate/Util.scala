@@ -17,6 +17,7 @@ import better.files._
 import scala.io.Codec
 
 object Util {
+  import URIExtensionMethods._
   val siteRootURI = new URI("site", null, "/", null)
   val themeRootURI = new URI("theme", null, "/", null)
 
@@ -28,17 +29,6 @@ object Util {
     }.dropWhile(c => !Character.isAlphabetic(c))
     if(s.nonEmpty) s else "section"
   }
-
-  def replaceSuffix(u: URI, suffix: String, newSuffix: String): URI =
-    if(suffix.isEmpty && newSuffix.isEmpty) u
-    else {
-      val p = u.getPath
-      val p2 =
-        if(p.toLowerCase(Locale.ENGLISH).endsWith(suffix.toLowerCase(Locale.ENGLISH)))
-          p.substring(0, p.length-suffix.length)
-        else p
-      new URI(u.getScheme, u.getAuthority, p2 + newSuffix, u.getQuery, u.getFragment)
-    }
 
   /** Create a relative link from one page to another. Both URIs must be absolute "site:" URIs
     * without "." or ".." path segments, ending in file names (i.e. no tailing "/"). */
@@ -64,10 +54,8 @@ object Util {
   def rewriteIndexPageLink(rel: URI, indexPage: Option[String]): URI = indexPage match {
     case Some(s) =>
       val p = rel.getPath
-      if(p == s)
-        new URI(rel.getScheme, rel.getAuthority, "./", rel.getQuery, rel.getFragment)
-      else if(p.endsWith("/"+s))
-        new URI(rel.getScheme, rel.getAuthority, p.substring(0, p.length-s.length), rel.getQuery, rel.getFragment)
+      if(p == s) rel.copy(path = "./")
+      else if(p.endsWith("/"+s)) rel.copy(path = p.substring(0, p.length-s.length))
       else rel
     case None => rel
   }
@@ -148,4 +136,24 @@ object Util {
     * https://www.w3.org/TR/html5/scripting-1.html#restrictions-for-contents-of-script-elements */
   def encodeScriptContent(s: String): String =
     s.replace("<!--", "<\\!--").replace("<script", "<\\script").replace("</script", "<\\/script")
+}
+
+class URIExtensionMethods(private val uri: URI) extends AnyVal {
+  def copy(scheme: String = uri.getScheme, authority: String = uri.getAuthority, path: String = uri.getPath, query: String = uri.getQuery, fragment: String = uri.getFragment): URI =
+    new URI(scheme, authority, path, query, fragment)
+
+  def replaceSuffix(suffix: String, newSuffix: String): URI =
+    if(suffix.isEmpty && newSuffix.isEmpty) uri
+    else {
+      val p = uri.getPath
+      val p2 =
+        if(p.toLowerCase(Locale.ENGLISH).endsWith(suffix.toLowerCase(Locale.ENGLISH)))
+          p.substring(0, p.length-suffix.length)
+        else p
+      copy(path = p2 + newSuffix)
+    }
+}
+
+object URIExtensionMethods {
+  @inline implicit def uriToUriExtensionMethods(uri: URI): URIExtensionMethods = new URIExtensionMethods(uri)
 }

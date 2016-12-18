@@ -2,12 +2,13 @@ package com.novocode.ornate.theme
 
 import java.net.URI
 
+import com.novocode.ornate.URIExtensionMethods._
 import com.novocode.ornate.commonmark.PageProcessor
 import com.novocode.ornate.{Logging, Util, Page, Site}
 import org.commonmark.node.{Image, Link, AbstractVisitor}
 
 /** Resolve links and image targets to the proper destination. */
-class SpecialLinkProcessor(imageResources: PageResources, site: Site, suffix: String, indexPage: Option[String], resourcePaths: Set[String]) extends PageProcessor with Logging {
+class SpecialLinkProcessor(imageResources: PageResources, lookup: SpecialLinkProcessor.Lookup, suffix: String, indexPage: Option[String], resourcePaths: Set[String]) extends PageProcessor with Logging {
   def apply(p: Page): Unit = {
     p.doc.accept(new AbstractVisitor {
       override def visit(n: Link): Unit = {
@@ -32,19 +33,18 @@ class SpecialLinkProcessor(imageResources: PageResources, site: Site, suffix: St
       val uri = pageURI.resolve(destination)
       uri.getScheme match {
         case "site" =>
-          val rel = (if(allowPage) site.getPageFor(uri) else None) match {
+          val rel = (if(allowPage) lookup.getPageFor(uri) else None) match {
             case Some(t) =>
               logger.debug(s"Page $pageURI: Resolved $tpe $destination to page ${t.uri}")
               val turi = t.uriWithSuffix(suffix)
               val frag = uri.getFragment
               if(!unchecked && (frag ne null) && !t.headingIDs.contains(frag))
-                logger.error(s"Page $pageURI: Fragment #$frag for $tpe $destination (resolved to $uri) not found")
-              val turi2 = new URI(turi.getScheme, turi.getAuthority, turi.getPath, uri.getQuery, frag)
-              Util.relativeSiteURI(pageURI, turi2)
+                logger.error(s"Page $pageURI: Fragment #$frag for $tpe $destination not found")
+              Util.relativeSiteURI(pageURI, turi.copy(fragment = frag))
             case None =>
               if(!unchecked && !resourcePaths.contains(uri.getPath)) {
                 val what = if(allowPage) "page or resource" else "resource"
-                logger.warn(s"Page $pageURI: No $what found for $tpe $destination (resolved to $uri)")
+                logger.warn(s"Page $pageURI: No $what found for $tpe $destination")
               }
               Util.relativeSiteURI(pageURI, uri)
           }
@@ -61,5 +61,21 @@ class SpecialLinkProcessor(imageResources: PageResources, site: Site, suffix: St
       logger.error(s"Page $pageURI: Error processing link: $destination", ex)
       destination
     }
+  }
+}
+
+object SpecialLinkProcessor {
+  class Lookup(site: Site, targetSuffix: Option[String]) {
+    private[this] val pageMap: Map[String, Page] = {
+      val m = site.pages.map(p => (p.uri.getPath, p)).toMap
+      targetSuffix match {
+        case Some(s) => m ++ site.pages.map(p => (p.uriWithSuffix(s).getPath, p)).toMap
+        case None => m
+      }
+    }
+
+    def getPageFor(uri: URI): Option[Page] =
+      if(uri.getScheme == Util.siteRootURI.getScheme) pageMap.get(uri.getPath)
+      else None
   }
 }

@@ -2,17 +2,12 @@ package com.novocode.ornate
 
 import java.net.URI
 
+import URIExtensionMethods._
 import com.novocode.ornate.commonmark.{CustomParser, PageProcessor}
 import com.typesafe.config.Config
 import org.commonmark.node._
 
 class Site(val pages: Vector[Page], val toc: Vector[TocEntry]) {
-  private[this] val pageMap: Map[String, Page] = pages.map(p => (p.uri.getPath, p)).toMap
-
-  def getPageFor(uri: URI): Option[Page] =
-    if(uri.getScheme == Util.siteRootURI.getScheme) pageMap.get(uri.getPath)
-    else None
-
   def findTocEntry(p: Page): Option[TocEntry] = toc.find(te => te.page eq p)
 }
 
@@ -20,7 +15,7 @@ class Page(val sourceFileURI: Option[URI], val uri: URI, val suffix: String, val
            val section: PageSection, val extensions: Extensions, parser: CustomParser) {
   override def toString: String = s"Page($uri)"
 
-  def uriWithSuffix(ext: String): URI = Util.replaceSuffix(uri, suffix, ext)
+  def uriWithSuffix(ext: String): URI = uri.replaceSuffix(suffix, ext)
 
   var processors: Seq[PageProcessor] = null // Initialized by Main after the Site object has been built
 

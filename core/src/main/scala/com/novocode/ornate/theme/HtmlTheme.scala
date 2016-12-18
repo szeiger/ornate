@@ -7,6 +7,7 @@ import better.files.File.OpenOptions
 import com.novocode.ornate._
 import com.novocode.ornate.commonmark.NodeExtensionMethods._
 import better.files._
+import com.novocode.ornate.URIExtensionMethods._
 import com.novocode.ornate.commonmark._
 import com.novocode.ornate.config.ConfigExtensionMethods.configExtensionMethods
 import com.novocode.ornate.config.Global
@@ -214,12 +215,15 @@ class HtmlTheme(global: Global) extends Theme(global) { self =>
       if(!mathJaxExclude.matchesPath(path))
         pc.res.get(s"webjar:/mathjax/$path", "mathjax/", minified=true)
     val u = pc.res.get(s"webjar:/mathjax/MathJax.js", "mathjax/", minified=true)
-    val u2 = if(loadConfig.isEmpty) u else new URI(u.getScheme, u.getUserInfo, u.getHost, u.getPort, u.getPath, "config="+loadConfig, u.getFragment)
+    val u2 = if(loadConfig.isEmpty) u else u.copy(query = "config="+loadConfig)
     Some(u2, inlineConfig)
   } else None
 
-  def createPageContext(site: Site, page: Page, staticResources: Vector[(File, URI)]): HtmlPageContext =
-    new HtmlPageContext(this, site, page, staticResources)
+  def createSiteContext(site: Site): HtmlSiteContext =
+    new HtmlSiteContext(this, site)
+
+  def createPageContext(siteContext: HtmlSiteContext, page: Page): HtmlPageContext =
+    new HtmlPageContext(siteContext, page)
 
   def createPageModel(pc: HtmlPageContext, renderer: HtmlRenderer): HtmlPageModel =
     new HtmlPageModel(pc, renderer)
@@ -227,7 +231,7 @@ class HtmlTheme(global: Global) extends Theme(global) { self =>
   def createSiteModel: HtmlSiteModel = new HtmlSiteModel(this)
 
   def render(site: Site): Unit = {
-    val staticResources = global.findStaticResources
+    val siteContext = createSiteContext(site)
     val siteResources = new mutable.HashMap[URI, ResourceSpec]
 
     site.pages.foreach { p =>
@@ -235,7 +239,7 @@ class HtmlTheme(global: Global) extends Theme(global) { self =>
       try {
         val templateName = global.userConfig.theme.getConfig(p.config).getString("template")
         logger.debug(s"Rendering page ${p.uri} to file $file with template ${templateName}")
-        val pc = createPageContext(site, p, staticResources)
+        val pc = createPageContext(siteContext, p)
         pc.slp(p)
         val renderer = renderers(pc).foldLeft(HtmlRenderer.builder()) { case (z, n) => z.nodeRendererFactory(n) }
           .nodeRendererFactory(fencedCodeBlockRenderer(pc))
@@ -258,7 +262,7 @@ class HtmlTheme(global: Global) extends Theme(global) { self =>
     try createSearchIndex(site)
     catch { case ex: Exception => logger.error(s"Error creating search index", ex) }
 
-    staticResources.foreach { case (sourceFile, uri) =>
+    siteContext.staticResources.foreach { case (sourceFile, uri) =>
       val file = targetFile(uri)
       logger.debug(s"Copying static resource $uri to file $file")
       try {
@@ -355,8 +359,16 @@ class HtmlTheme(global: Global) extends Theme(global) { self =>
   })
 }
 
+/** The site context is created before page preprocessing */
+class HtmlSiteContext(val theme: HtmlTheme, val site: Site) {
+  val staticResources = theme.global.findStaticResources
+  val staticResourceURIs = staticResources.iterator.map(_._2.getPath).toSet
+  val slpLookup =
+    new SpecialLinkProcessor.Lookup(site, if(theme.global.userConfig.allowTargetLinks) Some(theme.suffix) else None)
+}
+
 /** The page context is available for preprocessing a page */
-class HtmlPageContext(val theme: HtmlTheme, site: Site, val page: Page, staticResources: Vector[(File, URI)]) {
+class HtmlPageContext(val siteContext: HtmlSiteContext, val page: Page) {
   private[this] var last = -1
   private[this] var _needsJavaScript, _needsMathJax, _needsMermaid = false
   def newID(): String = {
@@ -370,21 +382,21 @@ class HtmlPageContext(val theme: HtmlTheme, site: Site, val page: Page, staticRe
   def needsMermaid: Boolean = _needsMermaid
   def requireMermaid(): Unit = _needsMermaid = true
 
-  private lazy val pageTC = theme.global.userConfig.theme.getConfig(page.config)
+  private lazy val pageTC = siteContext.theme.global.userConfig.theme.getConfig(page.config)
   def pageConfig(path: String): Option[String] = page.config.getStringOpt(path)
   def themeConfig(path: String): Option[String] = pageTC.getStringOpt(path)
   def themeConfigBoolean(path: String): Option[Boolean] = pageTC.getBooleanOpt(path)
   lazy val siteNav: Option[Vector[ExpandTocProcessor.TocItem]] = themeConfig("siteNav") match {
     case Some(uri) =>
-      val tocBlock = SpecialImageProcessor.parseTocURI(uri, theme.global.userConfig)
-      Some(ExpandTocProcessor.buildTocTree(tocBlock, site.toc, page))
+      val tocBlock = SpecialImageProcessor.parseTocURI(uri, siteContext.theme.global.userConfig)
+      Some(ExpandTocProcessor.buildTocTree(tocBlock, siteContext.site.toc, page))
     case None => None
   }
 
-  def searchLink: Option[String] = theme.tc.getStringOpt("global.pages.search").map { uri =>
-    Util.rewriteIndexPageLink(Util.relativeSiteURI(page.uri, Util.replaceSuffix(Util.siteRootURI.resolve(uri), ".md", ".html")), theme.indexPage).toString
+  def searchLink: Option[String] = siteContext.theme.tc.getStringOpt("global.pages.search").map { uri =>
+    Util.rewriteIndexPageLink(Util.relativeSiteURI(page.uri, Util.siteRootURI.resolve(uri).replaceSuffix(".md", ".html")), siteContext.theme.indexPage).toString
   }
-  def searchIndex: Option[String] = theme.tc.getStringOpt("global.searchIndex").map { uri =>
+  def searchIndex: Option[String] = siteContext.theme.tc.getStringOpt("global.searchIndex").map { uri =>
     Util.relativeSiteURI(page.uri, Util.siteRootURI.resolve(uri)).toString
   }
   def resolveLink(dest: String): String = slp.resolve(page.uri, dest, "link", true, false)
@@ -397,14 +409,12 @@ class HtmlPageContext(val theme: HtmlTheme, site: Site, val page: Page, staticRe
     snippet.doc
   }
 
-  val res = new PageResources(page, theme, {
-    val dir = theme.tc.getString(s"global.resourceDir")
+  val res = new PageResources(page, siteContext.theme, {
+    val dir = siteContext.theme.tc.getString(s"global.resourceDir")
     Util.siteRootURI.resolve(if(dir.endsWith("/")) dir else dir + "/")
   })
 
-  private[this] val staticResourceURIs = staticResources.iterator.map(_._2.getPath).toSet
-
-  val slp = new SpecialLinkProcessor(res, site, theme.suffix, theme.indexPage, staticResourceURIs)
+  val slp = new SpecialLinkProcessor(res, siteContext.slpLookup, siteContext.theme.suffix, siteContext.theme.indexPage, siteContext.staticResourceURIs)
 }
 
 /** The page model is available for rendering a preprocessed page with a template. Creating the HtmlPageModel
@@ -412,7 +422,7 @@ class HtmlPageContext(val theme: HtmlTheme, site: Site, val page: Page, staticRe
 class HtmlPageModel(val pc: HtmlPageContext, renderer: HtmlRenderer) {
   val title = HtmlFormat.escape(pc.page.section.title.getOrElse(""))
   val content = HtmlFormat.raw(renderer.render(pc.page.doc))
-  private[this] val mathJaxResources = pc.theme.addMathJaxResources(pc)
+  private[this] val mathJaxResources = pc.siteContext.theme.addMathJaxResources(pc)
   val mathJaxMain: Option[URI] = mathJaxResources.map(_._1)
   val mathJaxInline: Option[Html] = mathJaxResources.flatMap(_._2).flatMap { cv =>
     if(cv.isEmpty) None

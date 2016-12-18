@@ -119,6 +119,7 @@ class UserConfig(raw: Config, startDir: File, global: Global) extends ReferenceC
   val tocMaxLevel: Int = raw.getInt("global.tocMaxLevel")
   val tocMergeFirst: Boolean = raw.getBoolean("global.tocMergeFirst")
   val excludeResources: FileMatcher = new FileMatcher(raw.getStringList("global.excludeResources").asScala.toVector)
+  val allowTargetLinks: Boolean = raw.getBoolean("global.allowTargetLinks")
 
   val theme = objectKind("theme").singleton
   val highlight = objectKind("highlight").singleton

@@ -9,6 +9,8 @@ All pages and resources have a `site` URI. For example, if the source directory 
 > {.note}
 > Note that rendered sites always use relative links for pages and resources. They can be placed anywhere in a filesystem or on an HTTP server.
 
+If `global.allowTargetLinks` is set to `true`, links may also use the target suffix instead of the source suffix (e.g. `foo.html` instead of `foo.md`). This option is provided for compatibility with other site generator tools. It is turned off by default.
+
 ## `webjar`, `theme`, `classpath`
 
 These protocols reference resources on the classpath. They differ only in the lookup location. `classpath:/` points to the classpath root, `theme:/` points to the package containing the theme class and `webjar:/name/path` points to a path in the named webjar. They can be used for referencing CSS, JS and image resources in themes and image markup elements. These files are copied into the generated site as resources.
