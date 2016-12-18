@@ -6,7 +6,7 @@ import com.novocode.ornate.commonmark.{AttributedHeading, CustomParser, CustomPa
 import com.novocode.ornate.commonmark.NodeExtensionMethods._
 import com.novocode.ornate.config.ConfigExtensionMethods.configExtensionMethods
 import com.novocode.ornate.config.{Global, ReferenceConfig}
-import com.typesafe.config.Config
+import com.typesafe.config.{Config, ConfigException}
 import org.commonmark.node.{Document, Heading, Node}
 import org.commonmark.parser.Parser
 import better.files._
@@ -46,14 +46,24 @@ object PageParser extends Logging {
       } else (front, rest)
     } else ("", text)
 
-    val pageConfig = if(front.nonEmpty) globalConfig.parsePageConfig(front) else globalConfig.raw
+    val pageConfig = if(front.nonEmpty) {
+      try globalConfig.parsePageConfig(front)
+      catch {
+        case ex: ConfigException =>
+          logger.error(s"Page $uri: Error parsing front matter: "+ex.getMessage)
+          globalConfig.raw
+        case ex: Exception =>
+          logger.error(s"Page $uri: Error parsing front matter", ex)
+          globalConfig.raw
+      }
+    } else globalConfig.raw
 
     parseContent(sourceFileURI, globalConfig, uri, suffix, Some(content), pageConfig)
   }
 
   def parseContent(sourceFileURI: Option[URI], appConfig: ReferenceConfig, uri: URI, suffix: String, content: Option[String], pageConfig: Config): Page = {
     val extensions = appConfig.getExtensions(pageConfig.getStringList("extensions").asScala)
-    if(logger.isDebugEnabled) logger.debug("Page extensions: " + extensions)
+    if(logger.isDebugEnabled) logger.debug(s"Page $uri: Extensions: " + extensions)
 
     val parser = new CustomParser((new CustomParserBuilder).extensions(extensions.parser(pageConfig).asJava).asInstanceOf[CustomParserBuilder])
     val pre = extensions.ornate.flatMap(_.preProcessors(pageConfig))
@@ -91,7 +101,7 @@ object PageParser extends Logging {
       case (h, null) => (h, null)
       case (h, id) if used.contains(id) =>
         val id2 = newID(id)
-        logger.warn(s"Renaming duplicate section ID #$id in $uri to #$id2")
+        logger.warn(s"Page $uri: Renaming duplicate section ID #$id to #$id2")
         h.id = id2
         (h, id2)
       case (h, id) =>

@@ -261,8 +261,10 @@ class HtmlTheme(global: Global) extends Theme(global) { self =>
     staticResources.foreach { case (sourceFile, uri) =>
       val file = targetFile(uri)
       logger.debug(s"Copying static resource $uri to file $file")
-      try sourceFile.copyTo(file, overwrite = true)
-      catch { case ex: Exception =>
+      try {
+        file.parent.createDirectories()
+        sourceFile.copyTo(file, overwrite = true)
+      } catch { case ex: Exception =>
         logger.error(s"Error copying static resource file $sourceFile to $file", ex)
       }
     }
