@@ -2,7 +2,7 @@ package com.novocode.ornate.highlight
 
 import java.net.URI
 
-import com.novocode.ornate.js.{JSMap, NashornSupport}
+import com.novocode.ornate.js.{JSMap, NashornSupport, WebJarSupport}
 import com.novocode.ornate.{Logging, Page}
 import com.novocode.ornate.config.ConfigExtensionMethods.configExtensionMethods
 import com.novocode.ornate.config.{ConfiguredObject, Global}
@@ -13,13 +13,13 @@ import scala.collection.mutable
 /** A Highlighter based on highlight.js */
 class HighlightJSHighlighter(global: Global, conf: ConfiguredObject) extends Highlighter with NashornSupport with Logging {
   logger.debug("Loading highlight.js...")
-  val hljs = mainModule.require("highlight.js/lib/highlight.js")
-  val supportedLanguages = NashornSupport.listAssets("highlight.js", "lib/languages/").map(_.replaceAll("\\.js$", ""))
+  private[this] val hljs = mainModule.require("highlight.js/lib/highlight.js")
+  private[this] val supportedLanguages = WebJarSupport.listAssets("highlight.js", "lib/languages/").map(_.replaceAll("\\.js$", ""))
   logger.debug("Supported languages: "+supportedLanguages.mkString(", "))
 
-  val tried, loaded = new mutable.HashSet[String]
+  private[this] val tried, loaded = new mutable.HashSet[String]
 
-  def requireLanguages(langs: Iterable[String]): Vector[String] = {
+  def requireLanguages(langs: Iterable[String]): Vector[String] = synchronized {
     val toLoad = langs.filterNot(tried.contains)
     if(toLoad.nonEmpty) {
       tried ++= toLoad // even if loading fails, so we don't retry every time
@@ -34,7 +34,7 @@ class HighlightJSHighlighter(global: Global, conf: ConfiguredObject) extends Hig
     langs.filter(loaded.contains).toVector
   }
 
-  def highlightTextAsHTML(text: String, lang: Option[String], target: HighlightTarget, page: Page): HighlightResult = try {
+  def highlightTextAsHTML(text: String, lang: Option[String], target: HighlightTarget, page: Page): HighlightResult = synchronized { try {
     val localConf = conf.getConfig(page.config)
     localConf.getStringListOpt("preload").foreach(requireLanguages)
     val langs: Vector[String] = lang match {
@@ -71,5 +71,5 @@ class HighlightJSHighlighter(global: Global, conf: ConfiguredObject) extends Hig
   } catch { case ex: Exception =>
     logger.error("Error running highlight.js", ex)
     new NoHighlighter(global, null).highlightTextAsHTML(text, lang, target, page)
-  }
+  }}
 }

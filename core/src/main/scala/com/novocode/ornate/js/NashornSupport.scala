@@ -1,23 +1,15 @@
 package com.novocode.ornate.js
 
-import java.util
-import java.util.Locale
+import java.util.{Locale, Formatter}
 import java.util.regex.Pattern
 import javax.script.{ScriptContext, SimpleBindings, Bindings, ScriptEngineManager}
 
-import better.files._
 import jdk.nashorn.api.scripting._
 import org.slf4j.{LoggerFactory, Logger}
-import org.webjars.WebJarAssetLocator
-
-import scala.collection.JavaConverters._
-import scala.io.Codec
 
 /** Some utilities for running JavaScript code on Nashorn. */
-trait NashornSupport {
+trait NashornSupport extends WebJarSupport {
   import NashornSupport._
-
-  def logger: Logger
 
   val engine = {
     val f = new NashornScriptEngineFactory
@@ -48,12 +40,6 @@ trait NashornSupport {
   def patchJavaScript(module: String, path: String, js: String): String = {
     js
     //val js2 = if(js.startsWith(""""use strict";""")) js.substring(13) else js
-  }
-
-  def loadAsset(webjar: String, exactPath: String): Option[String] = getFullPathExact(webjar, exactPath).map { path =>
-    logger.debug(s"Loading WebJar asset: $webjar/$exactPath")
-    val in = getClass.getClassLoader.getResourceAsStream(path)
-    try in.content(Codec.UTF8).mkString finally in.close()
   }
 
   def call[T](thiz: AnyRef, name: String, args: Any*)(implicit ev: JSResultConverter[T]): T =
@@ -87,7 +73,7 @@ object NashornSupport {
       case 0 => "null"
       case 1 => String.valueOf(args.head)
       case _ =>
-        new util.Formatter(Locale.ENGLISH).format(String.valueOf(args(0)),
+        new Formatter(Locale.ENGLISH).format(String.valueOf(args(0)),
           args.tail.asInstanceOf[Seq[AnyRef]].toArray: _*).out.toString
     }
     bindings(
@@ -98,26 +84,5 @@ object NashornSupport {
       "error" -> jsFunc(args => if(jslog.isErrorEnabled) jslog.error(format(args))),
       "trace" -> jsFunc(args => if(jslog.isDebugEnabled) jslog.debug("console.trace()", new Throwable("console.trace()")))
     )
-  }
-
-  private lazy val fullPathIndex = {
-    val loader = Option(Thread.currentThread.getContextClassLoader).getOrElse(getClass.getClassLoader)
-    val fpi = WebJarAssetLocator.getFullPathIndex(Pattern.compile(".*"), loader)
-    val offset = WebJarAssetLocator.WEBJARS_PATH_PREFIX.length + 1
-    fpi.asScala.valuesIterator.map { s =>
-      val sep1 = s.indexOf('/', offset+1)
-      val sep2 = s.indexOf('/', sep1+1)
-      val noVer = s.substring(offset, sep1) + s.substring(sep2)
-      (noVer, s)
-    }.toMap
-  }
-
-  /* This is orders of magnitude faster than WebJarLocator.getFullPathExact: */
-  def getFullPathExact(webjar: String, exactPath: String): Option[String] =
-    fullPathIndex.get(webjar + "/" + exactPath)
-
-  def listAssets(webjar: String, path: String): Vector[String] = {
-    val prefix = if(path.startsWith("/")) webjar+path else webjar+"/"+path
-    fullPathIndex.keysIterator.filter(_.startsWith(prefix)).map(_.substring(prefix.length)).toVector
   }
 }

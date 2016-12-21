@@ -1,15 +1,14 @@
 package com.novocode.ornate.theme
 
 import java.io.FileNotFoundException
-import java.net.{URL, URI}
-import scala.collection.mutable
+import java.net.{URI, URL}
 
+import scala.collection.mutable
 import com.novocode.ornate._
-import com.novocode.ornate.commonmark.{ExpandTocProcessor, AttributeFencedCodeBlocksProcessor, SpecialImageProcessor}
+import com.novocode.ornate.commonmark.{AttributeFencedCodeBlocksProcessor, ExpandTocProcessor, SpecialImageProcessor}
 import com.novocode.ornate.config.ConfigExtensionMethods.configExtensionMethods
 import com.novocode.ornate.config.Global
-import com.novocode.ornate.js.NashornSupport
-
+import com.novocode.ornate.js.WebJarSupport
 import better.files._
 
 /** Base class for themes. */
@@ -24,10 +23,12 @@ abstract class Theme(val global: Global) extends Logging {
     val site = new Site(pages, toc)
 
     val sip = new SpecialImageProcessor(global.userConfig)
-    pages.foreach { p =>
-      val pagepp = p.extensions.ornate.flatMap(_.pageProcessors(site))
-      p.processors = (AttributeFencedCodeBlocksProcessor +: sip +: pagepp)
-      p.applyProcessors()
+    logTime("Running page processors took") {
+      global.parMap(pages) { p =>
+        val pagepp = p.extensions.ornate.flatMap(_.pageProcessors(site))
+        p.processors = (AttributeFencedCodeBlocksProcessor +: sip +: pagepp)
+        p.applyProcessors()
+      }
     }
 
     val etp = new ExpandTocProcessor(toc)
@@ -62,7 +63,7 @@ abstract class Theme(val global: Global) extends Logging {
     case "site" => global.userConfig.resourceDir.path.toUri.resolve(uri.getPath.replaceFirst("^/*", ""))
     case "webjar" =>
       val parts = uri.getPath.split('/').filter(_.nonEmpty)
-      val path = NashornSupport.getFullPathExact(parts.head, parts.tail.mkString("/"))
+      val path = WebJarSupport.getFullPathExact(parts.head, parts.tail.mkString("/"))
       if(path.isEmpty) throw new FileNotFoundException("WebJar resource not found: "+uri)
       getClass.getClassLoader.getResource(path.get).toURI
     case "theme" =>

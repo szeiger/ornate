@@ -6,7 +6,7 @@ object CSSO extends Logging { self =>
   private val nashorn: NashornSupport = new NashornSupport { def logger = self.logger }
   private val csso = nashorn.mainModule.require("csso")
 
-  def minify(s: String): String = {
+  def minify(s: String): String = synchronized {
     val res = nashorn.call[JSMap](csso, "minify", s)
     res.apply[String]("css")
   }

@@ -1,8 +1,9 @@
 package com.novocode.ornate.config
 
-import java.net.{URLEncoder, URI}
+import java.net.{URI, URLEncoder}
+import java.util.concurrent.{ThreadFactory, ThreadPoolExecutor, LinkedBlockingQueue, TimeUnit}
 
-import com.novocode.ornate.highlight.{NoHighlighter, Highlighter}
+import com.novocode.ornate.highlight.{Highlighter, NoHighlighter}
 import com.novocode.ornate._
 import com.novocode.ornate.theme.Theme
 import com.novocode.ornate.config.ConfigExtensionMethods.configExtensionMethods
@@ -11,10 +12,13 @@ import org.commonmark.parser.Parser.ParserExtension
 
 import scala.collection.JavaConverters._
 import better.files._
-import com.typesafe.config.{ConfigValue, ConfigFactory, Config}
+import com.typesafe.config.{Config, ConfigFactory, ConfigValue}
 
+import scala.collection.generic.CanBuildFrom
 import scala.collection.mutable
 import scala.collection.mutable.ListBuffer
+import scala.concurrent.duration.Duration
+import scala.concurrent.{Await, ExecutionContext, Future}
 
 class Global(startDir: File, confFile: Option[File], overrides: Config = ConfigFactory.empty()) extends Logging {
   val (referenceConfig: ReferenceConfig, userConfig: UserConfig) = {
@@ -41,31 +45,34 @@ class Global(startDir: File, confFile: Option[File], overrides: Config = ConfigF
   logger.debug("Target dir is: " + userConfig.targetDir)
 
   private val cachedExtensions = new mutable.HashMap[String, Option[AnyRef]]
-  private[config] def getCachedExtensionObject(co: ConfiguredObject): Option[AnyRef] = cachedExtensions.getOrElseUpdate(co.className, {
-    try {
-      val cls = Class.forName(co.className)
-      if(classOf[Extension].isAssignableFrom(cls)) {
-        try {
-          val cons = cls.getConstructor(classOf[ConfiguredObject])
-          Some(cons.newInstance(co).asInstanceOf[Extension])
-        } catch { case _: NoSuchMethodException =>
-          Some(cls.newInstance().asInstanceOf[Extension])
-        }
-      } else // CommonMark extension
-        Some(cls.getMethod("create").invoke(null))
-    } catch { case ex: Exception =>
-      logger.error(s"Error instantiating extension class ${co.className} -- disabling extension", ex)
-      None
-    }
-  })
 
-  lazy val theme: Theme = {
+  private[config] def getCachedExtensionObject(co: ConfiguredObject): Option[AnyRef] = cachedExtensions.synchronized {
+    cachedExtensions.getOrElseUpdate(co.className, {
+      try {
+        val cls = Class.forName(co.className)
+        if(classOf[Extension].isAssignableFrom(cls)) {
+          try {
+            val cons = cls.getConstructor(classOf[ConfiguredObject])
+            Some(cons.newInstance(co).asInstanceOf[Extension])
+          } catch { case _: NoSuchMethodException =>
+            Some(cls.newInstance().asInstanceOf[Extension])
+          }
+        } else // CommonMark extension
+          Some(cls.getMethod("create").invoke(null))
+      } catch { case ex: Exception =>
+        logger.error(s"Error instantiating extension class ${co.className} -- disabling extension", ex)
+        None
+      }
+    })
+  }
+
+  @volatile lazy val theme: Theme = {
     val cl = userConfig.theme.className
     logger.debug(s"Creating theme from class $cl")
     Class.forName(cl).getConstructor(classOf[Global]).newInstance(this).asInstanceOf[Theme]
   }
 
-  lazy val highlighter: Highlighter = {
+  @volatile lazy val highlighter: Highlighter = {
     val cl = userConfig.highlight.className
     logger.debug(s"Creating highlighter from class $cl")
     try Class.forName(cl).getConstructor(classOf[Global], classOf[ConfiguredObject]).newInstance(this, userConfig.highlight).asInstanceOf[Highlighter]
@@ -73,6 +80,28 @@ class Global(startDir: File, confFile: Option[File], overrides: Config = ConfigF
       logger.error(s"Error instantiating highlighter class $cl -- disabling highlighting", ex)
       new NoHighlighter(this, null)
     }
+  }
+
+  @volatile lazy val executionContext: ExecutionContext = {
+    val num = userConfig.numThreads
+    logger.debug(s"Using $num threads")
+    object TF extends ThreadFactory {
+      override def newThread(r: Runnable): Thread = {
+        val t = new Thread(r)
+        t.setDaemon(true)
+        t
+      }
+    }
+    val pool = new ThreadPoolExecutor(num, num, 1L, TimeUnit.SECONDS, new LinkedBlockingQueue[Runnable](), TF)
+    ExecutionContext.fromExecutor(pool)
+  }
+
+  /** Run a mapping function in parallel using the configured `executionContext` */
+  def parMap[T, R](coll: Traversable[T])(f: T => R): Vector[R] = {
+    implicit val ec = executionContext
+    val fs: Vector[Future[R]] = coll.map(x => Future(f(x)))(collection.breakOut)
+    fs.foreach(f => Await.ready(f, Duration.Inf))
+    fs.map(f => f.value.get.get)
   }
 
   /** Find all sources in global.sourceDir as (file, suffix, uri) */
@@ -104,11 +133,12 @@ class ReferenceConfig(val raw: Config, global: Global) {
 
   private[this] val cachedObjectKinds = new mutable.HashMap[String, ConfiguredObjectKind]
 
-  def objectKind(prefix: String): ConfiguredObjectKind =
+  def objectKind(prefix: String): ConfiguredObjectKind = cachedObjectKinds.synchronized {
     cachedObjectKinds.getOrElseUpdate(prefix, {
       val m = raw.getConfigMapOr(s"global.${prefix}Aliases").mapValues(_.unwrapped.toString)
       new ConfiguredObjectKind(prefix, m, raw, global)
     })
+  }
 }
 
 /** User configuration */
@@ -120,6 +150,7 @@ class UserConfig(raw: Config, startDir: File, global: Global) extends ReferenceC
   val tocMergeFirst: Boolean = raw.getBoolean("global.tocMergeFirst")
   val excludeResources: FileMatcher = new FileMatcher(raw.getStringList("global.excludeResources").asScala.toVector)
   val allowTargetLinks: Boolean = raw.getBoolean("global.allowTargetLinks")
+  val numThreads: Int = raw.getIntOr("global.numThreads", Runtime.getRuntime.availableProcessors)
 
   val theme = objectKind("theme").singleton
   val highlight = objectKind("highlight").singleton
@@ -150,7 +181,7 @@ class ConfiguredObjectKind(val prefix: String, aliases: Map[String, String], roo
   def create(alias: String): ConfiguredObject =
     new ConfiguredObject(prefix, alias, dealias(alias), rootConfig, global)
 
-  lazy val singleton: ConfiguredObject = create(rootConfig.getString(s"global.$prefix"))
+  @volatile lazy val singleton: ConfiguredObject = create(rootConfig.getString(s"global.$prefix"))
 
   def normalizeAndCreate(names: Iterable[String]): Vector[ConfiguredObject] = {
     val b = new mutable.ListBuffer[String]

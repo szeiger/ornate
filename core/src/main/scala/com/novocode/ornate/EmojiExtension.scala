@@ -5,7 +5,7 @@ import java.net.URI
 import com.novocode.ornate.commonmark.Attributed
 import com.novocode.ornate.commonmark.NodeExtensionMethods._
 import com.novocode.ornate.config.ConfiguredObject
-import com.novocode.ornate.js.NashornSupport
+import com.novocode.ornate.js.WebJarSupport
 import com.typesafe.config.Config
 import org.commonmark.node.{AbstractVisitor, CustomNode, Node, Text}
 import org.commonmark.parser.{Parser, PostProcessor}
@@ -19,7 +19,7 @@ class EmojiExtension(co: ConfiguredObject) extends Extension {
   override def parserExtensions(pageConfig: Config) = ext
 }
 
-class EmojiParserExtension(co: ConfiguredObject) extends Parser.ParserExtension with NashornSupport with Logging {
+class EmojiParserExtension(co: ConfiguredObject) extends Parser.ParserExtension with WebJarSupport with Logging {
   import EmojiParserExtension._
   val format = co.config.getString("global.format")
   val formatSuffix = format.replaceAll("_.*$", "")
@@ -55,7 +55,7 @@ class EmojiParserExtension(co: ConfiguredObject) extends Parser.ParserExtension 
   def shortnameToImage(n: String): Option[URI] = emojiOneData.get(n).flatMap { e =>
     val pathOpt = e.unicode.reverseIterator.map { n =>
       val path = s"assets/$format/$n.$formatSuffix"
-      if(NashornSupport.getFullPathExact("emojione", path).isEmpty) null else path
+      if(WebJarSupport.getFullPathExact("emojione", path).isEmpty) null else path
     }.find(_ ne null)
     pathOpt.map { path => new URI(s"webjar:/emojione/$path") }
   }

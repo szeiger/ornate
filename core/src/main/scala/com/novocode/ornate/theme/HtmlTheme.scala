@@ -12,7 +12,7 @@ import com.novocode.ornate.commonmark._
 import com.novocode.ornate.config.ConfigExtensionMethods.configExtensionMethods
 import com.novocode.ornate.config.Global
 import com.novocode.ornate.highlight.{HighlightResult, HighlightTarget}
-import com.novocode.ornate.js.{CSSO, ElasticlunrSearch, NashornSupport}
+import com.novocode.ornate.js.{CSSO, ElasticlunrSearch, WebJarSupport}
 import com.typesafe.config.{ConfigObject, ConfigRenderOptions}
 import org.commonmark.renderer.NodeRenderer
 import org.commonmark.renderer.html.HtmlRenderer
@@ -24,6 +24,8 @@ import play.twirl.api.{Html, HtmlFormat, Template1, TxtFormat}
 import scala.StringBuilder
 import scala.collection.JavaConverters._
 import scala.collection.mutable
+import scala.concurrent.duration.Duration
+import scala.concurrent.{Await, Future}
 import scala.io.Codec
 
 /** Base class for Twirl-based HTML themes */
@@ -211,7 +213,7 @@ class HtmlTheme(global: Global) extends Theme(global) { self =>
   def addMathJaxResources(pc: HtmlPageContext): Option[(URI, Option[ConfigObject])] = if(pc.needsMathJax) {
     val loadConfig = tc.getStringListOr("global.mathJax.loadConfig").mkString(",")
     val inlineConfig = tc.getConfigOpt("global.mathJax.inlineConfig").map(_.root())
-    for(path <- NashornSupport.listAssets("mathjax", "/"))
+    for(path <- WebJarSupport.listAssets("mathjax", "/"))
       if(!mathJaxExclude.matchesPath(path))
         pc.res.get(s"webjar:/mathjax/$path", "mathjax/", minified=true)
     val u = pc.res.get(s"webjar:/mathjax/MathJax.js", "mathjax/", minified=true)
@@ -228,36 +230,40 @@ class HtmlTheme(global: Global) extends Theme(global) { self =>
   def createPageModel(pc: HtmlPageContext, renderer: HtmlRenderer): HtmlPageModel =
     new HtmlPageModel(pc, renderer)
 
-  def createSiteModel: HtmlSiteModel = new HtmlSiteModel(this)
+  def createSiteModel(pms: Vector[HtmlPageModel]): HtmlSiteModel = new HtmlSiteModel(this, pms)
 
   def render(site: Site): Unit = {
     val siteContext = createSiteContext(site)
-    val siteResources = new mutable.HashMap[URI, ResourceSpec]
 
-    site.pages.foreach { p =>
-      val file = targetFile(p.uriWithSuffix(suffix))
-      try {
-        val templateName = global.userConfig.theme.getConfig(p.config).getString("template")
-        logger.debug(s"Rendering page ${p.uri} to file $file with template ${templateName}")
-        val pc = createPageContext(siteContext, p)
-        pc.slp(p)
-        val renderer = renderers(pc).foldLeft(HtmlRenderer.builder()) { case (z, n) => z.nodeRendererFactory(n) }
-          .nodeRendererFactory(fencedCodeBlockRenderer(pc))
-          .nodeRendererFactory(indentedCodeBlockRenderer(pc))
-          .nodeRendererFactory(inlineCodeRenderer(pc))
-          .extensions(p.extensions.htmlRenderer.asJava).build()
-        val pm = createPageModel(pc, renderer)
-        val formatted = getTemplate(templateName).render(pm).body.trim
-        siteResources ++= pc.res.mappings.map(r => (r.resolvedSourceURI, r))
-        file.parent.createDirectories()
-        val minifyInlineJS = minifyJS && !pc.needsMathJax // HtmlCompressor cannot handle non-JavaScript <script> tags
-        val min =
-          if(minifyHTML) Util.htmlCompressorMinimize(formatted, minimizeCss = minifyCSS, minimizeJs = minifyInlineJS) else formatted+'\n'
-        file.write(min)(codec = Codec.UTF8)
-      } catch { case ex: Exception =>
-        logger.error(s"Error rendering page ${p.uri} to $file", ex)
-      }
+    val pageModels = logTime("Page rendering took") {
+      global.parMap(site.pages) { p =>
+        val file = targetFile(p.uriWithSuffix(suffix))
+        try {
+          val templateName = global.userConfig.theme.getConfig(p.config).getString("template")
+          logger.debug(s"Rendering page ${p.uri} to file $file with template ${templateName}")
+          val pc = createPageContext(siteContext, p)
+          pc.slp(p)
+          val renderer = renderers(pc).foldLeft(HtmlRenderer.builder()) { case (z, n) => z.nodeRendererFactory(n) }
+            .nodeRendererFactory(fencedCodeBlockRenderer(pc))
+            .nodeRendererFactory(indentedCodeBlockRenderer(pc))
+            .nodeRendererFactory(inlineCodeRenderer(pc))
+            .extensions(p.extensions.htmlRenderer.asJava).build()
+          val pm = createPageModel(pc, renderer)
+          val formatted = getTemplate(templateName).render(pm).body.trim
+          file.parent.createDirectories()
+          val minifyInlineJS = minifyJS && !pc.needsMathJax // HtmlCompressor cannot handle non-JavaScript <script> tags
+          val min =
+            if(minifyHTML) Util.htmlCompressorMinimize(formatted, minimizeCss = minifyCSS, minimizeJs = minifyInlineJS) else formatted+'\n'
+          file.write(min)(codec = Codec.UTF8)
+          Some(pm)
+        } catch { case ex: Exception =>
+          logger.error(s"Error rendering page ${p.uri} to $file", ex)
+          None
+        }
+      }.flatten
     }
+
+    val siteResources = pageModels.flatMap(_.pc.res.mappings.map(r => (r.resolvedSourceURI, r))).toMap
 
     try createSearchIndex(site)
     catch { case ex: Exception => logger.error(s"Error creating search index", ex) }
@@ -273,7 +279,7 @@ class HtmlTheme(global: Global) extends Theme(global) { self =>
       }
     }
 
-    val siteModel = createSiteModel
+    val siteModel = createSiteModel(pageModels)
     implicit val utf8Codec = Codec.UTF8
     siteResources.valuesIterator.filter(_.sourceURI.getScheme != "site").foreach { rs =>
       val file = targetFile(rs.targetURI)
@@ -434,7 +440,7 @@ class HtmlPageModel(val pc: HtmlPageContext, renderer: HtmlRenderer) {
   def stringText(name: String): Option[Html] = pc.stringNode(name).map(n => HtmlFormat.escape(NodeUtil.extractText(n)))
 }
 
-class HtmlSiteModel(val theme: HtmlTheme) {
+class HtmlSiteModel(val theme: HtmlTheme, pms: Vector[HtmlPageModel]) {
   def themeConfig(path: String): Option[String] = theme.tc.getStringOpt(path)
   def themeConfigBoolean(path: String): Option[Boolean] = theme.tc.getBooleanOpt(path)
 }
