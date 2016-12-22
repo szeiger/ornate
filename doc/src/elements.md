@@ -3,6 +3,7 @@ highlight.highlightjs.fenced = null
 highlight.highlightjs.indented = scala
 highlight.highlightjs.inline = scala
 extension.mathSyntax.dollarInlineCode = asciimath
+extensions = ${extensions} [ins, superscript, subscript]
 ---
 # All Elements
 
@@ -30,7 +31,7 @@ euismod ligula egestas sit amet. Suspendisse congue orci neque.
 
 Text can contain code like `val x = 42` (using Scala highlighting on this page). It can be used without adjacent spaces, e.g.: `x`'s value is larger than `y`'s value. HTML 5 entities like &prod; and &radic; and other Unicode characters may be used in text.
 
-Text can contain *emphasis* and **strong emphasis**. Intra**word**emphasis _and**mixed**emphasis_ are also supported. If the `strikethrough` extension is enabled, ~~it looks like this~~.
+Text can contain *emphasis* and **strong emphasis**. Intra**word**emphasis _and**mixed**emphasis_ are also supported. If the `strikethrough` extension is enabled, ~~it looks like this~~. If the `ins` extension is enabled, ++it looks like this++. With the `superscript` and `subscript` extensions you can get notations like baseline^superscript\ part^ or baseline~subscript\ part~.
 
 Simple [links](index.md) consist of a link target and text. The text may [**contain** ~~other~~ _markup_](index.md). Links can also have [titles](index.md "Here's the title"). Plain links (either enclosed in angle brackets or created by the `autolink` extension) look like <http://lightbend.com> which consist of the URL as link text and target, and no title.
 

@@ -1,3 +1,6 @@
+---
+extensions: ${extensions} [subscript, superscript]
+---
 # Markdown Extensions
 
 The following extensions are provided out of the box.
@@ -5,7 +8,7 @@ The following extensions are provided out of the box.
 ```yaml src=../../core/src/main/resources/ornate-reference.conf#--doc-extension-aliases
 ```
 
-Except for `autolink` and `ins` they are all enabled by default. This can be configured on a per-page basis through the `extensions` setting:
+Not all extensions are enabled by default. This can be configured on a per-page basis through the `extensions` setting. The following is the default configuration:
 
 ```yaml src=../../core/src/main/resources/ornate-reference.conf#--doc-extensions
 ```
@@ -13,6 +16,20 @@ Except for `autolink` and `ins` they are all enabled by default. This can be con
 ## commonmark-java extensions
 
 See the [commonmark-java documentation](https://github.com/atlassian/commonmark-java#extensions) for `autolink`, `ins`, `strikethrough` and `tables`.
+
+## `subscript` and `superscript`
+
+These extensions enable subscript and superscript notation with the same syntax as [Pandoc](http://pandoc.org/MANUAL.html#superscripts-and-subscripts). Superscripts are enclosed by a single `^` characer, subscripts by a single `~` character. The enclosed text may not contain other markup. Enclosed spaces have to be escaped with backslashes.
+
+Example source:
+
+```markdown
+H~2~O is a liquid. 2^10^ is 1024.
+```
+
+This gets rendered as:
+
+H~2~O is a liquid. 2^10^ is 1024.
 
 ## `headerAttributes` and `autoIdentifiers` {#header_attributes}
 
