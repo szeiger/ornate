@@ -7,6 +7,7 @@ import org.commonmark.node.{Block, Image, Link, Node, Text}
 
 import scala.collection.mutable.ArrayBuffer
 
+/** Replace ASCII quotes by proper Unicode quotes in text content. */
 class SmartQuotesExtension(co: ConfiguredObject) extends Extension {
   override def pageProcessors(site: Site): Seq[PageProcessor] = Seq(SmartQuotesProcessor)
 }

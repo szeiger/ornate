@@ -224,6 +224,28 @@ This gets rendered as:
 > 
 > Here is some quoted '`code`' and a "[quoted link](#smartquotes)".
 
+## `smartPunctuation`
+
+This extension converts the ASCII replacements for em-dashes (`---`), en-dashes (`--`) and ellipses (`...`) to the proper Unicode glyphs `—`, `–` and `…`) in all text content (including link and image titles). Code sections are not processed.
+
+Example source:
+
+```markdown
+> Some dashes:  one---two --- three---four --- five.
+>
+> Dashes between numbers: 5--7, 255--66, 1987--1999. 
+>
+> Ellipses...and...and....
+```
+
+This gets rendered as:
+
+> Some dashes:  one---two --- three---four --- five.
+>
+> Dashes between numbers: 5--7, 255--66, 1987--1999. 
+>
+> Ellipses...and...and....
+
 ## `globalRefs`
 
 This extension allows you to prepend reference targets that are defined in the site config or page config to every page. This is useful for targets that are either computed from other config values or used on many pages. This is the default configuration:
