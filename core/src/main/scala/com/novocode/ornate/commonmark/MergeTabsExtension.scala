@@ -44,6 +44,6 @@ class MergeTabsProcessor extends PageProcessor with Logging {
 
 class TabView extends CustomBlock
 
-class TabItem(val title: String) extends CustomBlock {
+class TabItem(var title: String) extends CustomBlock {
   override def toStringAttributes = s"title=$title"
 }

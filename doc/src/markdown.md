@@ -190,6 +190,40 @@ The format can be changed in the configuration:
 ```yaml src=../../core/src/main/resources/ornate-reference.conf#--doc-emoji
 ```
 
+## `smartQuotes`
+
+This extension converts single (`'`) and double (`"`) ASCII quotes to balanced Unicode quotes (`‘single’` and `“double”`) in all text content (including link and image titles). Code sections are not processed.
+
+Example source:
+
+```markdown
+> "Hello," said the spider.  "'Shelob' is my name."
+> 
+> 'A', 'B', and 'C' are letters.
+> 
+> 'Oak,' 'elm,' and 'beech' are names of trees.
+> So is 'pine.'
+> 
+> 'He said, "I want to go."'  Were you alive in the
+> 70's?
+> 
+> Here is some quoted '`code`' and a "[quoted link](#smartquotes)".
+```
+
+This gets rendered as:
+
+> "Hello," said the spider.  "'Shelob' is my name."
+> 
+> 'A', 'B', and 'C' are letters.
+> 
+> 'Oak,' 'elm,' and 'beech' are names of trees.
+> So is 'pine.'
+> 
+> 'He said, "I want to go."'  Were you alive in the
+> 70's?
+> 
+> Here is some quoted '`code`' and a "[quoted link](#smartquotes)".
+
 ## `globalRefs`
 
 This extension allows you to prepend reference targets that are defined in the site config or page config to every page. This is useful for targets that are either computed from other config values or used on many pages. This is the default configuration:
