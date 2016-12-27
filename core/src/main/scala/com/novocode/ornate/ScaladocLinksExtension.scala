@@ -40,7 +40,7 @@ class ScaladocLinksExtension(co: ConfiguredObject) extends Extension with Loggin
           val fragment = dest.substring(scheme.prefix.length+1)
           n.setDestination(scheme.indexUri + "#" + fragment)
           val ch = n.getFirstChild
-          if(n.getFirstChild eq null)
+          if(ch eq null)
             n.appendChild(new Text(autoName(fragment)))
           else if(ch.isInstanceOf[Text] && ch.getNext == null && ch.asInstanceOf[Text].getLiteral == dest)
             ch.asInstanceOf[Text].setLiteral(autoName(fragment))

@@ -298,4 +298,4 @@ This extensions enables common notation for inline and display (block) math. See
 
 ## `highlightjs`
 
-See [Code Highlighting](highlighting.md) for details.
+See [](highlighting.md) for details.

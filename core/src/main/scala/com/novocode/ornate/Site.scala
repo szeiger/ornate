@@ -28,7 +28,7 @@ class Page(val sourceFileURI: Option[URI], val uri: URI, val suffix: String, val
     snippetPage
   }
 
-  lazy val headingIDs: Set[String] = section.allHeadings.map(_.id).toSet
+  lazy val headingTitles: Map[String, String] = section.allHeadings.map(s => (s.id, s.title)).toMap
 }
 
 sealed abstract class Section {

@@ -182,7 +182,7 @@ class HtmlTheme(global: Global) extends Theme(global) { self =>
       wr.raw(s"""<img class="emoji" title="${n.name}" alt="""")
       wr.text(n.unicode)
       wr.raw("""" src="""")
-      wr.text(pc.slp.resolve(pc.page.uri, n.uri.toString, "image", false, true))
+      wr.text(pc.slp.resolveLink(pc.page.uri, n.uri.toString, "image", false))
       wr.raw(""""/>""")
     } else {
       wr.raw(s"""<span class="emoji" title="${n.name}">""")
@@ -398,7 +398,7 @@ class HtmlPageContext(val siteContext: HtmlSiteContext, val page: Page) {
   def searchIndex: Option[String] = siteContext.theme.tc.getStringOpt("global.searchIndex").map { uri =>
     Util.relativeSiteURI(page.uri, Util.siteRootURI.resolve(uri)).toString
   }
-  def resolveLink(dest: String): String = slp.resolve(page.uri, dest, "link", true, false)
+  def resolveLink(dest: String): String = slp.resolveLink(page.uri, dest, "link", true)
 
   def sections: Vector[Section] = page.section.children
 

@@ -4,62 +4,68 @@ import java.net.URI
 
 import com.novocode.ornate.URIExtensionMethods._
 import com.novocode.ornate.commonmark.PageProcessor
-import com.novocode.ornate.{Logging, Util, Page, Site}
-import org.commonmark.node.{Image, Link, AbstractVisitor}
+import com.novocode.ornate.{Logging, Page, Site, Util}
+import org.commonmark.node.{AbstractVisitor, Image, Link, Text}
 
 /** Resolve links and image targets to the proper destination. */
 class SpecialLinkProcessor(imageResources: PageResources, lookup: SpecialLinkProcessor.Lookup, suffix: String, indexPage: Option[String], resourcePaths: Set[String]) extends PageProcessor with Logging {
   def apply(p: Page): Unit = {
     p.doc.accept(new AbstractVisitor {
       override def visit(n: Link): Unit = {
-        n.setDestination(resolve(p.uri, n.getDestination, "link", true, false))
-        super.visit(n)
+        val (dest, titleO) = resolve(p.uri, n.getDestination, "link", true)
+        if(n.getFirstChild eq null) titleO match {
+          case Some(t) => n.appendChild(new Text(t))
+          case None => logger.warn(s"Page ${p.uri}: Link to ${n.getDestination} is empty")
+        }
+        n.setDestination(dest)
       }
-      override def visit(n: Image): Unit = {
-        n.setDestination(resolve(p.uri, n.getDestination, "image", false, true))
-        super.visit(n)
-      }
+      override def visit(n: Image): Unit =
+        n.setDestination(resolveLink(p.uri, n.getDestination, "image", false))
     })
   }
 
-  def resolve(pageURI: URI, destination: String, tpe: String, allowPage: Boolean, allowResources: Boolean, unchecked: Boolean = false): String = {
+  def resolveLink(pageURI: URI, destination: String, tpe: String, isPage: Boolean, unchecked: Boolean = false): String =
+    resolve(pageURI, destination, tpe, isPage)._1
+
+  def resolve(pageURI: URI, destination: String, tpe: String, isPage: Boolean, unchecked: Boolean = false): (String, Option[String]) = {
     if(destination.startsWith("abs:")) {
       val dest = destination.substring(4)
       logger.debug(s"Page $pageURI: Rewriting $tpe $destination to $dest")
-      dest
+      (dest, None)
     } else if(destination.startsWith("unchecked:")) {
-      resolve(pageURI, destination.substring(10), tpe, allowPage, allowResources, unchecked = true)
+      resolve(pageURI, destination.substring(10), tpe, isPage, unchecked = true)
     } else try {
       val uri = pageURI.resolve(destination)
       uri.getScheme match {
         case "site" =>
-          val rel = (if(allowPage) lookup.getPageFor(uri) else None) match {
+          val (rel, titleO) = (if(isPage) lookup.getPageFor(uri) else None) match {
             case Some(t) =>
               logger.debug(s"Page $pageURI: Resolved $tpe $destination to page ${t.uri}")
               val turi = t.uriWithSuffix(suffix)
               val frag = uri.getFragment
-              if(!unchecked && (frag ne null) && !t.headingIDs.contains(frag))
+              val title: Option[String] = if(frag eq null) t.section.title else t.headingTitles.get(frag)
+              if(!unchecked && (frag ne null) && title.isEmpty)
                 logger.error(s"Page $pageURI: Fragment #$frag for $tpe $destination not found")
-              Util.relativeSiteURI(pageURI, turi.copy(fragment = frag))
+              (Util.relativeSiteURI(pageURI, turi.copy(fragment = frag)), title)
             case None =>
               if(!unchecked && !resourcePaths.contains(uri.getPath)) {
-                val what = if(allowPage) "page or resource" else "resource"
+                val what = if(isPage) "page or resource" else "resource"
                 logger.warn(s"Page $pageURI: No $what found for $tpe $destination")
               }
-              Util.relativeSiteURI(pageURI, uri)
+              (Util.relativeSiteURI(pageURI, uri), None)
           }
-          Util.rewriteIndexPageLink(rel, indexPage).toString
-        case "theme" | "webjar" | "classpath" if allowResources =>
-          try imageResources.get(uri.toString, "images/").toString
+          (Util.rewriteIndexPageLink(rel, indexPage).toString, titleO)
+        case "theme" | "webjar" | "classpath" if !isPage =>
+          try { (imageResources.get(uri.toString, "images/").toString, None) }
           catch { case ex: Exception =>
             logger.error(s"Page $pageURI: Error resolving $tpe with resource URI", ex)
-            destination
+            (destination, None)
           }
-        case _ => destination
+        case _ => (destination, None)
       }
     } catch { case ex: Exception =>
       logger.error(s"Page $pageURI: Error processing link: $destination", ex)
-      destination
+      (destination, None)
     }
   }
 }

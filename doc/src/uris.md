@@ -6,6 +6,8 @@ URIs are used pervasively throughout Ornate for referencing different kinds of c
 
 All pages and resources have a `site` URI. For example, if the source directory is `./doc/src`, the page located at `./doc/src/foo/bar.md` gets the `site` URI `site:/foo/bar.md`. All links and images on a page are resolved against the page's `site` URI. This makes it easy to use relative links that are identical to the corresponding `file` source URI links (for compatibility with other Markdown processors) or, alternatively, to use absolute links on deeply nested sites.
 
+When a `site` URI link has no link text, the title of the link target (page or section) is used as the link text.
+
 > {.note}
 > Note that rendered sites always use relative links for pages and resources. They can be placed anywhere in a filesystem or on an HTTP server.
 
@@ -29,4 +31,4 @@ Standard `file` URIs. They can be used for referencing CSS, JS and image resourc
 
 ## `toctree` and `config`
 
-These protocols are used to include TOCs and config values in a document. See [Image Elements](images.md) for more details.
+These protocols are used to include TOCs and config values in a document. See [](images.md) for more details.
