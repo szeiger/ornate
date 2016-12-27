@@ -2,9 +2,9 @@ package com.novocode.ornate.highlight
 
 import java.net.URI
 
-import com.novocode.ornate.commonmark.{AttributeFencedCodeBlocksProcessor, PageProcessor}
+import com.novocode.ornate.commonmark.AttributeFencedCodeBlocksProcessor
 import com.novocode.ornate.commonmark.NodeExtensionMethods.nodeToNodeExtensionMethods
-import com.novocode.ornate.{Page, Util}
+import com.novocode.ornate.{Page, PageProcessor, Phase, Util}
 import com.novocode.ornate.config.{ConfiguredObject, Global}
 import com.novocode.ornate.config.ConfigExtensionMethods.configExtensionMethods
 import org.commonmark.node._
@@ -15,6 +15,8 @@ abstract class Highlighter(co: ConfiguredObject) extends PageProcessor {
   /** Convert source code or other plain text to HTML with highlighting applied. Use the
     * language name, if supplied, otherwise guess or format without highlighting. */
   def highlightTextAsHTML(text: String, lang: Option[String], node: Node, page: Page): HighlightResult
+
+  def runAt: Phase = Phase.Highlight
 
   override def apply(page: Page): Unit = {
     val ignore = co.getConfig(page.config).getStringListOr("ignore")

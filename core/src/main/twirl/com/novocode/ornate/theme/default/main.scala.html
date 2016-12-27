@@ -12,7 +12,7 @@
   </li>
 }
 
-@import com.novocode.ornate.commonmark.ExpandTocProcessor.TocItem
+@import com.novocode.ornate.ExpandTocProcessor.TocItem
 @siteNav(ti: TocItem) = {
   <li @if(ti.focused) { class="a_thispage" }>
     @if(ti.target.isDefined && ti.text.isDefined) {

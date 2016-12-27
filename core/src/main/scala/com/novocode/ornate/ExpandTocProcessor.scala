@@ -1,16 +1,15 @@
-package com.novocode.ornate.commonmark
+package com.novocode.ornate
 
-import com.novocode.ornate._
-import NodeExtensionMethods._
-
+import com.novocode.ornate.commonmark.{AttributedHeading, TocBlock}
+import com.novocode.ornate.commonmark.NodeExtensionMethods.nodeToNodeExtensionMethods
 import org.commonmark.node._
 
 import scala.collection.mutable.ArrayBuffer
 
-abstract class PageProcessor extends (Page => Unit)
-
 class ExpandTocProcessor(toc: Vector[TocEntry]) extends PageProcessor with Logging {
   import ExpandTocProcessor._
+
+  def runAt: Phase = Phase.Special
 
   def log(prefix: String, ti: TocItem): Unit = {
     logger.debug(s"""$prefix- "${ti.text.getOrElse("")}" -> ${ti.target.getOrElse("")}""")

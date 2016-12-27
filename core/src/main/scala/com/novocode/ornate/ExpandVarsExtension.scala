@@ -4,9 +4,8 @@ import com.novocode.ornate.commonmark.Attributed
 import com.novocode.ornate.commonmark.AttributedFencedCodeBlock
 import com.novocode.ornate.commonmark.NodeExtensionMethods
 import NodeExtensionMethods._
-import com.novocode.ornate.commonmark.PageProcessor
 import com.novocode.ornate.config.ConfiguredObject
-import org.commonmark.node.{IndentedCodeBlock, Code, AbstractVisitor, FencedCodeBlock, Text}
+import org.commonmark.node.{AbstractVisitor, Code, FencedCodeBlock, IndentedCodeBlock, Text}
 
 import scala.collection.mutable
 
@@ -16,6 +15,8 @@ class ExpandVarsExtension(co: ConfiguredObject) extends Extension {
 }
 
 class ExpandVarsProcessor(co: ConfiguredObject) extends PageProcessor with Logging {
+  def runAt: Phase = Phase.Expand
+
   def apply(p: Page): Unit = p.doc.accept(new AbstractVisitor {
     val config = co.getConfig(p.config)
     val inCode = config.getBoolean("code")

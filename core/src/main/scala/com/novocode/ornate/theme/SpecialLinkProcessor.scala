@@ -3,12 +3,13 @@ package com.novocode.ornate.theme
 import java.net.URI
 
 import com.novocode.ornate.URIExtensionMethods._
-import com.novocode.ornate.commonmark.PageProcessor
-import com.novocode.ornate.{Logging, Page, Site, Util}
+import com.novocode.ornate._
 import org.commonmark.node.{AbstractVisitor, Image, Link, Text}
 
 /** Resolve links and image targets to the proper destination. */
 class SpecialLinkProcessor(imageResources: PageResources, lookup: SpecialLinkProcessor.Lookup, suffix: String, indexPage: Option[String], resourcePaths: Set[String]) extends PageProcessor with Logging {
+  def runAt: Phase = Phase.Special
+
   def apply(p: Page): Unit = {
     p.doc.accept(new AbstractVisitor {
       override def visit(n: Link): Unit = {

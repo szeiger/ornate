@@ -1,7 +1,7 @@
 package com.novocode.ornate
 
-import java.io.{FileNotFoundException, InputStreamReader, BufferedReader}
-import java.net.{URLDecoder, URI}
+import java.io.{BufferedReader, FileNotFoundException, InputStreamReader}
+import java.net.{URI, URLDecoder}
 import java.util.regex.Pattern
 
 import URIExtensionMethods._
@@ -9,7 +9,6 @@ import com.novocode.ornate.commonmark.Attributed
 import com.novocode.ornate.commonmark.AttributedFencedCodeBlock
 import com.novocode.ornate.commonmark.NodeExtensionMethods
 import NodeExtensionMethods._
-import com.novocode.ornate.commonmark.PageProcessor
 import com.novocode.ornate.config.{ConfiguredObject, Global}
 import com.novocode.ornate.config.ConfigExtensionMethods.configExtensionMethods
 import com.typesafe.config.ConfigValueType
@@ -37,6 +36,7 @@ class IncludeCodeExtension(co: ConfiguredObject) extends Extension with Logging 
   }
 
   override def pageProcessors(site: Site) = Seq(new PageProcessor {
+    def runAt: Phase = Phase.Include
     def apply(p: Page): Unit = p.doc.accept(new IncludeCodeVisitor(p, parse(p.config)))
   })
 

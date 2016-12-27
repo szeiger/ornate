@@ -2,9 +2,8 @@ package com.novocode.ornate.highlight
 
 import java.net.URI
 
-import com.novocode.ornate.commonmark.PageProcessor
 import com.novocode.ornate.js.{JSMap, NashornSupport, WebJarSupport}
-import com.novocode.ornate.{Extension, Logging, Page, Site}
+import com.novocode.ornate._
 import com.novocode.ornate.config.ConfigExtensionMethods.configExtensionMethods
 import com.novocode.ornate.config.ConfiguredObject
 import org.commonmark.node.{FencedCodeBlock, IndentedCodeBlock, Node}

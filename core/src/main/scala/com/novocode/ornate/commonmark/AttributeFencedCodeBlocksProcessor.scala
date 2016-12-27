@@ -1,6 +1,6 @@
 package com.novocode.ornate.commonmark
 
-import com.novocode.ornate.Page
+import com.novocode.ornate.{Page, PageProcessor, Phase}
 import org.commonmark.node.{AbstractVisitor, FencedCodeBlock}
 import NodeExtensionMethods._
 
@@ -8,6 +8,8 @@ import scala.collection.mutable
 
 /** Replace FencedCodeBlocks with AttributedFencedCodeBlocks */
 object AttributeFencedCodeBlocksProcessor extends PageProcessor {
+  def runAt: Phase = Phase.Attribute
+
   def lift(n: FencedCodeBlock): AttributedFencedCodeBlock = n match {
     case n: AttributedFencedCodeBlock => n
     case n =>

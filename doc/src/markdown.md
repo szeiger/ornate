@@ -15,6 +15,8 @@ Not all extensions are enabled by default. This can be configured on a per-page 
 
 HOCON does not allow the removal of list elements when overriding a setting. (You can only replace the entire list or add elements at the beginning or end of it.) For `global.extensions` Ornate supports the use of a minus (`-`) prefix to remove existing elements. 
 
+The order in which extensions are added generally does not matter. Extensions perform their processing in predefined phases to automatically handle dependencies correctly (e.g. first include external code snippets, then expand variables in them, then perform highlighting).
+
 ## commonmark-java extensions
 
 See the [commonmark-java documentation](https://github.com/atlassian/commonmark-java#extensions) for `autolink`, `ins`, `strikethrough` and `tables`.
@@ -167,9 +169,6 @@ This gets rendered as:
 # Set the version to {{version}}:
 version = "{{version}}"
 ```
-
-> {.note}
-> Note: When using `expandVars` together with `includeCode`, the order in which the extensions are run determines whether variables in included snippets are expanded. The default configuration adds `expandVars` *after* `includeCode` so that snippets are processed by `expandVars`.
 
 In plain text you can also use objects with [config](images.md#config) URIs instead of `expandVars` but this is not possible in code elements, which cannot contain embedded Markdown syntax.
 

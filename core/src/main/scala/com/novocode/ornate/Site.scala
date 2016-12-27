@@ -3,7 +3,7 @@ package com.novocode.ornate
 import java.net.URI
 
 import URIExtensionMethods._
-import com.novocode.ornate.commonmark.{CustomParser, PageProcessor}
+import com.novocode.ornate.commonmark.CustomParser
 import com.typesafe.config.Config
 import org.commonmark.node._
 
@@ -17,7 +17,7 @@ class Page(val sourceFileURI: Option[URI], val uri: URI, val suffix: String, val
 
   def uriWithSuffix(ext: String): URI = uri.replaceSuffix(suffix, ext)
 
-  var processors: Seq[PageProcessor] = null // Initialized by Main after the Site object has been built
+  var processors: Seq[PageProcessor] = null // Initialized by Theme after the Site object has been built
 
   def applyProcessors(): Unit = processors.foreach(_.apply(this))
 

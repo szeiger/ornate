@@ -1,9 +1,9 @@
 package com.novocode.ornate.commonmark
 
 import NodeExtensionMethods.nodeToNodeExtensionMethods
-import com.novocode.ornate.{Extension, Logging, Page, Site}
+import com.novocode.ornate._
 import com.novocode.ornate.config.ConfiguredObject
-import org.commonmark.node.{Block, Image, Link, Node, Text}
+import org.commonmark.node._
 
 import scala.collection.mutable.ArrayBuffer
 
@@ -19,6 +19,8 @@ object SmartQuotesProcessor extends PageProcessor with Logging {
   final val RightSingle = '\u2019'
   final val LeftDouble  = '\u201c'
   final val RightDouble = '\u201d'
+
+  def runAt: Phase = Phase.Visual
 
   override def apply(p: Page): Unit = findSections(p.doc).foreach(s => processQuotes(identifyQuotes(s)))
 

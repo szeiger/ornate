@@ -7,6 +7,3 @@ Code highlighting is provided through the `higlightjs` extension which runs [hig
 
 > {.note}
 > Note: The default theme overrides any background color set by the highlight.js style.
-
-> {.note}
-> Note: A highlighter extension should always be added *after* all other extensions that may modify the contents of code blocks and inline code. Once highlighting has been performed, any further modification to the code by other extensions has no effect.

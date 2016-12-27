@@ -3,9 +3,7 @@ package com.novocode.ornate
 import com.typesafe.config.Config
 import org.commonmark.renderer.html.HtmlRenderer.HtmlRendererExtension
 import org.commonmark.parser.Parser.ParserExtension
-
-import com.novocode.ornate.commonmark.PageProcessor
-import com.novocode.ornate.config.{ReferenceConfig, ConfiguredObject, Global}
+import com.novocode.ornate.config.{ConfiguredObject, Global, ReferenceConfig}
 
 trait Extension {
   def preProcessors(pageConfig: Config): Seq[PreProcessor] = Nil

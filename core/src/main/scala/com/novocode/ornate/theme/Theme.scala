@@ -5,7 +5,7 @@ import java.net.{URI, URL}
 
 import scala.collection.mutable
 import com.novocode.ornate._
-import com.novocode.ornate.commonmark.{AttributeFencedCodeBlocksProcessor, ExpandTocProcessor, SpecialImageProcessor}
+import com.novocode.ornate.commonmark.{AttributeFencedCodeBlocksProcessor, SpecialImageProcessor}
 import com.novocode.ornate.config.ConfigExtensionMethods.configExtensionMethods
 import com.novocode.ornate.config.Global
 import com.novocode.ornate.js.WebJarSupport
@@ -26,7 +26,7 @@ abstract class Theme(val global: Global) extends Logging {
     logTime("Running page processors took") {
       global.parMap(pages) { p =>
         val pagepp = p.extensions.ornate.flatMap(_.pageProcessors(site))
-        p.processors = (AttributeFencedCodeBlocksProcessor +: sip +: pagepp)
+        p.processors = (AttributeFencedCodeBlocksProcessor +: sip +: pagepp).sortBy(_.runAt.idx)
         p.applyProcessors()
       }
     }
