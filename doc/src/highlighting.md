@@ -1,10 +1,12 @@
 # Code Highlighting
 
-A highlighter is a class that implements the [](api:com.novocode.ornate.highlight.Highlighter) trait. It can be set in the site configuration in `global.highlight`.
-
-The default highlighter runs [highlight.js](https://highlightjs.org/) at build time in Nashorn. All languages from the highlight.js distribution are supported but only a few of them are enabled by default to improve startup times. This and other settings can be changed in the page or site configuration. These are the defaults:
+Code highlighting is provided through the `higlightjs` extension which runs [highlight.js](https://highlightjs.org/) at build time in Nashorn. All languages from the highlight.js distribution are supported but only a few of them are enabled by default to improve startup time. This and other settings can be changed in the page or site configuration. These are the defaults:
 
 ```yaml src=../../core/src/main/resources/ornate-reference.conf#--doc-highlightjs
 ```
 
-Note that the default theme overrides any background color set by the highlight.js style.
+> {.note}
+> Note: The default theme overrides any background color set by the highlight.js style.
+
+> {.note}
+> Note: A highlighter extension should always be added *after* all other extensions that may modify the contents of code blocks and inline code. Once highlighting has been performed, any further modification to the code by other extensions has no effect.

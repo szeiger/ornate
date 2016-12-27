@@ -13,7 +13,7 @@ import com.novocode.ornate.config.ConfigExtensionMethods.configExtensionMethods
 import com.novocode.ornate.highlight.HighlightResult
 import com.novocode.ornate.theme.{HtmlPageContext, HtmlPageModel, HtmlSiteModel, HtmlTheme}
 import org.commonmark.ext.gfm.tables.TableBlock
-import org.commonmark.node.Node
+import org.commonmark.node.{Block, Node}
 import org.commonmark.renderer.html.{HtmlNodeRendererContext, HtmlNodeRendererFactory, HtmlRenderer}
 
 import scala.collection.JavaConverters._
@@ -89,12 +89,12 @@ class PdfTheme(global: Global) extends HtmlTheme(global) {
     }
   }
 
-  override def renderCode(n: Node, hlr: HighlightResult, c: HtmlNodeRendererContext, block: Boolean): Unit = {
+  override def renderCode(hlr: HighlightResult, code: Node, c: HtmlNodeRendererContext, pc: HtmlPageContext): Unit = if(code.isInstanceOf[Block]) {
     val wr = c.getWriter
-    if(block) wr.raw("""<div class="a_code_block">""")
-    super.renderCode(n, hlr, c, block)
-    if(block) wr.raw("""</div>""")
-  }
+    wr.raw("""<div class="a_code_block">""")
+    super.renderCode(hlr, code, c, pc)
+    wr.raw("""</div>""")
+  } else super.renderCode(hlr, code, c, pc)
 
   def renderTableBlock(n: TableBlock, c: HtmlNodeRendererContext): Unit = {
     val wr = c.getWriter

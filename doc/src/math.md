@@ -17,7 +17,7 @@ This default configuration disables preprocessing (which is not needed if you us
 
 ## Fenced Code Blocks
 
-Fenced code blocks whose info string starts with the language codes `texmath`, `asciimath` (or simpy `math`) and `mathml` are
+Fenced code blocks whose info string starts with the language codes `texmath`, `asciimath` (or simply `math`) and `mathml` are
 treated as display math instead of passing them on to the standard [highlighter](highlighting.md).
 
 TeX example:

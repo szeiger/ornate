@@ -11,7 +11,7 @@ import com.novocode.ornate.URIExtensionMethods._
 import com.novocode.ornate.commonmark._
 import com.novocode.ornate.config.ConfigExtensionMethods.configExtensionMethods
 import com.novocode.ornate.config.Global
-import com.novocode.ornate.highlight.{HighlightResult, HighlightTarget}
+import com.novocode.ornate.highlight.{HighlightResult, Highlit, HighlitBlock, HighlitInline}
 import com.novocode.ornate.js.{CSSO, ElasticlunrSearch, WebJarSupport}
 import com.typesafe.config.{ConfigObject, ConfigRenderOptions}
 import org.commonmark.renderer.NodeRenderer
@@ -90,18 +90,20 @@ class HtmlTheme(global: Global) extends Theme(global) { self =>
 
   /** Render code that was run through the highlighter. This method is called for all fenced code blocks,
     * indented code blocks and inline code. It can be overridden in subclasses as needed. */
-  def renderCode(n: Node, hlr: HighlightResult, c: HtmlNodeRendererContext, block: Boolean): Unit = {
+  def renderCode(hlr: HighlightResult, code: Node, c: HtmlNodeRendererContext, pc: HtmlPageContext): Unit = {
+    val block = code.isInstanceOf[Block]
     val langCode = hlr.language.map("language-" + _)
     val codeClasses = (if(block) hlr.preCodeClasses else hlr.codeClasses) ++ langCode
     val codeAttrs: Map[String, String] = (if(codeClasses.nonEmpty) Map("class" -> codeClasses.mkString(" ")) else Map.empty)
     val preAttrs: Map[String, String] = (if(hlr.preClasses.nonEmpty) Map("class" -> hlr.preClasses.mkString(" ")) else Map.empty)
     val wr = c.getWriter
+    hlr.css.foreach(u => pc.res.getURI(u, null, u.getPath.endsWith(".css"), false))
     if(block) {
       wr.line
       wr.tag("pre", preAttrs.asJava)
     }
     wr.tag("code", codeAttrs.asJava)
-    n match {
+    code match {
       case n: AttributedFencedCodeBlock if n.postHighlightSubstitutions.nonEmpty =>
         val ch = n.children.toVector
         n.splitProcessed(hlr.html.toString).foreach {
@@ -109,7 +111,7 @@ class HtmlTheme(global: Global) extends Theme(global) { self =>
           case Right(idx) =>
             c.render(ch(idx))
         }
-      case n =>
+      case _ =>
         wr.raw(hlr.html.toString)
     }
     wr.tag("/code")
@@ -119,24 +121,25 @@ class HtmlTheme(global: Global) extends Theme(global) { self =>
     }
   }
 
-  def fencedCodeBlockRenderer(pc: HtmlPageContext) = SimpleHtmlNodeRenderer { (n: AttributedFencedCodeBlock, c: HtmlNodeRendererContext) =>
-    val info = if(n.getInfo eq null) Vector.empty else n.getInfo.split(' ').filter(_.nonEmpty).toVector
-    renderFencedCodeBlock(n, c, pc, info.headOption)
-  }
-
-  def renderFencedCodeBlock(n: AttributedFencedCodeBlock, c: HtmlNodeRendererContext, pc: HtmlPageContext, lang: Option[String]): Unit = lang match {
+  def renderFencedCodeBlock(pc: HtmlPageContext)(n: AttributedFencedCodeBlock, c: HtmlNodeRendererContext): Unit = n.getLanguage match {
     case Some("mermaid") => renderMermaid(n, c, pc)
     case Some("texmath") => renderMath(n.getLiteral, c, pc, "tex", true)
     case Some("asciimath" | "math") => renderMath(n.getLiteral, c, pc, "asciimath", true)
     case Some("mathml") => renderMath(n.getLiteral, c, pc, "mml", true)
-    case _ => renderRegularFencedCodeBlock(n, c, pc, lang)
+    case lang => renderCode(HighlightResult.simple(n.getLiteral, lang), n, c, pc)
   }
 
-  def renderRegularFencedCodeBlock(n: AttributedFencedCodeBlock, c: HtmlNodeRendererContext, pc: HtmlPageContext, lang: Option[String]): Unit = {
-    val hlr = global.highlighter.highlightTextAsHTML(n.getLiteral, lang, HighlightTarget.FencedCodeBlock, pc.page)
-    hlr.css.foreach(u => pc.res.getURI(u, null, u.getPath.endsWith(".css"), false))
-    renderCode(n, hlr.copy(language = lang.orElse(hlr.language)), c, true)
-  }
+  def renderIndentedCodeBlock(pc: HtmlPageContext)(n: IndentedCodeBlock, c: HtmlNodeRendererContext): Unit =
+    renderCode(HighlightResult.simple(n.getLiteral, None), n, c, pc)
+
+  def renderInlineCode(pc: HtmlPageContext)(n: Code, c: HtmlNodeRendererContext): Unit =
+    renderCode(HighlightResult.simple(n.getLiteral, None), n, c, pc)
+
+  def renderHighlitBlock(pc: HtmlPageContext)(n: HighlitBlock, c: HtmlNodeRendererContext): Unit =
+    renderCode(n.result, n.getFirstChild, c, pc)
+
+  def renderHighlitInline(pc: HtmlPageContext)(n: HighlitInline, c: HtmlNodeRendererContext): Unit =
+    renderCode(n.result, n.getFirstChild, c, pc)
 
   /** Render a Mermaid diagram block. This does not add any dependency on Mermaid to the generated site.
     * The method should be overwritten accordingly (unless a theme always adds it anyway). */
@@ -173,19 +176,7 @@ class HtmlTheme(global: Global) extends Theme(global) { self =>
     if(block && mathType == "asciimath") wr.tag("/div")
   }
 
-  def indentedCodeBlockRenderer(pc: HtmlPageContext) = SimpleHtmlNodeRenderer { (n: IndentedCodeBlock, c: HtmlNodeRendererContext) =>
-    val hlr = global.highlighter.highlightTextAsHTML(n.getLiteral, None, HighlightTarget.IndentedCodeBlock, pc.page)
-    hlr.css.foreach(u => pc.res.getURI(u, null, u.getPath.endsWith(".css"), false))
-    renderCode(n, hlr, c, true)
-  }
-
-  def inlineCodeRenderer(pc: HtmlPageContext) = SimpleHtmlNodeRenderer { (n: Code, c: HtmlNodeRendererContext) =>
-    val hlr = global.highlighter.highlightTextAsHTML(n.getLiteral, None, HighlightTarget.InlineCode, pc.page)
-    hlr.css.foreach(u => pc.res.getURI(u, null, u.getPath.endsWith(".css"), false))
-    renderCode(n, hlr, c, false)
-  }
-
-  def emojiRenderer(pc: HtmlPageContext) = SimpleHtmlNodeRenderer { (n: Emoji, c: HtmlNodeRendererContext) =>
+  def renderEmoji(pc: HtmlPageContext)(n: Emoji, c: HtmlNodeRendererContext): Unit = {
     val wr = c.getWriter
     if(n.uri ne null) {
       wr.raw(s"""<img class="emoji" title="${n.name}" alt="""")
@@ -201,12 +192,17 @@ class HtmlTheme(global: Global) extends Theme(global) { self =>
   }
 
   def renderers(pc: HtmlPageContext): Seq[HtmlNodeRendererFactory] = Seq(
-    emojiRenderer(pc),
+    SimpleHtmlNodeRenderer(renderEmoji(pc) _),
     SimpleHtmlNodeRenderer(renderAttributedBlockQuote _),
     SimpleHtmlNodeRenderer(renderAttributedHeading _),
     SimpleHtmlNodeRenderer(renderTabView(pc) _),
     SimpleHtmlNodeRenderer(renderInlineMath(pc) _),
-    SimpleHtmlNodeRenderer(renderMathBlock(pc) _)
+    SimpleHtmlNodeRenderer(renderMathBlock(pc) _),
+    SimpleHtmlNodeRenderer(renderFencedCodeBlock(pc) _),
+    SimpleHtmlNodeRenderer(renderIndentedCodeBlock(pc) _),
+    SimpleHtmlNodeRenderer(renderInlineCode(pc) _),
+    SimpleHtmlNodeRenderer(renderHighlitBlock(pc) _),
+    SimpleHtmlNodeRenderer(renderHighlitInline(pc) _)
   )
 
   /** If MathJAX is needed by the page, add all resources and return the resolved main script URI and inline config. */
@@ -244,9 +240,6 @@ class HtmlTheme(global: Global) extends Theme(global) { self =>
           val pc = createPageContext(siteContext, p)
           pc.slp(p)
           val renderer = renderers(pc).foldLeft(HtmlRenderer.builder()) { case (z, n) => z.nodeRendererFactory(n) }
-            .nodeRendererFactory(fencedCodeBlockRenderer(pc))
-            .nodeRendererFactory(indentedCodeBlockRenderer(pc))
-            .nodeRendererFactory(inlineCodeRenderer(pc))
             .extensions(p.extensions.htmlRenderer.asJava).build()
           val pm = createPageModel(pc, renderer)
           val formatted = getTemplate(templateName).render(pm).body.trim

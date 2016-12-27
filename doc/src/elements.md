@@ -1,7 +1,7 @@
 ---
-highlight.highlightjs.fenced = null
-highlight.highlightjs.indented = scala
-highlight.highlightjs.inline = scala
+extension.highlightjs.fenced = null
+extension.highlightjs.indented = scala
+extension.highlightjs.inline = scala
 extension.mathSyntax.dollarInlineCode = asciimath
 extensions = ${extensions} [ins, superscript, subscript]
 ---

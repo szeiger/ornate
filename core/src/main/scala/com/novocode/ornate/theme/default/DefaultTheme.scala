@@ -11,7 +11,7 @@ import com.novocode.ornate._
 import com.novocode.ornate.theme.{HtmlPageContext, HtmlTheme, PageResources}
 import org.commonmark.ext.gfm.tables.TableBlock
 import org.commonmark.renderer.html.{HtmlNodeRendererContext, HtmlNodeRendererFactory}
-import org.commonmark.node.{Document, Node}
+import org.commonmark.node.{Block, Document, Node}
 
 import scala.collection.JavaConverters._
 
@@ -58,12 +58,12 @@ class DefaultTheme(global: Global) extends HtmlTheme(global) {
     pc.requireJavaScript()
   }
 
-  override def renderCode(n: Node, hlr: HighlightResult, c: HtmlNodeRendererContext, block: Boolean): Unit = if(block) {
+  override def renderCode(hlr: HighlightResult, code: Node, c: HtmlNodeRendererContext, pc: HtmlPageContext): Unit = if(code.isInstanceOf[Block]) {
     val wr = c.getWriter
     wr.line
     wr.raw("<div class=\"row\"><div class=\"a_linked small-expand columns a_xscroll a_codeblock\">")
-    super.renderCode(n, hlr, c, block)
-    n match {
+    super.renderCode(hlr, code, c, pc)
+    code match {
       case attr: Attributed =>
         attr.defAttrs.get("sourceLinkURI").foreach { uri =>
           val text = attr.defAttrs.get("sourceLinkText").getOrElse(generateSourceLinkText(uri))
@@ -75,7 +75,7 @@ class DefaultTheme(global: Global) extends HtmlTheme(global) {
     }
     wr.raw("</div></div>")
     wr.line
-  } else super.renderCode(n, hlr, c, block)
+  } else super.renderCode(hlr, code, c, pc)
 
   def generateSourceLinkText(uri: String): String = try {
     val p = new URI(uri).getPath

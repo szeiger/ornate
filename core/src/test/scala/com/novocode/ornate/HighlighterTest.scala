@@ -2,12 +2,12 @@ package com.novocode.ornate
 
 import java.net.URI
 
-import com.novocode.ornate.highlight.{HighlightTarget, NoHighlighter, HighlightResult, HighlightJSHighlighter}
+import com.novocode.ornate.highlight.{HighlightJSExtension, HighlightJSHighlighter, HighlightResult}
 import com.novocode.ornate.config.Global
 import org.junit.Test
 import org.junit.Assert._
-
 import better.files._
+import org.commonmark.node.FencedCodeBlock
 import play.twirl.api.HtmlFormat
 
 class HighlighterTest {
@@ -15,28 +15,29 @@ class HighlighterTest {
   val p1 = PageParser.parseWithFrontMatter(None, global.referenceConfig, new URI("site:/p1"), "", "p1 content")
   val p2 = PageParser.parseWithFrontMatter(None, global.referenceConfig, new URI("site:/p2"), "",
     """---
-      |highlight.highlightjs.fenced: rust
+      |extension.highlightjs.fenced: rust
       |---
       |p2 content
     """.stripMargin)
   val p3 = PageParser.parseWithFrontMatter(None, global.referenceConfig, new URI("site:/p3"), "",
     """---
-      |highlight.highlightjs.fenced: [json, scala, rust]
+      |extension.highlightjs.fenced: [json, scala, rust]
       |---
       |p3 content
     """.stripMargin)
   val p4 = PageParser.parseWithFrontMatter(None, global.referenceConfig, new URI("site:/p4"), "",
     """---
-      |highlight.highlightjs.fenced: null
+      |extension.highlightjs.fenced: null
       |---
       |p4 content
     """.stripMargin)
 
   @Test def testHighlightJS: Unit = {
-    val hl = new HighlightJSHighlighter(global, global.userConfig.highlight)
+    val hlext = global.userConfig.getExtensions(Seq("highlightjs")).ornate.head.asInstanceOf[HighlightJSExtension]
+    val hl = hlext.pageProcessors(null).head.asInstanceOf[HighlightJSHighlighter]
     def check(p: Page, src: String, lang: Option[String], exp: String, expLang: Option[String]): Unit = {
-      val hlr = hl.highlightTextAsHTML(src, lang, HighlightTarget.FencedCodeBlock, p)
-      assertEquals(HtmlFormat.raw(exp), hlr.html)
+      val hlr = hl.highlightTextAsHTML(src, lang, new FencedCodeBlock, p)
+      assertEquals(HtmlFormat.raw(exp).toString, hlr.html)
       assertEquals(expLang, hlr.language)
     }
 
@@ -67,9 +68,8 @@ class HighlighterTest {
   }
 
   @Test def testNoHighlight: Unit = {
-    val hl = new NoHighlighter(global, null)
     val exp = """val x = &quot;&lt;foo&gt;&quot;"""
-    assertEquals(HighlightResult(HtmlFormat.raw(exp), None),
-      hl.highlightTextAsHTML("val x = \"<foo>\"", None, HighlightTarget.FencedCodeBlock, p1))
+    assertEquals(HighlightResult(HtmlFormat.raw(exp).toString, None),
+      HighlightResult.simple("val x = \"<foo>\""))
   }
 }

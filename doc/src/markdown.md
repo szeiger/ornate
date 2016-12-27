@@ -13,6 +13,8 @@ Not all extensions are enabled by default. This can be configured on a per-page 
 ```yaml src=../../core/src/main/resources/ornate-reference.conf#--doc-extensions
 ```
 
+HOCON does not allow the removal of list elements when overriding a setting. (You can only replace the entire list or add elements at the beginning or end of it.) For `global.extensions` Ornate supports the use of a minus (`-`) prefix to remove existing elements. 
+
 ## commonmark-java extensions
 
 See the [commonmark-java documentation](https://github.com/atlassian/commonmark-java#extensions) for `autolink`, `ins`, `strikethrough` and `tables`.
@@ -293,3 +295,7 @@ When the link text is left empty or is identical to the link target (which is th
 ## `mathSyntax`
 
 This extensions enables common notation for inline and display (block) math. See [mathSyntax extension](math.md#mathSyntax) for details.
+
+## `highlightjs`
+
+See [Code Highlighting](highlighting.md) for details.

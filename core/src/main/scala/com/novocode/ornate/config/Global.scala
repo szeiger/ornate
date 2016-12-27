@@ -3,7 +3,6 @@ package com.novocode.ornate.config
 import java.net.{URI, URLEncoder}
 import java.util.concurrent.{ThreadFactory, ThreadPoolExecutor, LinkedBlockingQueue, TimeUnit}
 
-import com.novocode.ornate.highlight.{Highlighter, NoHighlighter}
 import com.novocode.ornate._
 import com.novocode.ornate.theme.Theme
 import com.novocode.ornate.config.ConfigExtensionMethods.configExtensionMethods
@@ -70,16 +69,6 @@ class Global(startDir: File, confFile: Option[File], overrides: Config = ConfigF
     val cl = userConfig.theme.className
     logger.debug(s"Creating theme from class $cl")
     Class.forName(cl).getConstructor(classOf[Global]).newInstance(this).asInstanceOf[Theme]
-  }
-
-  @volatile lazy val highlighter: Highlighter = {
-    val cl = userConfig.highlight.className
-    logger.debug(s"Creating highlighter from class $cl")
-    try Class.forName(cl).getConstructor(classOf[Global], classOf[ConfiguredObject]).newInstance(this, userConfig.highlight).asInstanceOf[Highlighter]
-    catch { case ex: Exception =>
-      logger.error(s"Error instantiating highlighter class $cl -- disabling highlighting", ex)
-      new NoHighlighter(this, null)
-    }
   }
 
   @volatile lazy val executionContext: ExecutionContext = {
@@ -153,7 +142,6 @@ class UserConfig(raw: Config, startDir: File, global: Global) extends ReferenceC
   val numThreads: Int = raw.getIntOr("global.numThreads", Runtime.getRuntime.availableProcessors)
 
   val theme = objectKind("theme").singleton
-  val highlight = objectKind("highlight").singleton
 
   val toc: Option[Vector[ConfigValue]] = raw.getListOpt("global.toc").map(_.toVector)
 }

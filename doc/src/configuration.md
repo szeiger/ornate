@@ -3,7 +3,7 @@
 The configuration is written in HOCON. The site configuration is in `ornate.conf`. It is resolved against the reference configuration `ornate-reference.conf` that ships with Ornate. Every page may have a HOCON front matter section at the top, for example:
 
     ---
-    highlight.highlightjs.inline = scala
+    extension.highlightjs.inline = scala
     ---
     # Page Title
 

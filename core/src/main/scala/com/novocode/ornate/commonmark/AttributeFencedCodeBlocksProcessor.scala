@@ -34,6 +34,9 @@ class AttributedFencedCodeBlock extends FencedCodeBlock with Attributed {
   private var _prefix: String = null
   private var _nextId = 0
 
+  def getLanguage: Option[String] =
+    if(getInfo eq null) None else getInfo.split(' ').find(_.nonEmpty)
+
   def substitutionPrefix: String = {
     if(_prefix eq null) _prefix = unusedIdentifierPrefix(getLiteral)
     _prefix
