@@ -9,6 +9,14 @@ import org.commonmark.node._
 
 class Site(val pages: Vector[Page], val toc: Vector[TocEntry]) {
   def findTocEntry(p: Page): Option[TocEntry] = toc.find(te => te.page eq p)
+  def findTocLocation(p: Page): Option[TocLocation] = {
+    val i = toc.indexWhere(_.page eq p)
+    if(i < 0) None else {
+      val prev = if(i > 0) Some(toc(i-1)) else None
+      val next = if(i < toc.length-1) Some(toc(i+1)) else None
+      Some(TocLocation(toc(i), prev, next))
+    }
+  }
 }
 
 class Page(val sourceFileURI: Option[URI], val uri: URI, val suffix: String, val doc: Node, val config: Config,
@@ -64,4 +72,6 @@ final case class PageSection(title: Option[String], children: Vector[Section]) e
   def getID = None
 }
 
-case class TocEntry(val page: Page, val title: Option[String])
+case class TocEntry(page: Page, title: Option[String])
+
+case class TocLocation(current: TocEntry, previous: Option[TocEntry], next: Option[TocEntry])

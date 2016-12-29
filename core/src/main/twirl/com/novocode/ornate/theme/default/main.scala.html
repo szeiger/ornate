@@ -28,6 +28,31 @@
   </li>
 }
 
+@import com.novocode.ornate.TocEntry
+@* Render a navigation link in a navigation bar *@
+@navLink(to: Option[TocEntry], name: String) = {
+  @defining(to.map(te => new java.net.URI(p.pc.resolveLink(te.page.uri.toString)))) { target =>
+    @if(target.isDefined) {
+      <li><a href="@target.get" title="@{to.flatMap(te => te.title.map(HtmlFormat.escape))}">@{p.stringText(name)}</a></li>
+    } else {
+      <li><span class="a_disabled">@{p.stringText(name)}</span></li>
+    }
+  }
+}
+@* Render a navigation link in HEAD *@
+@headNavLink(to: Option[TocEntry], rel: String) = { @for(te <- to) {
+  <link rel="@rel" href="@{new java.net.URI(p.pc.resolveLink(te.page.uri.toString))}" title="@{to.flatMap(te => te.title.map(HtmlFormat.escape))}" />
+}}
+
+@navBar(cls: String) = {
+  @if(p.pc.tocLocation.isDefined) { @* Only pages in the TOC get a nav bar *@
+    <ul class="menu align-right simple a_navbar @cls">
+      @{navLink(p.pc.tocLocation.flatMap(_.previous), "navPrevious")}
+      @{navLink(p.pc.tocLocation.flatMap(_.next), "navNext")}
+    </ul>
+  }
+}
+
 <!DOCTYPE html>
 <html class="no-js" lang="@{p.pc.pageConfig("meta.lang").get}" dir="@{p.pc.pageConfig("meta.dir").get}">
   <head>
@@ -51,6 +76,9 @@
       }
       <script type="text/javascript" async src="@mathJax"></script>
     }
+    @{headNavLink(p.pc.siteContext.site.toc.headOption, "top")}
+    @{headNavLink(p.pc.tocLocation.flatMap(_.previous), "prev")}
+    @{headNavLink(p.pc.tocLocation.flatMap(_.next), "next")}
   </head>
   <body>
     <div class="expanded row">
@@ -80,10 +108,12 @@
             <div class="row">
               @****************************** Content ******************************@
               <main class="columns large-order-2 sections" id="_sections">
+                @if(p.pc.themeConfigBoolean("topNavBar").getOrElse(false)) { @navBar("a_navbar_top") }
                 @if(p.pc.needsJavaScript) {
                   @for(h <- p.stringHtml("noScript")) { <noscript> @h </noscript> }
                 }
                 @content
+                @if(p.pc.themeConfigBoolean("bottomNavBar").getOrElse(false)) { @navBar("a_navbar_bottom") }
               </main>
               @****************************** Site Navigation ******************************@
               @for(items <- p.pc.siteNav) {

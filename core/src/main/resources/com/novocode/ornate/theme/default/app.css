@@ -473,6 +473,32 @@ img.emoji {
   margin-bottom: 3rem;
 }
 
+.menu.simple.a_navbar_bottom {
+  margin-top: 2rem;
+}
+
+.menu.simple.a_navbar li {
+  margin-left: 1rem;
+  margin-right: 0;
+}
+
+.menu.simple.a_navbar li .a_disabled {
+  color: #999;
+  display: flex;
+}
+
+@media screen and (max-width: 39.9375em) {
+  .menu.simple.a_navbar_top {
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid #ddd;
+    margin-bottom: 1rem;
+  }
+  .menu.simple.a_navbar_bottom {
+    padding-top: 0.5rem;
+    border-top: 1px solid #ddd;
+  }
+}
+
 @media screen and (max-width: 63.9375em) {
   .a_sitenav {
     padding-top: 1rem;
@@ -497,6 +523,9 @@ img.emoji {
     padding-right: 0;
     padding-bottom: 1rem;
   }
+  .menu.simple.a_navbar_top {
+    margin-top: 0.3rem;
+  }
 }
 
 /********** MathJax customization **********/
@@ -516,7 +545,7 @@ div.MathJax_Preview {
 /********** Print styles **********/
 
 @media print {
-  div.a_sitenav_container, nav, header, footer, .a_sourcelink { display: none; }
+  div.a_sitenav_container, nav, header, footer, .a_sourcelink, .a_navbar { display: none; }
   main, div.row, div.columns { display: block; max-width: none; }
   body > div { height: auto; }
   .a_xscroll { width: auto; overflow: hidden; }

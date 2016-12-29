@@ -402,6 +402,8 @@ class HtmlPageContext(val siteContext: HtmlSiteContext, val page: Page) {
 
   def sections: Vector[Section] = page.section.children
 
+  lazy val tocLocation: Option[TocLocation] = siteContext.site.findTocLocation(page)
+
   def stringNode(name: String): Option[Node] = themeConfig(s"strings.$name").map { md =>
     val snippet = page.parseAndProcessSnippet(md)
     slp(snippet)
