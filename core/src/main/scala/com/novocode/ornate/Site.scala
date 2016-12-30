@@ -19,7 +19,8 @@ class Site(val pages: Vector[Page], val toc: Vector[TocEntry]) {
   }
 }
 
-class Page(val sourceFileURI: Option[URI], val uri: URI, val suffix: String, val doc: Node, val config: Config,
+class Page(val sourceFileURI: Option[URI], val syntheticName: Option[String],
+           val uri: URI, val suffix: String, val doc: Node, val config: Config,
            val section: PageSection, val extensions: Extensions, parser: CustomParser) {
   override def toString: String = s"Page($uri)"
 
@@ -31,7 +32,7 @@ class Page(val sourceFileURI: Option[URI], val uri: URI, val suffix: String, val
 
   def parseAndProcessSnippet(content: String): Page = {
     val doc = parser.parse(content)
-    val snippetPage = new Page(None, uri, suffix, doc, config, section, extensions, parser)
+    val snippetPage = new Page(None, None, uri, suffix, doc, config, section, extensions, parser)
     processors.foreach(_.apply(snippetPage))
     snippetPage
   }

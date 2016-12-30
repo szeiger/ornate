@@ -20,12 +20,12 @@ class DefaultTheme(global: Global) extends HtmlTheme(global) {
     syntheticPageURIs.flatMap {
       case ("toc", u) =>
         logger.debug(s"Creating TOC page $u")
-        Some(PageParser.parseContent(None, global.userConfig, u, ".md",
+        Some(PageParser.parseContent(None, Some("toc"), global.userConfig, u, ".md",
           Some(global.userConfig.theme.config.getString("strings.tocPage")),
           global.userConfig.raw))
       case ("search", u) =>
         logger.debug(s"Creating search page $u")
-        Some(PageParser.parseContent(None, global.userConfig, u, ".md",
+        Some(PageParser.parseContent(None, Some("search"), global.userConfig, u, ".md",
           Some(global.userConfig.theme.config.getString("strings.searchPage")),
           global.userConfig.theme.config.getConfig("global.searchPageConfig").withFallback(global.userConfig.raw)))
       case (name, u) =>

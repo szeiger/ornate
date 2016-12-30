@@ -76,9 +76,10 @@
       }
       <script type="text/javascript" async src="@mathJax"></script>
     }
-    @{headNavLink(p.pc.siteContext.site.toc.headOption, "top")}
+    @{headNavLink(p.pc.siteContext.site.toc.headOption, "start")}
     @{headNavLink(p.pc.tocLocation.flatMap(_.previous), "prev")}
     @{headNavLink(p.pc.tocLocation.flatMap(_.next), "next")}
+    @{headNavLink(p.pc.siteContext.site.pages.find(_.syntheticName == Some("toc")).map(p => new TocEntry(p, p.section.title)), "toc")}
   </head>
   <body>
     <div class="expanded row">

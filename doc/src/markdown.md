@@ -60,7 +60,7 @@ This extension implements the same header attribute syntax for block quotes. Orn
 Example source:
 
 ```markdown
-> This is a reqular block quote.
+> This is a regular block quote.
 
 > {.note}
 > This is a note.
