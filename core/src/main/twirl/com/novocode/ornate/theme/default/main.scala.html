@@ -15,11 +15,11 @@
 @import com.novocode.ornate.ExpandTocProcessor.TocItem
 @siteNav(ti: TocItem) = {
   <li @if(ti.focused) { class="a_thispage" }>
-    @if(ti.target.isDefined && ti.text.isDefined) {
-      <a href="@p.pc.resolveLink(ti.target.get)">@ti.text.get</a>
-    } else {
-      @if(ti.text.isDefined) {
-        <span>@ti.text.get</span>
+    @for(t <- ti.text) {
+      @if(ti.target.isDefined) {
+        <a href="@p.pc.resolveLink(ti.target.get)">@t</a>
+      } else {
+        <span>@t</span>
       }
     }
     @if(ti.children.nonEmpty) {
@@ -28,30 +28,17 @@
   </li>
 }
 
-@import com.novocode.ornate.TocEntry
-@* Render a navigation link in a navigation bar *@
-@navLink(to: Option[TocEntry], name: String) = {
-  @defining(to.map(te => new java.net.URI(p.pc.resolveLink(te.page.uri.toString)))) { target =>
-    @if(target.isDefined) {
-      <li><a href="@target.get" title="@{to.flatMap(te => te.title.map(HtmlFormat.escape))}">@{p.stringText(name)}</a></li>
-    } else {
-      <li><span class="a_disabled">@{p.stringText(name)}</span></li>
+@navBar(cls: String) = { @if(p.namedNavLinks.nonEmpty) {
+  <ul class="menu align-right simple a_navbar @cls">
+    @for(n <- p.namedNavLinks) {
+      @if(n.target.isDefined) {
+        <li><a href="@n.target.get" @for(t <- n.title) { title="@t" }>@n.text.get</a></li>
+      } else {
+        <li><span>@n.text.get</span></li>
+      }
     }
-  }
-}
-@* Render a navigation link in HEAD *@
-@headNavLink(to: Option[TocEntry], rel: String) = { @for(te <- to) {
-  <link rel="@rel" href="@{new java.net.URI(p.pc.resolveLink(te.page.uri.toString))}" title="@{to.flatMap(te => te.title.map(HtmlFormat.escape))}" />
+  </ul>
 }}
-
-@navBar(cls: String) = {
-  @if(p.pc.tocLocation.isDefined) { @* Only pages in the TOC get a nav bar *@
-    <ul class="menu align-right simple a_navbar @cls">
-      @{navLink(p.pc.tocLocation.flatMap(_.previous), "navPrevious")}
-      @{navLink(p.pc.tocLocation.flatMap(_.next), "navNext")}
-    </ul>
-  }
-}
 
 <!DOCTYPE html>
 <html class="no-js" lang="@{p.pc.pageConfig("meta.lang").get}" dir="@{p.pc.pageConfig("meta.dir").get}">
@@ -70,16 +57,13 @@
           @if(p.mathJaxSkipStartupTypeset) { MathJax.Hub.Queue(["Process",MathJax.Hub]); }
           MathJax.Hub.Queue(function() {
             var sticky = $('.sticky');
-            if(sticky.foundation) sticky.foundation('_calc', true); // recalculate sticky positions if Foundation is already initialized
+            if(sticky.foundation) sticky.foundation('_calc', true); @* recalculate sticky positions if Foundation is already initialized *@
           });
         </script>
       }
       <script type="text/javascript" async src="@mathJax"></script>
     }
-    @{headNavLink(p.pc.siteContext.site.toc.headOption, "start")}
-    @{headNavLink(p.pc.tocLocation.flatMap(_.previous), "prev")}
-    @{headNavLink(p.pc.tocLocation.flatMap(_.next), "next")}
-    @{headNavLink(p.pc.siteContext.site.pages.find(_.syntheticName == Some("toc")).map(p => new TocEntry(p, p.section.title)), "toc")}
+    @for(n <- p.activeRelNavLinks) { <link rel="@n.rel.get" href="@n.target.get" @for(t <- n.title) { title="@t" } /> }
   </head>
   <body>
     <div class="expanded row">

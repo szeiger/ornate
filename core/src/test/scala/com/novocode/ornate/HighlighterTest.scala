@@ -12,20 +12,20 @@ import play.twirl.api.HtmlFormat
 
 class HighlighterTest {
   val global = new Global(file"../doc", None)
-  val p1 = PageParser.parseWithFrontMatter(None, global.referenceConfig, new URI("site:/p1"), "", "p1 content")
-  val p2 = PageParser.parseWithFrontMatter(None, global.referenceConfig, new URI("site:/p2"), "",
+  val p1 = PageParser.parseWithFrontMatter(None, None, global.referenceConfig, new URI("site:/p1"), "", "p1 content")
+  val p2 = PageParser.parseWithFrontMatter(None, None, global.referenceConfig, new URI("site:/p2"), "",
     """---
       |extension.highlightjs.fenced: rust
       |---
       |p2 content
     """.stripMargin)
-  val p3 = PageParser.parseWithFrontMatter(None, global.referenceConfig, new URI("site:/p3"), "",
+  val p3 = PageParser.parseWithFrontMatter(None, None, global.referenceConfig, new URI("site:/p3"), "",
     """---
       |extension.highlightjs.fenced: [json, scala, rust]
       |---
       |p3 content
     """.stripMargin)
-  val p4 = PageParser.parseWithFrontMatter(None, global.referenceConfig, new URI("site:/p4"), "",
+  val p4 = PageParser.parseWithFrontMatter(None, None, global.referenceConfig, new URI("site:/p4"), "",
     """---
       |extension.highlightjs.fenced: null
       |---

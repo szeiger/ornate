@@ -433,6 +433,43 @@ class HtmlPageModel(val pc: HtmlPageContext, renderer: HtmlRenderer) {
     mathJaxResources.flatMap(_._2).map(_.toConfig.getBooleanOr("skipStartupTypeset")).getOrElse(false)
   def stringHtml(name: String): Option[Html] = pc.stringNode(name).map(n => HtmlFormat.raw(renderer.render(n)))
   def stringText(name: String): Option[Html] = pc.stringNode(name).map(n => HtmlFormat.escape(NodeUtil.extractText(n)))
+
+  def stringHtmlInline(name: String): Option[Html] = pc.stringNode(name).map { n =>
+    val sb = new java.lang.StringBuilder
+    def render(n: Node): Unit = {
+      if(n.isInstanceOf[Block]) n.children.foreach(render)
+      else {
+        if(sb.length() > 0) sb.append(' ')
+        renderer.render(n, sb)
+      }
+    }
+    render(n)
+    HtmlFormat.raw(sb.toString)
+  }
+
+  class NavLink(val target: Option[URI], val title: Option[Html], val rel: Option[String], textName: Option[String]) {
+    val text: Option[Html] = textName.flatMap(stringHtmlInline)
+
+    def this(to: Option[TocEntry], rel: Option[String], textName: Option[String]) = this(
+      to.map(te => new URI(pc.resolveLink(te.page.uri.toString))),
+      to.flatMap(te => te.title.map(HtmlFormat.escape)),
+      rel, textName
+    )
+  }
+
+  protected def editNavLink: Option[NavLink] = pc.themeConfig("editPage").map { s =>
+    val target = s.replace("[page]", pc.page.uri.getPath.dropWhile(_ == '/'))
+    new NavLink(Some(new URI(target)), None, Some("edit"), Some("navEdit"))
+  }
+
+  lazy val navLinks: Seq[NavLink] = Seq(
+    new NavLink(pc.siteContext.site.toc.headOption, Some("start"), None),
+    new NavLink(pc.tocLocation.flatMap(_.previous), Some("prev"), Some("navPrevious")),
+    new NavLink(pc.tocLocation.flatMap(_.next), Some("next"), Some("navNext")),
+    new NavLink(pc.siteContext.site.pages.find(_.syntheticName == Some("toc")).map(p => new TocEntry(p, p.section.title)), Some("toc"), None)
+  ) ++ editNavLink
+  lazy val activeRelNavLinks: Seq[NavLink] = navLinks.filter(n => n.rel.isDefined && n.target.isDefined)
+  lazy val namedNavLinks: Seq[NavLink] = navLinks.filter(_.text.isDefined)
 }
 
 class HtmlSiteModel(val theme: HtmlTheme, pms: Vector[HtmlPageModel]) {

@@ -380,6 +380,10 @@ img.emoji {
   color: #444;
 }
 
+.a_sitenav header p, .a_pagenav header p {
+  line-height: 1.5rem;
+}
+
 .a_sitenav a, .a_sitenav span {
   color: black;
   display: inline;
@@ -482,7 +486,7 @@ img.emoji {
   margin-right: 0;
 }
 
-.menu.simple.a_navbar li .a_disabled {
+.menu.simple.a_navbar li > span {
   color: #999;
   display: flex;
 }
