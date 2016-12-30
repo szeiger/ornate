@@ -1,7 +1,6 @@
 package com.novocode.ornate.js
 
 import java.util.{Locale, Formatter}
-import java.util.regex.Pattern
 import javax.script.{ScriptContext, SimpleBindings, Bindings, ScriptEngineManager}
 
 import jdk.nashorn.api.scripting._

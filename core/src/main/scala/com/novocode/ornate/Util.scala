@@ -5,13 +5,14 @@ import java.math.BigInteger
 import java.security.MessageDigest
 
 import com.google.javascript.jscomp.CompilationLevel
-import com.googlecode.htmlcompressor.compressor.{Compressor, ClosureJavaScriptCompressor, HtmlCompressor}
+import com.googlecode.htmlcompressor.compressor.{ClosureJavaScriptCompressor, Compressor, HtmlCompressor}
 import com.novocode.ornate.js.CSSO
 
 import scala.annotation.tailrec
 import scala.collection.JavaConverters._
-import java.net.{URL, URLEncoder, URI}
+import java.net.{URI, URL, URLEncoder}
 import java.util.Locale
+
 import better.files._
 
 import scala.io.Codec
@@ -91,6 +92,11 @@ object Util {
     } finally in.close
     val s2 = f(s)
     target.write(s2)
+  }
+
+  def readLines(source: URL): Vector[String] = {
+    val in = source.openStream()
+    try in.lines(Codec.UTF8).to[Vector] finally in.close
   }
 
   def closureMinimize(source: String, name: String = "<eval>"): String = {

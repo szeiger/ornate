@@ -39,7 +39,7 @@ The current theme is ![](config:global.theme).
 
 ## Theme-Specific URI Schemes
 
-The [default theme](default-theme.md) supports the `foundation-icon` scheme to render images from the [Foundation Icon Fonts 3](http://zurb.com/playground/foundation-icon-fonts-3). The scheme-specific part of the URI is the image name.
+The [default theme](default-theme.md) supports the `foundation-icon` and `font-awesome` schemes to render images from the [Foundation Icon Fonts 3](http://zurb.com/playground/foundation-icon-fonts-3) and [Font Awesome](http://fontawesome.io/icons/). The scheme-specific part of the URI is the image name. Only the canonical names are supported, no aliases.
 
 While such images *can* be used like any other image in a source document, this is not recommended because they would not be rendered correctly with different themes. Theme-specific URI schemes are intended to be used in Markdown snippets that are part of the theme configuration, for example in the navigation bar links as defined in the default configuration:
 

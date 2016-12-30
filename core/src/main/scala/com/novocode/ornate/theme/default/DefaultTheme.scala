@@ -17,6 +17,15 @@ import org.commonmark.node.{Block, Document, Node}
 import scala.collection.JavaConverters._
 
 class DefaultTheme(global: Global) extends HtmlTheme(global) {
+  lazy val fontAwesome: Map[String, String] = try {
+    val url = resolveResource(new URI("webjar:/font-awesome/scss/_variables.scss")).toURL
+    val P = """\$fa-var-(.*): "\\(....)";""".r
+    Util.readLines(url).collect { case P(name, code) => (name, Integer.parseInt(code, 16).toChar.toString) }.toMap
+  } catch { case ex: Exception =>
+    logger.error("Error creating Font Awesome mapping", ex)
+    Map.empty
+  }
+
   override def synthesizePages: Vector[Page] = {
     syntheticPageURIs.flatMap {
       case ("toc", u) =>
@@ -35,21 +44,30 @@ class DefaultTheme(global: Global) extends HtmlTheme(global) {
     }
   }
 
-  override def specialImageSchemesInline: Set[String] = Set("foundation-icon")
+  override def specialImageSchemesInline: Set[String] = Set("foundation-icon", "font-awesome")
 
-  override def renderSpecialImageInline(pc: HtmlPageContext)(n: SpecialImageInline, c: HtmlNodeRendererContext): Unit = {
-    if(n.destinationURI.getScheme == "foundation-icon") {
+  override def renderSpecialImageInline(pc: HtmlPageContext)(n: SpecialImageInline, c: HtmlNodeRendererContext): Unit = n.destinationURI.getScheme match {
+    case "foundation-icon" =>
       val name = n.destinationURI.getSchemeSpecificPart
       FoundationIcons.icons.get(name) match {
         case Some(glyph) =>
-          val wr = c.getWriter
-          wr.raw(s"""<span class="a_foundation_icon">$glyph</span>""")
+          c.getWriter.raw(s"""<span class="a_foundation_icon">$glyph</span>""")
           pc.res.get("foundation-icons.custom.css", "css/", createLink = true)
           pc.res.get("webjar:/foundation-icon-fonts/foundation-icons.woff", "css/foundation-icons.woff")
         case None =>
           logger.warn(s"Page ${pc.page.uri}: Foundation icon ${n.destinationURI} not found")
       }
-    }
+    case "font-awesome" =>
+      val name = n.destinationURI.getSchemeSpecificPart
+      fontAwesome.get(name) match {
+        case Some(glyph) =>
+          c.getWriter.raw(s"""<span class="a_fontawesome">$glyph</span>""")
+          pc.res.get("fontawesome.custom.css", "css/", createLink = true)
+          pc.res.get("webjar:/font-awesome/fonts/fontawesome-webfont.woff", "css/fontawesome-webfont.woff")
+        case None =>
+          logger.warn(s"Page ${pc.page.uri}: Font Awesome icon ${n.destinationURI} not found")
+      }
+    case _ =>
   }
 
   override def renderAttributedHeading(n: AttributedHeading, c: HtmlNodeRendererContext): Unit = if(n.id ne null) {
