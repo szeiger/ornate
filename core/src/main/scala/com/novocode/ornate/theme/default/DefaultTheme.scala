@@ -149,12 +149,13 @@ class DefaultTheme(global: Global) extends HtmlTheme(global) {
 }
 
 class DefaultPageModel(pc: HtmlPageContext, renderer: HtmlRenderer) extends HtmlPageModel(pc, renderer) {
-  protected def navBar(opt: String): Option[Seq[NavLink]] =
-    if(pc.themeConfigBoolean(opt).getOrElse(false) && namedNavLinks.exists(_.target.isDefined)) {
-      namedNavLinks.foreach(_.text) // force rendering
-      Some(namedNavLinks)
-    }
-    else None
+  protected def navBar(opt: String): Option[Seq[NavLink]] = pc.themeConfigStringList(opt).flatMap { defined =>
+    val links = defined.flatMap(id => navLinks.get(id).filter(_.hasText))
+    if(links.exists(_.target.isDefined)) {
+      links.foreach(_.text) // force rendering
+      Some(links)
+    } else None
+  }
 
   // These are non-lazy vals to force rendering (which may request additional resources) before HEAD
   val topNavBar = navBar("topNavBar")

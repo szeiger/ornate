@@ -392,6 +392,7 @@ class HtmlPageContext(val siteContext: HtmlSiteContext, val page: Page) {
   private lazy val pageTC = siteContext.theme.global.userConfig.theme.getConfig(page.config)
   def pageConfig(path: String): Option[String] = page.config.getStringOpt(path)
   def themeConfig(path: String): Option[String] = pageTC.getStringOpt(path)
+  def themeConfigStringList(path: String): Option[Seq[String]] = pageTC.getStringListOpt(path)
   def themeConfigBoolean(path: String): Option[Boolean] = pageTC.getBooleanOpt(path)
   lazy val siteNav: Option[Vector[ExpandTocProcessor.TocItem]] = themeConfig("siteNav") match {
     case Some(uri) =>
@@ -479,16 +480,23 @@ class HtmlPageModel(val pc: HtmlPageContext, renderer: HtmlRenderer) {
     }
   }
 
-  lazy val navLinks: Seq[NavLink] = Seq(
-    new NavLink(pc.siteContext.site.toc.headOption, Some("start"), None),
-    new NavLink(pc.tocLocation.flatMap(_.previous), Some("prev"), Some("navPrev")),
-    new NavLink(pc.tocLocation.flatMap(_.next), Some("next"), Some("navNext")),
-    new NavLink(pc.siteContext.site.pages.find(_.syntheticName == Some("toc")).map(p => new TocEntry(p, p.section.title)), Some("toc"), None)
-  ) ++ editNavLink
+  protected def inTocNavLinks: Map[String, NavLink] = if(pc.tocLocation.isDefined) Map(
+    "first" -> new NavLink(pc.siteContext.site.toc.headOption, Some("start"), Some("navFirst")),
+    "prev" -> new NavLink(pc.tocLocation.flatMap(_.previous), Some("prev"), Some("navPrev")),
+    "next" -> new NavLink(pc.tocLocation.flatMap(_.next), Some("next"), Some("navNext")),
+    "last" -> new NavLink(pc.siteContext.site.toc.headOption, None, Some("navLast"))
+  ) else Map.empty
 
-  lazy val activeRelNavLinks: Seq[NavLink] = navLinks.filter(n => n.rel.isDefined && n.target.isDefined)
+  protected def tocNavLink: Option[NavLink] =
+    pc.siteContext.site.pages.find(_.syntheticName == Some("toc")).flatMap(p =>
+      if(p == pc.page) None
+      else Some(new NavLink(Some(new TocEntry(p, p.section.title)), Some("toc"), Some("navToc")))
+    )
 
-  lazy val namedNavLinks: Seq[NavLink] = navLinks.filter(_.hasText)
+  lazy val navLinks: Map[String, NavLink] =
+    inTocNavLinks ++ tocNavLink.map(n => "toc" -> n) ++ editNavLink.map(n => "edit" -> n)
+
+  lazy val activeRelNavLinks: Seq[NavLink] = navLinks.values.iterator.filter(n => n.rel.isDefined && n.target.isDefined).toSeq
 }
 
 class HtmlSiteModel(val theme: HtmlTheme, pms: Vector[HtmlPageModel]) {
