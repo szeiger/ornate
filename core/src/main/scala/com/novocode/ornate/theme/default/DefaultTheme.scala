@@ -8,9 +8,10 @@ import com.novocode.ornate.commonmark.NodeExtensionMethods._
 import com.novocode.ornate.config.Global
 import com.novocode.ornate.highlight.HighlightResult
 import com.novocode.ornate._
-import com.novocode.ornate.theme.{HtmlPageContext, HtmlTheme, PageResources}
+import com.novocode.ornate.js.WebJarSupport
+import com.novocode.ornate.theme.{HtmlPageContext, HtmlPageModel, HtmlTheme, PageResources}
 import org.commonmark.ext.gfm.tables.TableBlock
-import org.commonmark.renderer.html.{HtmlNodeRendererContext, HtmlNodeRendererFactory}
+import org.commonmark.renderer.html.{HtmlNodeRendererContext, HtmlNodeRendererFactory, HtmlRenderer}
 import org.commonmark.node.{Block, Document, Node}
 
 import scala.collection.JavaConverters._
@@ -34,6 +35,23 @@ class DefaultTheme(global: Global) extends HtmlTheme(global) {
     }
   }
 
+  override def specialImageSchemesInline: Set[String] = Set("foundation-icon")
+
+  override def renderSpecialImageInline(pc: HtmlPageContext)(n: SpecialImageInline, c: HtmlNodeRendererContext): Unit = {
+    if(n.destinationURI.getScheme == "foundation-icon") {
+      val name = n.destinationURI.getSchemeSpecificPart
+      FoundationIcons.icons.get(name) match {
+        case Some(glyph) =>
+          val wr = c.getWriter
+          wr.raw(s"""<span class="a_foundation_icon">$glyph</span>""")
+          pc.res.get("foundation-icons.custom.css", "css/", createLink = true)
+          pc.res.get("webjar:/foundation-icon-fonts/foundation-icons.woff", "css/foundation-icons.woff")
+        case None =>
+          logger.warn(s"Page ${pc.page.uri}: Foundation icon ${n.destinationURI} not found")
+      }
+    }
+  }
+
   override def renderAttributedHeading(n: AttributedHeading, c: HtmlNodeRendererContext): Unit = if(n.id ne null) {
     val wr = c.getWriter
     val htag = s"h${n.getLevel}"
@@ -47,7 +65,7 @@ class DefaultTheme(global: Global) extends HtmlTheme(global) {
   } else super.renderAttributedHeading(n, c)
 
   override def renderMermaid(n: AttributedFencedCodeBlock, c: HtmlNodeRendererContext, pc: HtmlPageContext): Unit = {
-    pc.res.get(mermaidJS, "js/", createLink = true)
+    pc.res.get(mermaidJS, "js/" + mermaidJS.split('/').last, createLink = true)
     pc.res.get("mermaid.custom.css", "css/", createLink = true)
     val wr = c.getWriter
     wr.tag("div", Map("class" -> "mermaid", "id" -> pc.newID()).asJava)
@@ -125,4 +143,20 @@ class DefaultTheme(global: Global) extends HtmlTheme(global) {
 
   override def renderers(pc: HtmlPageContext): Seq[HtmlNodeRendererFactory] =
     SimpleHtmlNodeRenderer(renderTableBlock _) +: super.renderers(pc)
+
+  override def createPageModel(pc: HtmlPageContext, renderer: HtmlRenderer): HtmlPageModel =
+    new DefaultPageModel(pc, renderer)
+}
+
+class DefaultPageModel(pc: HtmlPageContext, renderer: HtmlRenderer) extends HtmlPageModel(pc, renderer) {
+  protected def navBar(opt: String): Option[Seq[NavLink]] =
+    if(pc.themeConfigBoolean(opt).getOrElse(false) && namedNavLinks.exists(_.target.isDefined)) {
+      namedNavLinks.foreach(_.text) // force rendering
+      Some(namedNavLinks)
+    }
+    else None
+
+  // These are non-lazy vals to force rendering (which may request additional resources) before HEAD
+  val topNavBar = navBar("topNavBar")
+  val bottomNavBar = navBar("bottomNavBar")
 }

@@ -26,7 +26,7 @@ object WebJarSupport {
     val loader = Option(Thread.currentThread.getContextClassLoader).getOrElse(getClass.getClassLoader)
     val fpi = WebJarAssetLocator.getFullPathIndex(Pattern.compile(".*"), loader)
     val offset = WebJarAssetLocator.WEBJARS_PATH_PREFIX.length + 1
-    fpi.asScala.valuesIterator.map { s =>
+    fpi.asScala.valuesIterator.collect { case s if s.startsWith(WebJarAssetLocator.WEBJARS_PATH_PREFIX) =>
       val sep1 = s.indexOf('/', offset+1)
       val sep2 = s.indexOf('/', sep1+1)
       val noVer = s.substring(offset, sep1) + s.substring(sep2)

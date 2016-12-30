@@ -22,7 +22,7 @@ abstract class Theme(val global: Global) extends Logging {
     val toc = TocParser.parse(global.userConfig, pages)
     val site = new Site(pages, toc)
 
-    val sip = new SpecialImageProcessor(global.userConfig)
+    val sip = new SpecialImageProcessor(global.userConfig, specialImageSchemesInline, specialImageSchemesBlock)
     logTime("Running page processors took") {
       global.parMap(pages) { p =>
         val pagepp = p.extensions.ornate.flatMap(_.pageProcessors(site))
@@ -37,6 +37,12 @@ abstract class Theme(val global: Global) extends Logging {
     logger.info("Rendering site to "+global.userConfig.targetDir)
     render(site)
   }
+
+  /** Extra image URI schemes to turn into `SpecialImage` nodes for rendering in inline contexts */
+  def specialImageSchemesInline: Set[String] = Set.empty
+
+  /** Extra image URI schemes to turn into `SpecialImage` nodes for rendering in block contexts */
+  def specialImageSchemesBlock: Set[String] = Set.empty
 
   /** Render the site. May create additional synthetic pages and copy resources on demand. */
   def render(site: Site): Unit

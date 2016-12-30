@@ -488,7 +488,10 @@ img.emoji {
 
 .menu.simple.a_navbar li > span {
   color: #999;
-  display: flex;
+}
+
+.menu.simple.a_navbar li > a {
+  display: inline;
 }
 
 @media screen and (max-width: 39.9375em) {

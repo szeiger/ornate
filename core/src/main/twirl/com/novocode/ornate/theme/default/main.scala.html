@@ -1,4 +1,4 @@
-@(p: com.novocode.ornate.theme.HtmlPageModel)(content: Html)(footer: Html = HtmlFormat.empty)
+@(p: com.novocode.ornate.theme.default.DefaultPageModel)(content: Html)(footer: Html = HtmlFormat.empty)
 
 @import com.novocode.ornate.Section
 @pageNav(section: Section) = {
@@ -28,9 +28,9 @@
   </li>
 }
 
-@navBar(cls: String) = { @if(p.namedNavLinks.nonEmpty) {
+@navBar(b: Seq[p.NavLink], cls: String) = {
   <ul class="menu align-right simple a_navbar @cls">
-    @for(n <- p.namedNavLinks) {
+    @for(n <- b) {
       @if(n.target.isDefined) {
         <li><a href="@n.target.get" @for(t <- n.title) { title="@t" }>@n.text.get</a></li>
       } else {
@@ -38,7 +38,7 @@
       }
     }
   </ul>
-}}
+}
 
 <!DOCTYPE html>
 <html class="no-js" lang="@{p.pc.pageConfig("meta.lang").get}" dir="@{p.pc.pageConfig("meta.dir").get}">
@@ -93,12 +93,12 @@
             <div class="row">
               @****************************** Content ******************************@
               <main class="columns large-order-2 sections" id="_sections">
-                @if(p.pc.themeConfigBoolean("topNavBar").getOrElse(false)) { @navBar("a_navbar_top") }
+                @for(b <- p.topNavBar) { @navBar(b, "a_navbar_top") }
                 @if(p.pc.needsJavaScript) {
                   @for(h <- p.stringHtml("noScript")) { <noscript> @h </noscript> }
                 }
                 @content
-                @if(p.pc.themeConfigBoolean("bottomNavBar").getOrElse(false)) { @navBar("a_navbar_bottom") }
+                @for(b <- p.bottomNavBar) { @navBar(b, "a_navbar_bottom") }
               </main>
               @****************************** Site Navigation ******************************@
               @for(items <- p.pc.siteNav) {

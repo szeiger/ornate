@@ -15,7 +15,7 @@ If `global.allowTargetLinks` is set to `true`, links may also use the target suf
 
 ## `webjar`, `theme`, `classpath`
 
-These protocols reference resources on the classpath. They differ only in the lookup location. `classpath:/` points to the classpath root, `theme:/` points to the package containing the theme class and `webjar:/name/path` points to a path in the named webjar. They can be used for referencing CSS, JS and image resources in themes and image markup elements. These files are copied into the generated site as resources.
+These schemes reference resources on the classpath. They differ only in the lookup location. `classpath:/` points to the classpath root, `theme:/` points to the package containing the theme class and `webjar:/name/path` points to a path in the named webjar. They can be used for referencing CSS, JS and image resources in themes and image markup elements. These files are copied into the generated site as resources.
 
 ## `abs`
 
@@ -31,4 +31,4 @@ Standard `file` URIs. They can be used for referencing CSS, JS and image resourc
 
 ## `toctree` and `config`
 
-These protocols are used to include TOCs and config values in a document. See [](images.md) for more details.
+These schemes are used to include TOCs and config values in a document. See [](images.md) for more details.

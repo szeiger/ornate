@@ -11,22 +11,31 @@ import org.commonmark.node._
 
 import scala.collection.mutable.ArrayBuffer
 
-class SpecialImageProcessor(config: UserConfig) extends PageProcessor with Logging {
+/** Replace "config" and "toctree" images and image paragraphs, and convert other matched images from
+  * `Image` to `SpecialImage` nodes. */
+class SpecialImageProcessor(config: UserConfig, extraInline: Set[String], extraBlock: Set[String]) extends PageProcessor with Logging {
   def runAt: Phase = Phase.Attribute
 
-  val SpecialObjectMatcher = new SpecialImageParagraphMatcher(Set("toctree", "config"))
+  val SpecialObjectMatcher = new SpecialImageParagraphMatcher(Set("toctree", "config") ++ extraBlock ++ extraInline)
 
   def apply(p: Page): Unit = p.doc.accept(new AbstractVisitor {
     override def visit(n: Paragraph): Unit = n match {
-      case SpecialObjectMatcher(r) => r.protocol match {
-        case "toctree" =>
-          try {
-            val t = SpecialImageProcessor.parseTocURI(r.image.getDestination, config)
-            t.title = r.title
-            n.replaceWith(t)
-            r.image.children.foreach(t.appendChild)
-          } catch { case ex: Exception => logger.error("Error expanding TOC tree "+r.dest, ex) }
-          case _ =>
+      case SpecialObjectMatcher(r) =>
+        r.protocol match {
+          case "toctree" =>
+            try {
+              val t = SpecialImageProcessor.parseTocURI(r.image.getDestination, config)
+              t.title = r.title
+              n.replaceWith(t)
+              r.image.children.foreach(t.appendChild)
+            } catch { case ex: Exception => logger.error("Error expanding TOC tree "+r.dest, ex) }
+          case s if extraBlock.contains(s) =>
+            val si = new SpecialImageBlock
+            si.destination = r.image.getDestination
+            si.title = r.image.getTitle
+            r.image.children.foreach(si.appendChild)
+            n.replaceWith(si)
+          case _ => super.visit(n)
         }
       case n => super.visit(n)
     }
@@ -42,6 +51,12 @@ class SpecialImageProcessor(config: UserConfig) extends PageProcessor with Loggi
               logger.error(s"""Page ${p.uri}: Error expanding config reference "${r.image.getDestination}"""", ex)
               n.unlink()
             }
+          case s if extraInline.contains(s) =>
+            val si = new SpecialImageInline
+            si.destination = r.image.getDestination
+            si.title = r.image.getTitle
+            r.image.children.foreach(si.appendChild)
+            r.image.replaceWith(si)
           case _ =>
             logger.error(s"Page ${p.uri}: Illegal inline special object ${r.image.getDestination} -- only block-level allowed")
         }
@@ -70,3 +85,24 @@ object SpecialImageProcessor {
     )
   }
 }
+
+trait SpecialImage {
+  var title: String = null
+
+  private[this] var _destination: String = null
+  def destination: String = _destination
+  def destination_= (s: String): Unit = {
+    _destination = s
+    _destinationURI = null
+  }
+
+  private[this] var _destinationURI: URI = null
+  def destinationURI: URI = {
+    if((_destinationURI eq null) && (_destination ne null)) _destinationURI = new URI(_destination)
+    _destinationURI
+  }
+}
+
+class SpecialImageInline extends CustomNode with SpecialImage
+
+class SpecialImageBlock extends CustomBlock with SpecialImage

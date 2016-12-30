@@ -1,6 +1,6 @@
 # Image Elements
 
-Ornate extends the use of standard Markdown image elements to non-image objects. These are not limited to external files, they can be included directly in the page depending on the [URI protocol](uris.md).
+Ornate extends the use of standard Markdown image elements to non-image objects. These are not limited to external files, they can be included directly in the page depending on the [URI scheme](uris.md).
 
 ## Table of Contents {#toctree}
 
@@ -36,3 +36,12 @@ The current theme is ![](config:global.theme).
 It is rendered as:
 
 The current theme is ![](config:global.theme).
+
+## Theme-Specific URI Schemes
+
+The [default theme](default-theme.md) supports the `foundation-icon` scheme to render images from the [Foundation Icon Fonts 3](http://zurb.com/playground/foundation-icon-fonts-3). The scheme-specific part of the URI is the image name.
+
+While such images *can* be used like any other image in a source document, this is not recommended because they would not be rendered correctly with different themes. Theme-specific URI schemes are intended to be used in Markdown snippets that are part of the theme configuration, for example in the navigation bar links as defined in the default configuration:
+
+```yaml src=../../core/src/main/resources/ornate-reference.conf#--doc-navlinks
+```

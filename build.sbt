@@ -65,6 +65,7 @@ lazy val core = project.in(file("core"))
       "org.webjars.npm" % "what-input" % "2.1.1",
       "org.webjars.npm" % "csso" % "2.2.1",
       "org.webjars.npm" % "mathjax" % "2.7.0",
+      "org.webjars" % "foundation-icon-fonts" % "d596a3cfb3",
       "com.googlecode.htmlcompressor" % "htmlcompressor" % "1.5.2",
       "rhino" % "js" % "1.7R2", // Only needed because HtmlCompressor unnecessarily references org.mozilla.javascript.ErrorReporter
       "com.google.javascript" % "closure-compiler" % "v20160911",

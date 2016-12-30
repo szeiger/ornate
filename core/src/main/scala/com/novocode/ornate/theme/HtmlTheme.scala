@@ -141,6 +141,12 @@ class HtmlTheme(global: Global) extends Theme(global) { self =>
   def renderHighlitInline(pc: HtmlPageContext)(n: HighlitInline, c: HtmlNodeRendererContext): Unit =
     renderCode(n.result, n.getFirstChild, c, pc)
 
+  /** This method should be overridden if `specialImageSchemesInline` is used. */
+  def renderSpecialImageInline(pc: HtmlPageContext)(n: SpecialImageInline, c: HtmlNodeRendererContext): Unit = ()
+
+  /** This method should be overridden if `specialImageSchemesBlock` is used. */
+  def renderSpecialImageBlock(pc: HtmlPageContext)(n: SpecialImageBlock, c: HtmlNodeRendererContext): Unit = ()
+
   /** Render a Mermaid diagram block. This does not add any dependency on Mermaid to the generated site.
     * The method should be overwritten accordingly (unless a theme always adds it anyway). */
   def renderMermaid(n: AttributedFencedCodeBlock, c: HtmlNodeRendererContext, pc: HtmlPageContext): Unit = {
@@ -202,10 +208,12 @@ class HtmlTheme(global: Global) extends Theme(global) { self =>
     SimpleHtmlNodeRenderer(renderIndentedCodeBlock(pc) _),
     SimpleHtmlNodeRenderer(renderInlineCode(pc) _),
     SimpleHtmlNodeRenderer(renderHighlitBlock(pc) _),
-    SimpleHtmlNodeRenderer(renderHighlitInline(pc) _)
+    SimpleHtmlNodeRenderer(renderHighlitInline(pc) _),
+    SimpleHtmlNodeRenderer(renderSpecialImageInline(pc) _),
+    SimpleHtmlNodeRenderer(renderSpecialImageBlock(pc) _)
   )
 
-  /** If MathJAX is needed by the page, add all resources and return the resolved main script URI and inline config. */
+  /** If MathJax is needed by the page, add all resources and return the resolved main script URI and inline config. */
   def addMathJaxResources(pc: HtmlPageContext): Option[(URI, Option[ConfigObject])] = if(pc.needsMathJax) {
     val loadConfig = tc.getStringListOr("global.mathJax.loadConfig").mkString(",")
     val inlineConfig = tc.getConfigOpt("global.mathJax.inlineConfig").map(_.root())
@@ -423,14 +431,16 @@ class HtmlPageContext(val siteContext: HtmlSiteContext, val page: Page) {
 class HtmlPageModel(val pc: HtmlPageContext, renderer: HtmlRenderer) {
   val title = HtmlFormat.escape(pc.page.section.title.getOrElse(""))
   val content = HtmlFormat.raw(renderer.render(pc.page.doc))
-  private[this] val mathJaxResources = pc.siteContext.theme.addMathJaxResources(pc)
-  val mathJaxMain: Option[URI] = mathJaxResources.map(_._1)
-  val mathJaxInline: Option[Html] = mathJaxResources.flatMap(_._2).flatMap { cv =>
+
+  private[this] lazy val mathJaxResources = pc.siteContext.theme.addMathJaxResources(pc)
+  lazy val mathJaxMain: Option[URI] = mathJaxResources.map(_._1)
+  lazy val mathJaxInline: Option[Html] = mathJaxResources.flatMap(_._2).flatMap { cv =>
     if(cv.isEmpty) None
     else Some(HtmlFormat.raw(cv.render(ConfigRenderOptions.concise())))
   }
-  val mathJaxSkipStartupTypeset =
+  lazy val mathJaxSkipStartupTypeset =
     mathJaxResources.flatMap(_._2).map(_.toConfig.getBooleanOr("skipStartupTypeset")).getOrElse(false)
+
   def stringHtml(name: String): Option[Html] = pc.stringNode(name).map(n => HtmlFormat.raw(renderer.render(n)))
   def stringText(name: String): Option[Html] = pc.stringNode(name).map(n => HtmlFormat.escape(NodeUtil.extractText(n)))
 
@@ -448,7 +458,11 @@ class HtmlPageModel(val pc: HtmlPageContext, renderer: HtmlRenderer) {
   }
 
   class NavLink(val target: Option[URI], val title: Option[Html], val rel: Option[String], textName: Option[String]) {
-    val text: Option[Html] = textName.flatMap(stringHtmlInline)
+    lazy val text: Option[Html] = textName.flatMap(stringHtmlInline)
+
+    /** Check for non-empty text without forcing rendering */
+    def hasText: Boolean =
+      textName.flatMap(s => pc.themeConfig(s"strings.$s")).map(_.nonEmpty).getOrElse(false)
 
     def this(to: Option[TocEntry], rel: Option[String], textName: Option[String]) = this(
       to.map(te => new URI(pc.resolveLink(te.page.uri.toString))),
@@ -457,19 +471,24 @@ class HtmlPageModel(val pc: HtmlPageContext, renderer: HtmlRenderer) {
     )
   }
 
-  protected def editNavLink: Option[NavLink] = pc.themeConfig("editPage").map { s =>
-    val target = s.replace("[page]", pc.page.uri.getPath.dropWhile(_ == '/'))
-    new NavLink(Some(new URI(target)), None, Some("edit"), Some("navEdit"))
+  protected def editNavLink: Option[NavLink] = {
+    if(pc.page.sourceFileURI.isEmpty) None
+    else pc.themeConfig("editPage").map { s =>
+      val target = s.replace("[page]", pc.page.uri.getPath.dropWhile(_ == '/'))
+      new NavLink(Some(new URI(target)), None, Some("edit"), Some("navEdit"))
+    }
   }
 
   lazy val navLinks: Seq[NavLink] = Seq(
     new NavLink(pc.siteContext.site.toc.headOption, Some("start"), None),
-    new NavLink(pc.tocLocation.flatMap(_.previous), Some("prev"), Some("navPrevious")),
+    new NavLink(pc.tocLocation.flatMap(_.previous), Some("prev"), Some("navPrev")),
     new NavLink(pc.tocLocation.flatMap(_.next), Some("next"), Some("navNext")),
     new NavLink(pc.siteContext.site.pages.find(_.syntheticName == Some("toc")).map(p => new TocEntry(p, p.section.title)), Some("toc"), None)
   ) ++ editNavLink
+
   lazy val activeRelNavLinks: Seq[NavLink] = navLinks.filter(n => n.rel.isDefined && n.target.isDefined)
-  lazy val namedNavLinks: Seq[NavLink] = navLinks.filter(_.text.isDefined)
+
+  lazy val namedNavLinks: Seq[NavLink] = navLinks.filter(_.hasText)
 }
 
 class HtmlSiteModel(val theme: HtmlTheme, pms: Vector[HtmlPageModel]) {
