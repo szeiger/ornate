@@ -33,6 +33,11 @@ class DefaultTheme(global: Global) extends HtmlTheme(global) {
         Some(PageParser.parseContent(None, Some("toc"), global.userConfig, u, ".md",
           Some(global.userConfig.theme.config.getString("strings.tocPage")),
           global.userConfig.raw))
+      case ("index", u) =>
+        logger.debug(s"Creating index page $u")
+        Some(PageParser.parseContent(None, Some("index"), global.userConfig, u, ".md",
+          Some(global.userConfig.theme.config.getString("strings.indexPage")),
+          global.userConfig.raw))
       case ("search", u) =>
         logger.debug(s"Creating search page $u")
         Some(PageParser.parseContent(None, Some("search"), global.userConfig, u, ".md",

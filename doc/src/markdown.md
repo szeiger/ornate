@@ -37,7 +37,7 @@ H~2~O is a liquid. 2^10^ is 1024.
 
 ## `headerAttributes` and `autoIdentifiers` {#header_attributes}
 
-The `headerAttributes` extension implements the same header attribute syntax as [Pandoc](http://pandoc.org/MANUAL.html#header-identifiers) and [PHP Markdown Extra](https://michelf.ca/projects/php-markdown/extra/). Only the IDs are used by Ornate. Classes and key/value pairs are currently ignored. This extension is essential for controlling header links. Every heading to which you want to link from other parts of the document, from the TOC, or from external sources, requires an ID. In case of the TOC, headings without an ID will still be listed but not linked.
+The `headerAttributes` extension implements the same header attribute syntax as [Pandoc](http://pandoc.org/MANUAL.html#header-identifiers) and [PHP Markdown Extra](https://michelf.ca/projects/php-markdown/extra/). The IDs are essential for controlling header links. Every heading to which you want to link from other parts of the document, from the TOC, or from external sources, requires an ID. In case of the TOC, headings without an ID will still be listed but not linked.
 
 Here is an example for a heading title with an ID:
 
@@ -52,6 +52,8 @@ Links to this section get to use `#settings` instead of
 > Note: IDs starting with an underscore (`_`) character should be avoided for headers. The [default theme](default-theme.md) creates some IDs of this form for internal use.
 
 The `autoIdentifiers` extension uses the same algorithm as Pandoc to automatically derive an ID from the heading title if no ID was set explicitly via `headerAttributes`
+
+Other parts of the header attributes may be used by by other extensions or features. In particular, key/value pairs with an `index` key are used to define [index entries](default-theme.md#index).
 
 ## `blockQuoteAttributes`
 

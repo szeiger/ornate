@@ -59,7 +59,7 @@ This gets rendered as (link shown on mouse-over):
 
 The [includeCode](markdown.md#includecode) extension can generate link targets for included snippets automatically.
 
-## Shortcut icons
+## Shortcut Icons
 
 Shortcut icons can be defined through custom `link` elements with appropriate `rel` and `href` values under `theme.default`:
 
@@ -72,4 +72,12 @@ For example, this is how you add a standard `favicon.ico` located under `global.
 theme.default.links = [
   { rel: "icon", href: "/favicon.ico" }
 ]
+```
+
+## Index
+
+The default theme can generate an index page from user-defined keywords. Using the [headerAttributes](markdown.md#header_attributes) extension, you can define the keywords with the `index` key. Nested keywords are separated by commas, multiple independent keywords are separated by semicolons. For example, the following header definition contributes two index entries "Bar" and "Foo, Bar" that link to the header:
+
+```markdown
+## Foo Bar {index="Bar;Foo,Bar"}
 ```

@@ -11,12 +11,12 @@ import org.commonmark.node._
 
 import scala.collection.mutable.ArrayBuffer
 
-/** Replace "config" and "toctree" images and image paragraphs, and convert other matched images from
+/** Replace "config", "toctree" and "index" images and image paragraphs, and convert other matched images from
   * `Image` to `SpecialImage` nodes. */
 class SpecialImageProcessor(config: UserConfig, extraInline: Set[String], extraBlock: Set[String]) extends PageProcessor with Logging {
   def runAt: Phase = Phase.Attribute
 
-  val SpecialObjectMatcher = new SpecialImageParagraphMatcher(Set("toctree", "config") ++ extraBlock ++ extraInline)
+  val SpecialObjectMatcher = new SpecialImageParagraphMatcher(Set("toctree", "config", "index") ++ extraBlock ++ extraInline)
 
   def apply(p: Page): Unit = p.doc.accept(new AbstractVisitor {
     override def visit(n: Paragraph): Unit = n match {
@@ -29,6 +29,11 @@ class SpecialImageProcessor(config: UserConfig, extraInline: Set[String], extraB
               n.replaceWith(t)
               r.image.children.foreach(t.appendChild)
             } catch { case ex: Exception => logger.error("Error expanding TOC tree "+r.dest, ex) }
+          case "index" =>
+            val t = new IndexBlock
+            t.title = r.title
+            n.replaceWith(t)
+            r.image.children.foreach(t.appendChild)
           case s if extraBlock.contains(s) =>
             val si = new SpecialImageBlock
             si.destination = r.image.getDestination
@@ -106,3 +111,26 @@ trait SpecialImage {
 class SpecialImageInline extends CustomNode with SpecialImage
 
 class SpecialImageBlock extends CustomBlock with SpecialImage
+
+class TocBlock(var maxLevel: Int, var mergeFirst: Boolean, var local: Boolean, var focusMaxLevel: Int) extends CustomBlock {
+  var title: String = null
+  override def toStringAttributes = {
+    val b = new StringBuilder
+    b.append(s"maxLevel=$maxLevel")
+    if(title ne null) b.append(s", title=$title")
+    b.append(s", mergeFirst=$mergeFirst")
+    b.append(s", local=$local")
+    b.append(s", focusMaxLevel=$focusMaxLevel")
+    b.toString
+  }
+}
+
+class IndexBlock extends CustomBlock {
+  import IndexBlock._
+  var title: String = null
+  var index: Vector[IndexEntry] = null // created by ExpandTocProcessor
+}
+
+object IndexBlock {
+  class IndexEntry(val text: String, val destinations: Vector[URI], val children: Vector[IndexEntry])
+}

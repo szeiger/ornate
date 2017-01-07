@@ -1,7 +1,8 @@
 package com.novocode.ornate.theme
 
 import java.net.{URI, URL}
-import java.util.Collections
+import java.text.Collator
+import java.util.{Collections, Comparator, Locale}
 
 import better.files.File.OpenOptions
 import com.novocode.ornate._
@@ -147,6 +148,74 @@ class HtmlTheme(global: Global) extends Theme(global) { self =>
   /** This method should be overridden if `specialImageSchemesBlock` is used. */
   def renderSpecialImageBlock(pc: HtmlPageContext)(n: SpecialImageBlock, c: HtmlNodeRendererContext): Unit = ()
 
+  def renderIndexBlock(pc: HtmlPageContext)(n: IndexBlock, c: HtmlNodeRendererContext): Unit = {
+    val wr = c.getWriter
+    val grouped = n.index.groupBy(_.text.codePointAt(0)).toVector
+    val (alphanumeric, symbolic) = grouped.partition { case (cp, _) => Character.isAlphabetic(cp) || Character.isDigit(cp) }
+
+    val locale = Locale.US
+    val coll = Collator.getInstance(locale)
+    coll.setStrength(Collator.PRIMARY)
+    val collOrd: Ordering[String] = Ordering.comparatorToOrdering(coll.asInstanceOf[Comparator[String]])
+
+    def cpid(s: String): String = s.codePoints().iterator().asScala.map { cp =>
+      if((cp >= 'a' && cp <= 'z') || (cp >= 'A' && cp <= 'Z')) String.valueOf(cp.toChar)
+      else if(cp >= '0' && cp <= '9') "d" + String.valueOf(cp.toChar)
+      else "u" + Integer.toHexString(cp)
+    }.mkString
+
+    val groups =
+      alphanumeric.map { case (cp, v) =>
+        val s = new String(Array(cp), 0, 1).toUpperCase(locale)
+        (s, cpid(s), v)
+      }.sortBy(_._1)(collOrd) ++
+        (if(symbolic.isEmpty) Vector.empty else Vector((null, "symbols", symbolic.flatMap(_._2))))
+
+    def render(e: IndexBlock.IndexEntry): Unit = {
+      wr.tag("li")
+      val resolved = e.destinations.map(u => pc.resolveLink(u.toString))
+      if(resolved.isEmpty) {
+        wr.text(e.text)
+      } else resolved.zipWithIndex.foreach { case (r, idx) =>
+        if(idx > 0) wr.text(", ")
+        wr.tag("a", Map("href" -> r).asJava)
+        wr.text(if(idx == 0) e.text else "["+idx.toString+"]")
+        wr.tag("/a")
+      }
+      if(e.children.nonEmpty) {
+        wr.tag("ul")
+        e.children.foreach(render)
+        wr.tag("/ul")
+      }
+      wr.tag("/li")
+    }
+
+    def renderTitle(title: String): Unit = {
+      if(title eq null) {
+        val n = pc.stringNode("indexSymbols").get
+        def render(n: Node): Unit =
+          if(n.isInstanceOf[Block]) n.children.foreach(render) else c.render(n)
+        render(n)
+      } else wr.text(title)
+    }
+
+    groups.zipWithIndex.foreach { case ((title, id, entries), idx) =>
+      if(idx > 0) wr.raw(" | ")
+      wr.tag("a", Map("href" -> s"#$id").asJava)
+      renderTitle(title)
+      wr.tag("/a")
+    }
+
+    groups.foreach { case (title, id, entries) =>
+      wr.tag("h2", Map("id" -> id).asJava)
+      renderTitle(title)
+      wr.tag("/h2")
+      wr.tag("ul")
+      entries.foreach(render)
+      wr.tag("/ul")
+    }
+  }
+
   /** Render a Mermaid diagram block. This does not add any dependency on Mermaid to the generated site.
     * The method should be overwritten accordingly (unless a theme always adds it anyway). */
   def renderMermaid(n: AttributedFencedCodeBlock, c: HtmlNodeRendererContext, pc: HtmlPageContext): Unit = {
@@ -212,7 +281,8 @@ class HtmlTheme(global: Global) extends Theme(global) { self =>
     SimpleHtmlNodeRenderer(renderHighlitBlock(pc) _),
     SimpleHtmlNodeRenderer(renderHighlitInline(pc) _),
     SimpleHtmlNodeRenderer(renderSpecialImageInline(pc) _),
-    SimpleHtmlNodeRenderer(renderSpecialImageBlock(pc) _)
+    SimpleHtmlNodeRenderer(renderSpecialImageBlock(pc) _),
+    SimpleHtmlNodeRenderer(renderIndexBlock(pc) _)
   )
 
   /** If MathJax is needed by the page, add all resources and return the resolved main script URI and inline config. */
@@ -518,8 +588,14 @@ class HtmlPageModel(val pc: HtmlPageContext, renderer: HtmlRenderer) {
       else Some(new NavLink(Some(new TocEntry(p, p.section.title)), Some("toc"), Some("navToc")))
     )
 
+  protected def indexNavLink: Option[NavLink] =
+    pc.siteContext.site.pages.find(_.syntheticName == Some("index")).flatMap(p =>
+      if(p == pc.page) None
+      else Some(new NavLink(Some(new TocEntry(p, p.section.title)), Some("index"), Some("navIndex")))
+    )
+
   lazy val navLinks: Map[String, NavLink] =
-    inTocNavLinks ++ tocNavLink.map(n => "toc" -> n) ++ editNavLink.map(n => "edit" -> n)
+    inTocNavLinks ++ tocNavLink.map(n => "toc" -> n) ++ indexNavLink.map(n => "index" -> n) ++ editNavLink.map(n => "edit" -> n)
 
   lazy val activeRelNavLinks: Seq[NavLink] = navLinks.values.iterator.filter(n => n.rel.isDefined && n.target.isDefined).toSeq
 

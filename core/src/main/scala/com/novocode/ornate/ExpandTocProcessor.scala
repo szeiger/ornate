@@ -1,12 +1,17 @@
 package com.novocode.ornate
 
-import com.novocode.ornate.commonmark.{AttributedHeading, TocBlock}
+import java.net.URI
+
+import com.novocode.ornate.commonmark.IndexBlock.IndexEntry
+import com.novocode.ornate.commonmark.{AttributedHeading, IndexBlock, TocBlock}
 import com.novocode.ornate.commonmark.NodeExtensionMethods.nodeToNodeExtensionMethods
 import org.commonmark.node._
+import URIExtensionMethods.uriToUriExtensionMethods
 
 import scala.collection.mutable.ArrayBuffer
 
-class ExpandTocProcessor(toc: Vector[TocEntry]) extends PageProcessor with Logging {
+/** Expand `TocBlock` nodes and add the computed index to `IndexBlock` nodes */
+class ExpandTocProcessor(site: Site) extends PageProcessor with Logging {
   import ExpandTocProcessor._
 
   def runAt: Phase = Phase.Special
@@ -16,11 +21,38 @@ class ExpandTocProcessor(toc: Vector[TocEntry]) extends PageProcessor with Loggi
     ti.children.foreach(ch => log(prefix+"  ", ch))
   }
 
+  def buildIndex: Vector[IndexEntry] = {
+    val flat = site.pages.flatMap { p =>
+      p.section.allHeadings.flatMap { s =>
+        s.heading match {
+          case h: AttributedHeading =>
+            val kws = h.defAttrs.get("index").map(v => v.split(';').iterator.map(_.trim).filter(_.nonEmpty)).getOrElse(Iterator.empty)
+            val splitKws = kws.map(kw => kw.split(',').map(_.trim).filter(_.nonEmpty)).filter(_.nonEmpty)
+            splitKws.map(a => (a.toVector, p.uri.copy(fragment = h.id))).toVector
+          case _ => Vector.empty
+        }
+      }
+    }
+    def nest(flat: Vector[(Vector[String], URI)]): Vector[IndexEntry] = {
+      val grouped = flat.groupBy(_._1.head)
+      grouped.iterator.map { case (kw, gflat) =>
+        val (here, below) = gflat.partition(_._1.length == 1)
+        new IndexEntry(kw, here.map(_._2), nest(below.map { case (v, u) => (v.tail, u) }))
+      }.toVector
+    }
+    nest(flat)
+  }
+
   def apply(p: Page): Unit = {
     p.doc.accept(new AbstractVisitor {
+      lazy val index: Vector[IndexEntry] = try buildIndex catch { case ex: Exception =>
+        logger.error("Error building site index", ex)
+        Vector.empty
+      }
+
       override def visit(n: CustomBlock): Unit = n match {
         case n: TocBlock =>
-          val items = buildTocTree(n, toc, p)
+          val items = buildTocTree(n, site.toc, p)
           if(items.nonEmpty) {
             val ul = new BulletList
             ul.setTight(true)
@@ -30,6 +62,8 @@ class ExpandTocProcessor(toc: Vector[TocEntry]) extends PageProcessor with Loggi
             }
             n.replaceWith(ul)
           } else n.unlink()
+        case n: IndexBlock =>
+          n.index = index
         case _ =>
           super.visit(n)
       }

@@ -31,7 +31,7 @@ abstract class Theme(val global: Global) extends Logging {
       }
     }
 
-    val etp = new ExpandTocProcessor(toc)
+    val etp = new ExpandTocProcessor(site)
     pages.foreach(etp)
 
     logger.info("Rendering site to "+global.userConfig.targetDir)
