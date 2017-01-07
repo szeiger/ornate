@@ -50,6 +50,7 @@
     <title>@p.title</title>
     <link rel="stylesheet" href="@{p.pc.res.get("foundation.min.css", "css/")}">
     <link rel="stylesheet" href="@{p.pc.res.get("app.css", "css/")}">
+    @for(html <- p.customLinks) { @html }
     @for(href <- p.pc.res.getLinks("css")) { <link rel="stylesheet" href="@href"> }
     @for(mathJax <- p.mathJaxMain) {
       @for(inline <- p.mathJaxInline) {

@@ -13,7 +13,7 @@ import com.novocode.ornate.config.ConfigExtensionMethods.configExtensionMethods
 import com.novocode.ornate.config.Global
 import com.novocode.ornate.highlight.{HighlightResult, Highlit, HighlitBlock, HighlitInline}
 import com.novocode.ornate.js.{CSSO, ElasticlunrSearch, WebJarSupport}
-import com.typesafe.config.{ConfigObject, ConfigRenderOptions}
+import com.typesafe.config.{ConfigObject, ConfigRenderOptions, ConfigValue}
 import org.commonmark.renderer.NodeRenderer
 import org.commonmark.renderer.html.HtmlRenderer
 import org.commonmark.renderer.html.HtmlRenderer.HtmlRendererExtension
@@ -415,6 +415,7 @@ class HtmlPageContext(val siteContext: HtmlSiteContext, val page: Page) {
   def pageConfig(path: String): Option[String] = page.config.getStringOpt(path)
   def themeConfig(path: String): Option[String] = pageTC.getStringOpt(path)
   def themeConfigStringList(path: String): Option[Seq[String]] = pageTC.getStringListOpt(path)
+  def themeConfigValueList(path: String): Option[Seq[ConfigValue]] = pageTC.getListOpt(path)
   def themeConfigBoolean(path: String): Option[Boolean] = pageTC.getBooleanOpt(path)
   lazy val siteNav: Option[Vector[ExpandTocProcessor.TocItem]] = themeConfig("siteNav") match {
     case Some(uri) =>
@@ -521,6 +522,30 @@ class HtmlPageModel(val pc: HtmlPageContext, renderer: HtmlRenderer) {
     inTocNavLinks ++ tocNavLink.map(n => "toc" -> n) ++ editNavLink.map(n => "edit" -> n)
 
   lazy val activeRelNavLinks: Seq[NavLink] = navLinks.values.iterator.filter(n => n.rel.isDefined && n.target.isDefined).toSeq
+
+  lazy val customLinks: Seq[Html] = pc.themeConfigValueList("links").getOrElse(Seq.empty).flatMap { cv =>
+    try {
+      val co = cv.asInstanceOf[ConfigObject]
+      val attrs = co.entrySet().iterator().asScala.flatMap { me =>
+        val v = me.getValue.unwrapped()
+        if(v eq null) None else Some((me.getKey, v.toString))
+      }.map {
+        case ("href", href) => ("href", pc.resolveLink(href))
+        case other => other
+      }.toMap
+      if(attrs.isEmpty) None
+      else {
+        val attrsText = attrs.iterator.map { case (k, v) =>
+          HtmlFormat.escape(k).toString + "=\"" + HtmlFormat.escape(v).toString + "\""
+        }.mkString(" ")
+        Some(HtmlFormat.raw(s"<link $attrsText />"))
+      }
+    } catch {
+      case ex: Exception =>
+        pc.siteContext.theme.logger.error("Error processing \"links\" entry: "+cv, ex)
+        None
+    }
+  }
 }
 
 class HtmlSiteModel(val theme: HtmlTheme, pms: Vector[HtmlPageModel]) {

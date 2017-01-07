@@ -58,3 +58,18 @@ This gets rendered as (link shown on mouse-over):
 ```
 
 The [includeCode](markdown.md#includecode) extension can generate link targets for included snippets automatically.
+
+## Shortcut icons
+
+Shortcut icons can be defined through custom `link` elements with appropriate `rel` and `href` values under `theme.default`:
+
+```yaml src=../../core/src/main/resources/ornate-reference.conf#--doc-customlinks
+```
+
+For example, this is how you add a standard `favicon.ico` located under `global.resourceDir`:
+
+```yaml
+theme.default.links = [
+  { rel: "icon", href: "/favicon.ico" }
+]
+```
