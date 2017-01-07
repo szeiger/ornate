@@ -478,6 +478,10 @@ img.emoji {
   margin-bottom: 3rem;
 }
 
+.menu.simple.a_navbar {
+  flex-wrap: wrap;
+}
+
 .menu.simple.a_navbar_bottom {
   margin-top: 2rem;
 }
@@ -485,6 +489,14 @@ img.emoji {
 .menu.simple.a_navbar li {
   margin-left: 1rem;
   margin-right: 0;
+}
+
+.menu.simple.a_navbar_top li {
+  margin-bottom: 0.5rem;
+}
+
+.menu.simple.a_navbar_bottom li {
+  margin-top: 0.5rem;
 }
 
 .menu.simple.a_navbar li > span {
