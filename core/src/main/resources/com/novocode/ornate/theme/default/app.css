@@ -21,9 +21,10 @@ h1, h2, h3, h4, h5, h6 {
   margin: 0;
 }
 
-.top-bar-right {
+.row .top-bar-right {
   text-align: right;
-  padding-right: 0.9375rem;
+  margin-left: 0;
+  margin-right: 0;
 }
 
 input::-webkit-input-placeholder, textarea::-webkit-input-placeholder {
