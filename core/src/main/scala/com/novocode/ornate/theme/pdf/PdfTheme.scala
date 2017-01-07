@@ -11,7 +11,7 @@ import com.novocode.ornate.commonmark._
 import com.novocode.ornate.config.Global
 import com.novocode.ornate.config.ConfigExtensionMethods.configExtensionMethods
 import com.novocode.ornate.highlight.HighlightResult
-import com.novocode.ornate.theme.{HtmlPageContext, HtmlPageModel, HtmlSiteModel, HtmlTheme}
+import com.novocode.ornate.theme._
 import org.commonmark.ext.gfm.tables.TableBlock
 import org.commonmark.node.{Block, Node}
 import org.commonmark.renderer.html.{HtmlNodeRendererContext, HtmlNodeRendererFactory, HtmlRenderer}
@@ -63,19 +63,10 @@ class PdfTheme(global: Global) extends HtmlTheme(global) {
     wr.line
   } else super.renderAttributedHeading(n, c)
 
-  /* // Disabled for now -- Mermaid support is broken with wkhtmltopdf 0.12
+  // Disabled for now -- Mermaid support is broken with wkhtmltopdf 0.12
   override def renderMermaid(n: AttributedFencedCodeBlock, c: HtmlNodeRendererContext, pc: HtmlPageContext): Unit = {
-    pc.res.get(Theme.mermaidJS, createLink = true)
-    pc.res.get("css/mermaid.custom.css", createLink = true)
-    val wr = c.getWriter
-    wr.tag("div", Map("class" -> "mermaid", "id" -> pc.newID()).asJava)
-    wr.tag("pre", Map("class" -> "mermaid_src", "style" -> "display: none").asJava)
-    wr.text(n.getLiteral)
-    wr.tag("/pre")
-    wr.tag("/div")
-    pc.requireJavaScript()
+    pc.features.request(HtmlFeatures.Mermaid)
   }
-  */
 
   override def renderTabView(pc: HtmlPageContext)(n: TabView, c: HtmlNodeRendererContext): Unit = {
     val wr = c.getWriter
@@ -111,8 +102,14 @@ class PdfTheme(global: Global) extends HtmlTheme(global) {
     SimpleHtmlNodeRenderer(renderTableBlock _) +: super.renderers(pc)
 
   override def createPageModel(pc: HtmlPageContext, renderer: HtmlRenderer) = new PdfPageModel(pc, renderer)
+
+  override def createSiteModel(pms: Vector[HtmlPageModel]): HtmlSiteModel = new HtmlSiteModel(this, pms) {
+    features.handle(HtmlFeatures.JavaScript)
+  }
 }
 
 class PdfPageModel(pc: HtmlPageContext, renderer: HtmlRenderer) extends HtmlPageModel(pc, renderer) {
-  def doneTriggerCount: Int = 1 + (if(pc.needsMathJax) 1 else 0) /*+ (if(pc.needsMermaid) 1 else 0)*/
+  def doneTriggerCount: Int = 1 +
+    (if(pc.features.isHandled(HtmlFeatures.MathJax)) 1 else 0)
+    /* + (if(pc.features.isHandled(HtmlFeatures.Mermaid)) 1 else 0)*/
 }

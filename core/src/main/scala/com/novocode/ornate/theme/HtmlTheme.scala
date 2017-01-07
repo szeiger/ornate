@@ -150,7 +150,8 @@ class HtmlTheme(global: Global) extends Theme(global) { self =>
   /** Render a Mermaid diagram block. This does not add any dependency on Mermaid to the generated site.
     * The method should be overwritten accordingly (unless a theme always adds it anyway). */
   def renderMermaid(n: AttributedFencedCodeBlock, c: HtmlNodeRendererContext, pc: HtmlPageContext): Unit = {
-    pc.requireMermaid()
+    pc.features.request(HtmlFeatures.Mermaid)
+    pc.features.request(HtmlFeatures.JavaScript)
     val wr = c.getWriter
     wr.tag("div", Map("class" -> "mermaid", "id" -> pc.newID()).asJava)
     wr.text(n.getLiteral)
@@ -168,7 +169,8 @@ class HtmlTheme(global: Global) extends Theme(global) { self =>
     * Inline elements get a preceding "MathJax_Preview" span element, for block elements this is created as a div and
     * a "mode=display" annotation is added to the script. */
   def renderMath(code: String, c: HtmlNodeRendererContext, pc: HtmlPageContext, mathType: String, block: Boolean): Unit = {
-    pc.requireMathJax()
+    pc.features.request(HtmlFeatures.MathJax)
+    pc.features.request(HtmlFeatures.JavaScript)
     val wr = c.getWriter
     if(block && mathType == "asciimath") // Work around a MathJax bug: AsciiMath is always displayed inline
       wr.tag("div", Map("class" -> "MJXc-display", "style" -> "text-align: center").asJava)
@@ -214,7 +216,7 @@ class HtmlTheme(global: Global) extends Theme(global) { self =>
   )
 
   /** If MathJax is needed by the page, add all resources and return the resolved main script URI and inline config. */
-  def addMathJaxResources(pc: HtmlPageContext): Option[(URI, Option[ConfigObject])] = if(pc.needsMathJax) {
+  def addMathJaxResources(pc: HtmlPageContext): Option[(URI, Option[ConfigObject])] = if(pc.features.handle(HtmlFeatures.MathJax)) {
     val loadConfig = tc.getStringListOr("global.mathJax.loadConfig").mkString(",")
     val inlineConfig = tc.getConfigOpt("global.mathJax.inlineConfig").map(_.root())
     for(path <- WebJarSupport.listAssets("mathjax", "/"))
@@ -252,7 +254,7 @@ class HtmlTheme(global: Global) extends Theme(global) { self =>
           val pm = createPageModel(pc, renderer)
           val formatted = getTemplate(templateName).render(pm).body.trim
           file.parent.createDirectories()
-          val minifyInlineJS = minifyJS && !pc.needsMathJax // HtmlCompressor cannot handle non-JavaScript <script> tags
+          val minifyInlineJS = minifyJS && !pc.features.isRequested(HtmlFeatures.MathJax) // HtmlCompressor cannot handle non-JavaScript <script> tags
           val min =
             if(minifyHTML) Util.htmlCompressorMinimize(formatted, minimizeCss = minifyCSS, minimizeJs = minifyInlineJS) else formatted+'\n'
           file.write(min)(codec = Codec.UTF8)
@@ -263,8 +265,6 @@ class HtmlTheme(global: Global) extends Theme(global) { self =>
         }
       }.flatten
     }
-
-    val siteResources = pageModels.flatMap(_.pc.res.mappings.map(r => (r.resolvedSourceURI, r))).toMap
 
     try createSearchIndex(site)
     catch { case ex: Exception => logger.error(s"Error creating search index", ex) }
@@ -282,7 +282,7 @@ class HtmlTheme(global: Global) extends Theme(global) { self =>
 
     val siteModel = createSiteModel(pageModels)
     implicit val utf8Codec = Codec.UTF8
-    siteResources.valuesIterator.filter(_.sourceURI.getScheme != "site").foreach { rs =>
+    siteModel.siteResources.valuesIterator.filter(_.sourceURI.getScheme != "site").foreach { rs =>
       val file = targetFile(rs.targetURI)
       logger.debug(s"Copying theme resource ${rs.resolvedSourceURI} to file $file")
       try {
@@ -311,6 +311,10 @@ class HtmlTheme(global: Global) extends Theme(global) { self =>
         logger.error(s"Error copying theme resource ${rs.resolvedSourceURI} to $file", ex)
       }
     }
+
+    val unhandled = siteModel.features.unhandled
+    if(!unhandled.isEmpty)
+      logger.warn("The following features are required by the site but not provided by the theme: "+unhandled.mkString(", "))
   }
 
   protected def createSearchIndex(site: Site): Unit = {
@@ -366,6 +370,31 @@ class HtmlTheme(global: Global) extends Theme(global) { self =>
   })
 }
 
+class HtmlFeatures(parents: Traversable[HtmlFeatures]) {
+  import HtmlFeatures._
+
+  val requestedFeatures: mutable.Set[Feature] = mutable.Set[Feature]() ++= parents.flatMap(_.requestedFeatures)
+  val handledFeatures: mutable.Set[Feature] = mutable.Set[Feature]() ++= parents.flatMap(_.handledFeatures)
+
+  def request(f: Feature): Unit = requestedFeatures += f
+  def isRequested(f: Feature): Boolean = requestedFeatures.contains(f)
+  def handle(f: Feature): Boolean =
+    if(requestedFeatures.contains(f)) { handledFeatures += f; true } else false
+  def isHandled(f: Feature): Boolean = handledFeatures.contains(f)
+
+  def unhandled: scala.collection.Set[Feature] = requestedFeatures -- handledFeatures
+}
+
+object HtmlFeatures {
+  /** A feature that is required on the client side or as part of the generated site. It can be requested during
+    * content rendering. The theme needs to handle all requested features and add the appropriate support to the
+    * site, otherwise a warning is logged. */
+  trait Feature
+  case object JavaScript extends Feature
+  case object MathJax extends Feature
+  case object Mermaid extends Feature
+}
+
 /** The site context is created before page preprocessing */
 class HtmlSiteContext(val theme: HtmlTheme, val site: Site) {
   val staticResources = theme.global.findStaticResources
@@ -377,17 +406,10 @@ class HtmlSiteContext(val theme: HtmlTheme, val site: Site) {
 /** The page context is available for preprocessing a page */
 class HtmlPageContext(val siteContext: HtmlSiteContext, val page: Page) {
   private[this] var last = -1
-  private[this] var _needsJavaScript, _needsMathJax, _needsMermaid = false
   def newID(): String = {
     last += 1
     s"_id$last"
   }
-  def needsJavaScript: Boolean = _needsJavaScript
-  def requireJavaScript(): Unit = _needsJavaScript = true
-  def needsMathJax: Boolean = _needsMathJax
-  def requireMathJax(): Unit = _needsMathJax = true
-  def needsMermaid: Boolean = _needsMermaid
-  def requireMermaid(): Unit = _needsMermaid = true
 
   private lazy val pageTC = siteContext.theme.global.userConfig.theme.getConfig(page.config)
   def pageConfig(path: String): Option[String] = page.config.getStringOpt(path)
@@ -425,6 +447,8 @@ class HtmlPageContext(val siteContext: HtmlSiteContext, val page: Page) {
   })
 
   val slp = new SpecialLinkProcessor(res, siteContext.slpLookup, siteContext.theme.suffix, siteContext.theme.indexPage, siteContext.staticResourceURIs)
+
+  val features = new HtmlFeatures(Seq.empty)
 }
 
 /** The page model is available for rendering a preprocessed page with a template. Creating the HtmlPageModel
@@ -500,6 +524,9 @@ class HtmlPageModel(val pc: HtmlPageContext, renderer: HtmlRenderer) {
 }
 
 class HtmlSiteModel(val theme: HtmlTheme, pms: Vector[HtmlPageModel]) {
+  val features = new HtmlFeatures(pms.map(_.pc.features))
+  val siteResources = pms.flatMap(_.pc.res.mappings.map(r => (r.resolvedSourceURI, r))).toMap
+
   def themeConfig(path: String): Option[String] = theme.tc.getStringOpt(path)
   def themeConfigBoolean(path: String): Option[Boolean] = theme.tc.getBooleanOpt(path)
 }

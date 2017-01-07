@@ -1,8 +1,9 @@
 @(p: com.novocode.ornate.theme.default.DefaultPageModel)
+@import com.novocode.ornate.theme.HtmlFeatures
 @main(p) {
   @p.content
 
-  @if(!p.pc.needsJavaScript) { @* if p.needsJavaScript is set, the content above already contains a warning *@
+  @if(!p.pc.features.isHandled(HtmlFeatures.JavaScript)) { @* if JS is handled, the content above already contains a warning *@
     @for(h <- p.stringHtml("noScript")) { <noscript> @h </noscript> }
   }
 

@@ -1,4 +1,5 @@
 @(p: com.novocode.ornate.theme.default.DefaultPageModel)(content: Html)(footer: Html = HtmlFormat.empty)
+@import com.novocode.ornate.theme.HtmlFeatures
 
 @import com.novocode.ornate.Section
 @pageNav(section: Section) = {
@@ -94,7 +95,7 @@
               @****************************** Content ******************************@
               <main class="columns large-order-2 sections" id="_sections">
                 @for(b <- p.topNavBar) { @navBar(b, "a_navbar_top") }
-                @if(p.pc.needsJavaScript) {
+                @if(p.pc.features.handle(HtmlFeatures.JavaScript)) {
                   @for(h <- p.stringHtml("noScript")) { <noscript> @h </noscript> }
                 }
                 @content

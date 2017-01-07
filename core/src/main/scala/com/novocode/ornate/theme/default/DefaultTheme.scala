@@ -9,7 +9,7 @@ import com.novocode.ornate.config.Global
 import com.novocode.ornate.highlight.HighlightResult
 import com.novocode.ornate._
 import com.novocode.ornate.js.WebJarSupport
-import com.novocode.ornate.theme.{HtmlPageContext, HtmlPageModel, HtmlTheme, PageResources}
+import com.novocode.ornate.theme._
 import org.commonmark.ext.gfm.tables.TableBlock
 import org.commonmark.renderer.html.{HtmlNodeRendererContext, HtmlNodeRendererFactory, HtmlRenderer}
 import org.commonmark.node.{Block, Document, Node}
@@ -83,6 +83,7 @@ class DefaultTheme(global: Global) extends HtmlTheme(global) {
   } else super.renderAttributedHeading(n, c)
 
   override def renderMermaid(n: AttributedFencedCodeBlock, c: HtmlNodeRendererContext, pc: HtmlPageContext): Unit = {
+    pc.features.request(HtmlFeatures.JavaScript)
     pc.res.get(mermaidJS, "js/" + mermaidJS.split('/').last, createLink = true)
     pc.res.get("mermaid.custom.css", "css/", createLink = true)
     val wr = c.getWriter
@@ -91,7 +92,6 @@ class DefaultTheme(global: Global) extends HtmlTheme(global) {
     wr.text(n.getLiteral)
     wr.tag("/pre")
     wr.tag("/div")
-    pc.requireJavaScript()
   }
 
   override def renderCode(hlr: HighlightResult, code: Node, c: HtmlNodeRendererContext, pc: HtmlPageContext): Unit = if(code.isInstanceOf[Block]) {
