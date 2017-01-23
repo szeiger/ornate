@@ -107,9 +107,19 @@
                 <div data-sticky-container class="small-12 medium-12 large-2 large-order-1 columns a_sitenav_container">
                   <nav class="a_sitenav" data-sticky data-sticky-on="large" data-anchor="_sections">
                     @for(s <- p.stringHtml("siteNav")) { <header>@s</header> }
-                  <ul>
-                    @for(i <- items) { @siteNav(i) }
-                  </ul>
+                    <ul>
+                      @for(i <- items) { @siteNav(i) }
+                    </ul>
+                    @****************************** Version Navigation ******************************@
+                    @if(p.pc.themeConfigBoolean("versionNav").getOrElse(false)) {
+                      <div class="a_vnav">
+                        <a href="#" class="a_toggle"><span class="a_arrow"></span>
+                          @{p.stringHtmlInline("versionNavPrefix")}
+                          <span class="a_currentversion"></span>
+                        </a>
+                        <div>@{p.stringHtmlInline("versionNavLoading")}</div>
+                      </div>
+                    }
                   </nav>
                 </div>
               }
@@ -142,6 +152,12 @@
         </div>
       </footer>
     </div>
+    @if(p.pc.themeConfigBoolean("versionNav").getOrElse(false)) {
+      <div style="display: none">
+        <a href="@p.versionIdxLink" id="_version_idx"></a>
+        <a href="@p.siteRootLink" id="_site_root"></a>
+      </div>
+    }
     <script src="@{p.pc.res.get("webjar:/jquery/dist/jquery.min.js", "js/jquery.min.js")}"></script>
     <script src="@{p.pc.res.get("webjar:/what-input/what-input.min.js", "js/what-input.min.js")}"></script>
     <script src="@{p.pc.res.get("foundation.min.js", "js/")}"></script>

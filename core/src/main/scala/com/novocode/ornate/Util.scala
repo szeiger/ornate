@@ -32,7 +32,8 @@ object Util {
   }
 
   /** Create a relative link from one page to another. Both URIs must be absolute "site:" URIs
-    * without "." or ".." path segments, ending in file names (i.e. no tailing "/"). */
+    * without "." or ".." path segments, ending in file names (i.e. no tailing "/").
+    * For the `to` URI, the site root ("/") is also allowed. */
   def relativeSiteURI(from: URI, to: URI): URI = {
     @tailrec def differentTail(f: List[String], t: List[String]): (List[String], List[String]) =
       if(f.isEmpty || t.isEmpty || f.head != t.head) (f, t)
@@ -41,14 +42,23 @@ object Util {
     val fromDir = fromPath.init
     val fromPage = fromPath.last
     val toPath = to.getPath.split('/').toList
-    val toDir = toPath.init
-    val toPage = toPath.last
-    val (fromTail, toTail) = differentTail(fromDir, toDir)
-    if(fromTail.isEmpty && toTail.isEmpty && fromPage == toPage && (to.getFragment ne null))
-      new URI(null, null, null, to.getQuery, to.getFragment)
-    else {
-      val relPath = ((fromTail.map(_ => "..") ::: toTail) :+ toPage).mkString("/")
+    if(toPath.isEmpty) {
+      val relPath = fromPath.tail match {
+        case _ :: Nil => "./"
+        case _ :: xs => xs.map(_ => "..").mkString("/") + "/"
+        case Nil => throw new IllegalArgumentException
+      }
       new URI(null, null, relPath, to.getQuery, to.getFragment)
+    } else {
+      val toDir = toPath.init
+      val toPage = toPath.last
+      val (fromTail, toTail) = differentTail(fromDir, toDir)
+      if(fromTail.isEmpty && toTail.isEmpty && fromPage == toPage && (to.getFragment ne null))
+        new URI(null, null, null, to.getQuery, to.getFragment)
+      else {
+        val relPath = ((fromTail.map(_ => "..") ::: toTail) :+ toPage).mkString("/")
+        new URI(null, null, relPath, to.getQuery, to.getFragment)
+      }
     }
   }
 

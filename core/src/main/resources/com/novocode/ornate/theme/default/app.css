@@ -385,7 +385,7 @@ img.emoji {
   line-height: 1.5rem;
 }
 
-.a_sitenav a, .a_sitenav span {
+.a_sitenav > ul a, .a_sitenav > ul span {
   color: black;
   display: inline;
   border-right: 0.2rem solid #eee;
@@ -400,7 +400,7 @@ img.emoji {
   background-color: rgba(0,120,215,0.15);
 }
 
-.a_sitenav li {
+.a_sitenav > ul li {
   display: block;
   padding: 0;
 }
@@ -546,6 +546,40 @@ img.emoji {
   .menu.simple.a_navbar_top {
     margin-top: 0.3rem;
   }
+}
+
+/********** Version navigation **********/
+
+.a_vnav {
+  visibility: hidden;
+  background-color: #f8f8f8;
+  border: 1px solid #ddd;
+  margin-right: 1rem;
+  margin-top: 2rem;
+  padding: 0.5rem 1rem;
+}
+.a_vnav > a > span.a_arrow {
+  float: right;
+}
+.a_vnav > a {
+  color: black;
+  display: block;
+}
+.a_vnav > a > span.a_arrow:after {
+  content: '\25bc';
+}
+.a_vnav.a_expanded > a > span.a_arrow:after {
+  content: '\25b2';
+}
+.a_vnav > div {
+  display: none;
+  margin-top: 0.5rem;
+}
+.a_vnav.a_expanded > div {
+  display: block;
+}
+.a_vnav > div > ul {
+  list-style-position: inside;
 }
 
 /********** MathJax customization **********/

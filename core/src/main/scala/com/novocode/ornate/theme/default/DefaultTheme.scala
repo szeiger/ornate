@@ -183,4 +183,7 @@ class DefaultPageModel(pc: HtmlPageContext, renderer: HtmlRenderer) extends Html
   // These are non-lazy vals to force rendering (which may request additional resources) before HEAD
   val topNavBar = navBar("topNavBar")
   val bottomNavBar = navBar("bottomNavBar")
+
+  def versionIdxLink: Option[URI] = pc.themeConfig("versionIndex").map(s => siteRootLink.resolve(s))
+  def siteRootLink: URI = Util.relativeSiteURI(pc.page.uri, Util.siteRootURI)
 }
