@@ -149,6 +149,31 @@ Each `sourceLinks` entry maps a `file:` URI (relative to `global.sourceDir`) den
 
 If the link destination has the special fragment `#ghLines`, github-style line highlighting fragments are appended to the generated URIs for snippets which include only parts of a file. Note that github can only highlight one continuous region. If the snippet consists of multiple blocks, the first line of the first block and the last line of the last block are used.
 
+## `renderMarkdown`
+
+This extension parses Markdown code contained in a fenced code block and includes it in the document, replacing the fenced code block. All fenced code blocks with the language code (i.e. the first token in the info string) `markdown` plus an extra `render` token are processed. 
+
+Example source:
+
+````markdown
+```markdown render
+> This is a blockquote with *standard* **markup**.
+```
+````
+
+This gets rendered as:
+
+```markdown render
+> This is a blockquote with *standard* **markup**.
+```
+
+This extension is not very useful on its own but you can combine it with [includeCode](#includecode) to include Markdown snippets from external files into a page, for example:
+
+````markdown
+```markdown render src=../../generated-content.md
+```
+````
+
 ## `expandVars`
 
 This extension allows expansion of variables that reference configuration keys. The delimiters for variables are configurable, the default style being `{{variable}}`. Variable substutions are performed *after* Markdown parsing, so there is no way to escape delimiters. Global expansion for different node types can also be enabled in the configuration. By default this extension is enabled but all expansion options are disabled, so expansion is only performed in fenced code blocks with an explicit `expandVars=true` attribute. This is the default configuration:

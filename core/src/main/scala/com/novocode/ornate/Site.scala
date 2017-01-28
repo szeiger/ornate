@@ -30,10 +30,16 @@ class Page(val sourceFileURI: Option[URI], val syntheticName: Option[String],
 
   def applyProcessors(): Unit = processors.foreach(_.apply(this))
 
-  def parseAndProcessSnippet(content: String): Page = {
+  /** Parse a Markdown snippet and run the PageProcessors on it.
+    *
+    * @param content The Markdown content to parse.
+    * @param stopBefore When a `PageProcessor` calls this method to parse a snippet for inclusion into the main
+    *                   document tree, it should pass itself as `stopBefore` to prevent any later PageProcessors
+    *                   from being applied. */
+  def parseAndProcessSnippet(content: String, stopBefore: PageProcessor = null): Page = {
     val doc = parser.parse(content)
     val snippetPage = new Page(None, None, uri, suffix, doc, config, section, extensions, parser)
-    processors.foreach(_.apply(snippetPage))
+    processors.iterator.takeWhile(_ ne stopBefore).foreach(_.apply(snippetPage))
     snippetPage
   }
 

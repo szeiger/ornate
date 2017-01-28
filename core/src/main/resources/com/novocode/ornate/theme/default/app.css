@@ -73,7 +73,7 @@ hr {
   border-bottom: 0.2rem solid #cacaca;
 }
 
-a, a:hover, a:active, a:visited {
+a, a:hover, a:active, a:visited, a code, a code.hljs {
   color: rgb(0,120,215);
 }
 
