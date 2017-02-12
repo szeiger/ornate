@@ -74,6 +74,13 @@ theme.default.links = [
 ]
 ```
 
+## Customization
+
+Some of the default theme's colors can be changed under `theme.default.global.color`. These are the default values:
+
+```yaml src=../../core/src/main/resources/ornate-reference.conf#--doc-themecolors
+```
+
 ## Index
 
 The default theme can generate an index page from user-defined keywords. Using the [headerAttributes](markdown.md#header_attributes) extension, you can define the keywords with the `index` key. Nested keywords are separated by commas, multiple independent keywords are separated by semicolons. For example, the following header definition contributes two index entries "Bar" and "Foo, Bar" that link to the header:

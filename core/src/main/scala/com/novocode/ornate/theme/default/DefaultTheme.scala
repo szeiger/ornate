@@ -169,6 +169,8 @@ class DefaultTheme(global: Global) extends HtmlTheme(global) {
 
   override def createPageModel(pc: HtmlPageContext, renderer: HtmlRenderer): HtmlPageModel =
     new DefaultPageModel(pc, renderer)
+
+  override def createSiteModel(pms: Vector[HtmlPageModel]): HtmlSiteModel = new DefaultSiteModel(this, pms)
 }
 
 class DefaultPageModel(pc: HtmlPageContext, renderer: HtmlRenderer) extends HtmlPageModel(pc, renderer) {
@@ -186,4 +188,20 @@ class DefaultPageModel(pc: HtmlPageContext, renderer: HtmlRenderer) extends Html
 
   def versionIdxLink: Option[URI] = pc.themeConfig("versionIndex").map(s => siteRootLink.resolve(s))
   def siteRootLink: URI = Util.relativeSiteURI(pc.page.uri, Util.siteRootURI)
+}
+
+class DefaultSiteModel(theme: DefaultTheme, pms: Vector[HtmlPageModel]) extends HtmlSiteModel(theme, pms) {
+  def themeConfigColor(path: String): Option[Color] = themeConfig(path).flatMap { s =>
+    try Some(Color.parse(s)) catch {
+      case ex: Exception =>
+        theme.logger.error("Error parsing color from theme config key "+path, ex)
+        None
+    }
+  }
+
+  lazy val accentColor: Color = themeConfigColor("global.color.accent").get
+  lazy val accentBackground: Color =
+    themeConfigColor("global.color.accentBackground").getOrElse(accentColor.withAlpha(accentColor.alpha * 0.15f))
+  lazy val headerFooterColor: Color = themeConfigColor("global.color.headerFooter").get
+  lazy val headerFooterBackground: Color = themeConfigColor("global.color.headerFooterBackground").get
 }

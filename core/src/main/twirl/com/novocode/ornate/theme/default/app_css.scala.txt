@@ -1,3 +1,5 @@
+@(m: com.novocode.ornate.theme.default.DefaultSiteModel)
+
 body {
   background: white;
   color: black;
@@ -74,7 +76,7 @@ hr {
 }
 
 a, a:hover, a:active, a:visited, a code, a code.hljs {
-  color: rgb(0,120,215);
+  color: @{m.accentColor.toCSSString};
 }
 
 a:hover, a:active {
@@ -147,7 +149,7 @@ main .a_search input {
 }
 
 main .a_search input:focus {
-  border: 1px solid rgb(0,120,215);
+  border: 1px solid @{m.accentColor.toCSSString};
   box-shadow: none;
 }
 
@@ -158,7 +160,7 @@ main .a_search button {
   height: 38px;
   padding: 0;
   width: 38px;
-  background-color: rgb(0,120,215);
+  background-color: @{m.accentColor.toCSSString};
   color: #ffffff;
 }
 
@@ -281,7 +283,7 @@ pre, pre.hljs {
 
 /********** Custom style classes **********/
 
-@media screen and (max-width: 68.9375em) {
+@@media screen and (max-width: 68.9375em) {
   .a_show-for-xlarge {
     display: none !important;
   }
@@ -299,8 +301,8 @@ img.emoji {
 }
 
 .a_header, .a_footer {
-  background-color: #444;
-  color: white;
+  background-color: @{m.headerFooterBackground.toCSSString};
+  color: @{m.headerFooterColor.toCSSString};
 }
 
 .a_header a, .a_footer a {
@@ -396,8 +398,8 @@ img.emoji {
 }
 
 .a_sitenav > ul li.a_thispage > a, .a_sitenav > ul li.a_thispage > span {
-  border-right-color: rgb(0,120,215);
-  background-color: rgba(0,120,215,0.15);
+  border-right-color: @{m.accentColor.toCSSString};
+  background-color: @{m.accentBackground.toCSSString};
 }
 
 .a_sitenav > ul li {
@@ -470,8 +472,8 @@ img.emoji {
 }
 
 .a_pagenav [data-magellan] a.active, [data-magellan] a.active:focus {
-  border-left-color: rgb(0,120,215);
-  background-color: rgba(0,120,215,0.15);
+  border-left-color: @{m.accentColor.toCSSString};
+  background-color: @{m.accentBackground.toCSSString};
 }
 
 #_sections {
@@ -507,7 +509,7 @@ img.emoji {
   display: inline;
 }
 
-@media screen and (max-width: 39.9375em) {
+@@media screen and (max-width: 39.9375em) {
   .menu.simple.a_navbar_top {
     padding-bottom: 0.5rem;
     border-bottom: 1px solid #ddd;
@@ -519,7 +521,7 @@ img.emoji {
   }
 }
 
-@media screen and (max-width: 63.9375em) {
+@@media screen and (max-width: 63.9375em) {
   .a_sitenav {
     padding-top: 1rem;
     padding-bottom: 1rem;
@@ -534,7 +536,7 @@ img.emoji {
   }
 }
 
-@media screen and (min-width: 64em) {
+@@media screen and (min-width: 64em) {
   #_sections {
     margin-left: 2em;
     margin-right: 1em;
@@ -598,12 +600,12 @@ div.MathJax_Preview {
 
 /********** Print styles **********/
 
-@media print {
+@@media print {
   div.a_sitenav_container, nav, header, footer, .a_sourcelink, .a_navbar { display: none; }
   main, div.row, div.columns { display: block; max-width: none; }
   body > div { height: auto; }
   .a_xscroll { width: auto; overflow: hidden; }
   pre, .hljs, pre.hljs, code.hljs { overflow: hidden; }
   .MJXc-display { page-break-inside: avoid; }
-  @page { margin-top: 2.5em; margin-bottom: 2.5em; }
+  @@page { margin-top: 2.5em; margin-bottom: 2.5em; }
 }
