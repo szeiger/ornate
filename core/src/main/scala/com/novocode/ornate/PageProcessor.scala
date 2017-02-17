@@ -19,8 +19,12 @@ object Phase {
   /** Perform visual post-processing of content. */
   case object Visual extends Phase(4000)
 
+  /** Perform theme-specific work before highlighting, e.g. setting `noHighlight` flags. This phase should only
+    * be used internally by themes and not by extensions. */
+  case object PreHighlight extends Phase(4900)
+
   /** Perform code highlighting. No further modification to code nodes should be done at or after this phase. */
-  case object Highlight extends Phase(4000)
+  case object Highlight extends Phase(5000)
 
   /** A phase for special use. Must not be used by Extension phases. */
   case object Special extends Phase(-1)

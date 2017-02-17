@@ -122,6 +122,10 @@ class HtmlTheme(global: Global) extends Theme(global) { self =>
     }
   }
 
+  val defaultNoHighlightLanguages: Set[String] = Set("mermaid", "texmath", "asciimath", "math", "mathml")
+
+  override def noHighlightLanguages(p: Page): Set[String] = defaultNoHighlightLanguages
+
   def renderFencedCodeBlock(pc: HtmlPageContext)(n: AttributedFencedCodeBlock, c: HtmlNodeRendererContext): Unit = n.getLanguage match {
     case Some("mermaid") => renderMermaid(n, c, pc)
     case Some("texmath") => renderMath(n.getLiteral, c, pc, "tex", true)

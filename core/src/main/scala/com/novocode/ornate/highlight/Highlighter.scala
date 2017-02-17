@@ -28,9 +28,11 @@ abstract class Highlighter(co: ConfiguredObject) extends PageProcessor {
     page.doc.accept(new AbstractVisitor {
       override def visit(_n: FencedCodeBlock): Unit = {
         val n = AttributeFencedCodeBlocksProcessor.lift(_n)
-        n.getLanguage match {
-          case Some(s) if ignore.contains(s) => // do nothing
-          case lang => wrap(new HighlitBlock, n.getLiteral, lang, n)
+        if(!n.noHighlight) {
+          n.getLanguage match {
+            case Some(s) if ignore.contains(s) => // do nothing
+            case lang => wrap(new HighlitBlock, n.getLiteral, lang, n)
+          }
         }
       }
       override def visit(n: Code): Unit = wrap(new HighlitInline, n.getLiteral, None, n)

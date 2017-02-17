@@ -26,7 +26,8 @@ abstract class Theme(val global: Global) extends Logging {
     logTime("Running page processors took") {
       global.parMap(pages) { p =>
         val pagepp = p.extensions.ornate.flatMap(_.pageProcessors(site))
-        p.processors = (AttributeFencedCodeBlocksProcessor +: sip +: pagepp).sortBy(_.runAt.idx)
+        val noHL = new NoHighlightProcessor(noHighlightLanguages(p))
+        p.processors = (noHL +: AttributeFencedCodeBlocksProcessor +: sip +: pagepp).sortBy(_.runAt.idx)
         p.applyProcessors()
       }
     }
@@ -37,6 +38,9 @@ abstract class Theme(val global: Global) extends Logging {
     logger.info("Rendering site to "+global.userConfig.targetDir)
     render(site)
   }
+
+  /** The language codes that should not be processed by a highlighter. */
+  def noHighlightLanguages(p: Page): Set[String] = Set.empty
 
   /** Extra image URI schemes to turn into `SpecialImage` nodes for rendering in inline contexts */
   def specialImageSchemesInline: Set[String] = Set.empty

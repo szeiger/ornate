@@ -31,7 +31,8 @@ object AttributeFencedCodeBlocksProcessor extends PageProcessor {
 }
 
 class AttributedFencedCodeBlock extends FencedCodeBlock with Attributed {
-  var postHighlightSubstitutions = new mutable.ArrayBuffer[String]
+  val postHighlightSubstitutions = new mutable.ArrayBuffer[String]
+  var noHighlight = false
 
   private var _prefix: String = null
   private var _nextId = 0
