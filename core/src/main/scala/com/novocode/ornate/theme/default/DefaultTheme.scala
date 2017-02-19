@@ -5,6 +5,7 @@ import java.util.Collections
 
 import com.novocode.ornate.commonmark._
 import com.novocode.ornate.commonmark.NodeExtensionMethods._
+import com.novocode.ornate.commonmark.HtmlNodeRendererContextExtensionMethods._
 import com.novocode.ornate.config.Global
 import com.novocode.ornate.highlight.HighlightResult
 import com.novocode.ornate._
@@ -49,7 +50,7 @@ class DefaultTheme(global: Global) extends HtmlTheme(global) {
     }
   }
 
-  override def specialImageSchemesInline: Set[String] = Set("foundation-icon", "font-awesome")
+  override def specialImageSchemesInline: Set[String] = Set("foundation-icon", "font-awesome", "versions")
 
   override def renderSpecialImageInline(pc: HtmlPageContext)(n: SpecialImageInline, c: HtmlNodeRendererContext): Unit = n.destinationURI.getScheme match {
     case "foundation-icon" =>
@@ -72,6 +73,18 @@ class DefaultTheme(global: Global) extends HtmlTheme(global) {
         case None =>
           logger.warn(s"Page ${pc.page.uri}: Font Awesome icon ${n.destinationURI} not found")
       }
+    case "versions" =>
+      if(tc.getBoolean("versionNavDropdown")) {
+        pc.features.request(DefaultTheme.MultiVersion)
+        val wr = c.getWriter
+        val id = pc.newID()
+        wr.raw(s"""<a class="a_vnav2" data-toggle="$id">""")
+        c.renderChildren(n)
+        wr.raw(s"""</a><span class="dropdown-pane a_vnav2_pane" id="$id"><span>""")
+        val loading = pc.stringNode("versionNavLoading").get
+        c.renderInline(loading)
+        wr.raw("</span></span>")
+      } else c.renderChildren(n)
     case _ =>
   }
 
@@ -81,7 +94,7 @@ class DefaultTheme(global: Global) extends HtmlTheme(global) {
     wr.line
     val attrs = Map[String, String]("id" -> n.id, "class" -> "a_section", "data-magellan-target" -> n.id)
     wr.tag(htag, c.extendAttributes(n, attrs.asJava))
-    n.children.toVector.foreach(c.render)
+    c.renderChildren(n)
     wr.raw(s"""<a class="a_hlink" href="#${n.id}"></a>""")
     wr.tag('/' + htag)
     wr.line
@@ -146,7 +159,7 @@ class DefaultTheme(global: Global) extends HtmlTheme(global) {
     items.foreach { case ((item, itemID), idx) =>
       val active = if(idx == 0) " is-active" else ""
       wr.raw(s"""<div class="tabs-panel$active" id="$itemID">""")
-      item.children.toVector.foreach(c.render)
+      c.renderChildren(item)
       wr.raw("</div>")
     }
     wr.raw("</div>")
@@ -158,7 +171,7 @@ class DefaultTheme(global: Global) extends HtmlTheme(global) {
     wr.line
     wr.raw("""<div class="row"><div class="small-expand columns a_xscroll a_table">""")
     wr.tag("table", c.extendAttributes(n, Collections.emptyMap[String, String]))
-    n.children.toVector.foreach(c.render)
+    c.renderChildren(n)
     wr.tag("/table")
     wr.raw("</div></div>")
     wr.line()
@@ -173,6 +186,10 @@ class DefaultTheme(global: Global) extends HtmlTheme(global) {
   override def createSiteModel(pms: Vector[HtmlPageModel]): HtmlSiteModel = new DefaultSiteModel(this, pms)
 }
 
+object DefaultTheme {
+  case object MultiVersion extends HtmlFeatures.Feature
+}
+
 class DefaultPageModel(pc: HtmlPageContext, renderer: HtmlRenderer) extends HtmlPageModel(pc, renderer) {
   protected def navBar(opt: String): Option[Seq[NavLink]] = pc.themeConfigStringList(opt).flatMap { defined =>
     val links = defined.flatMap(id => navLinks.get(id).filter(_.hasText))
@@ -185,6 +202,8 @@ class DefaultPageModel(pc: HtmlPageContext, renderer: HtmlRenderer) extends Html
   // These are non-lazy vals to force rendering (which may request additional resources) before HEAD
   val topNavBar = navBar("topNavBar")
   val bottomNavBar = navBar("bottomNavBar")
+
+  if(pc.themeConfigBoolean("versionNav").getOrElse(false)) pc.features.request(DefaultTheme.MultiVersion)
 
   def versionIdxLink: Option[URI] = pc.themeConfig("versionIndex").map(s => siteRootLink.resolve(s))
   def siteRootLink: URI = Util.relativeSiteURI(pc.page.uri, Util.siteRootURI)

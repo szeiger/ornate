@@ -44,6 +44,15 @@ $(window).load(function() {
   if(versionIdx.size() > 0) {
     var helperA = $("#_site_root")[0];
     if(helperA.protocol !== "file:") {
+      $(".a_vnav2").each(function() { // Activate vnav2 toggles
+        var toggle = $(this);
+        var pane = $("#"+toggle.attr("data-toggle"));
+        new Foundation.Dropdown(pane, { vOffset: 0 });
+        pane.on("show.zf.dropdown", function() { toggle.addClass("a_expanded"); });
+        pane.on("hide.zf.dropdown", function() { toggle.removeClass("a_expanded"); });
+        this.href = "#";
+        toggle.addClass("a_vnav2_toggle");
+      });
       var siteRoot = helperA.href;
       helperA.href = siteRoot + "../";
       var siteParent = helperA.href;
@@ -74,7 +83,7 @@ $(window).load(function() {
         var pageLocal = pageLoc.startsWith(siteRoot) ? pageLoc.substring(siteRoot.length) : null;
         //console.log("pageLocal: " + pageLocal);
         var ul = document.createElement("ul");
-        var container = $(".a_vnav > div");
+        var container = $(".a_vnav > div, .a_vnav2_pane span");
         $(versions).each(function() {
           if(this == thisVersion) {
             var a = document.createElement("span");

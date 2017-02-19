@@ -111,3 +111,8 @@ Example: A typical directory layout looks like this:
 ```
 
 Here `/docs/0.1/` and `/docs/0.2/` are two versions of a site that have been generated independently with Ornate. All HTML pages load `../` (the auto-generated directory listing of `/docs/`) as the index page and detect the versions `0.1` and `0.2` from it. For example, on `/docs/0.1/foo.html` you get a link to `/docs/0.2/foo.html`. When you click on it the navigation script first checks if the page exists and since it doesn't in this case, it loads `/docs/0.2/` instead.
+
+Instead of a separate navigation section below the page navigation the version switcher can be integrated into a version number that is shown in the title bar by embedding an image with the special `versions:/` URI. Here is the definition used by this manual:
+
+```yaml src=../../doc/ornate.conf#--doc-siteTitle
+```

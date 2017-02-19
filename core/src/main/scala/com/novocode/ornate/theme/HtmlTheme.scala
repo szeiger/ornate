@@ -7,6 +7,7 @@ import java.util.{Collections, Comparator, Locale}
 import better.files.File.OpenOptions
 import com.novocode.ornate._
 import com.novocode.ornate.commonmark.NodeExtensionMethods._
+import com.novocode.ornate.commonmark.HtmlNodeRendererContextExtensionMethods._
 import better.files._
 import com.novocode.ornate.URIExtensionMethods._
 import com.novocode.ornate.commonmark._
@@ -58,7 +59,7 @@ class HtmlTheme(global: Global) extends Theme(global) { self =>
     val wr = c.getWriter
     wr.line
     wr.tag(htag, attrs)
-    n.children.toVector.foreach(c.render)
+    c.renderChildren(n)
     wr.tag('/' + htag)
     wr.line
   }
@@ -72,7 +73,7 @@ class HtmlTheme(global: Global) extends Theme(global) { self =>
     wr.line
     wr.tag("blockquote", attrs)
     wr.line
-    n.children.toVector.foreach(c.render)
+    c.renderChildren(n)
     wr.line
     wr.tag("/blockquote")
     wr.line
@@ -83,8 +84,7 @@ class HtmlTheme(global: Global) extends Theme(global) { self =>
     * tab view. */
   def renderTabView(pc: HtmlPageContext)(n: TabView, c: HtmlNodeRendererContext): Unit = {
     n.children.toVector.foreach {
-      case i: TabItem =>
-        i.children.toVector.foreach(c.render)
+      case i: TabItem => c.renderChildren(i)
       case n => c.render(n)
     }
   }
