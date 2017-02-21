@@ -79,7 +79,8 @@ class IncludeCodeExtension(co: ConfiguredObject) extends Extension with Logging 
         if(sl.uri.getFragment == "ghLines" && lines.map(_.nonEmpty).getOrElse(false)) {
           val first = lines.get.head._1
           val last = lines.get.last._2
-          u.copy(fragment = s"L$first-L$last")
+          if(first == last) u.copy(fragment = s"L$first")
+          else u.copy(fragment = s"L$first-L$last")
         } else u
       }
     }
@@ -107,7 +108,7 @@ class IncludeCodeExtension(co: ConfiguredObject) extends Extension with Logging 
         Some(Snippet(content.mkString("\n"), None))
       } else {
         val suffix = "#" + fragment
-        logger.debug("Building snippet for fragement "+suffix)
+        logger.debug("Building snippet for fragment "+suffix)
         var found = false
         val buf = new ArrayBuffer[String]
         var linenos = new ArrayBuffer[(Int, Int)]
@@ -129,7 +130,7 @@ class IncludeCodeExtension(co: ConfiguredObject) extends Extension with Logging 
             if(soff >= 0) offset = math.min(offset, soff)
           }
           blockBuf.foreach(s => buf += s.substring(math.min(offset, s.length)))
-          if(line-startLine > 2)
+          if(line-startLine > 1)
             linenos += (((startLine+1), (line-1)))
         }
         trimmed.iterator.zipWithIndex.foreach { case (s, idx) =>
