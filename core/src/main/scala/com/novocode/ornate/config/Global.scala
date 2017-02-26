@@ -34,14 +34,16 @@ class Global(startDir: File, confFile: Option[File], overrides: Config = ConfigF
     } match {
       case Some(f) =>
         val c = ConfigFactory.parseFile(f.toJava)
-        (refC, new UserConfig(overrides.withFallback(c).withFallback(ref).resolve(), startDir, this))
+        (refC, new UserConfig(overrides.withFallback(c).withFallback(ref).resolve(), this))
       case None =>
-        (refC, new UserConfig(overrides.withFallback(ref).resolve(), startDir, this))
+        (refC, new UserConfig(overrides.withFallback(ref).resolve(), this))
     }
   }
 
   logger.debug("Source dir is: " + userConfig.sourceDir)
   logger.debug("Target dir is: " + userConfig.targetDir)
+
+  def getFile(path: String): File = startDir / path
 
   private val cachedExtensions = new mutable.HashMap[String, Option[AnyRef]]
 
@@ -131,10 +133,10 @@ class ReferenceConfig(val raw: Config, global: Global) {
 }
 
 /** User configuration */
-class UserConfig(raw: Config, startDir: File, global: Global) extends ReferenceConfig(raw, global) {
-  val sourceDir: File = startDir / raw.getString("global.sourceDir")
-  val targetDir: File = startDir / raw.getString("global.targetDir")
-  val resourceDir: File = startDir / raw.getString("global.resourceDir")
+class UserConfig(raw: Config, global: Global) extends ReferenceConfig(raw, global) {
+  val sourceDir: File = global.getFile(raw.getString("global.sourceDir"))
+  val targetDir: File = global.getFile(raw.getString("global.targetDir"))
+  val resourceDir: File = global.getFile(raw.getString("global.resourceDir"))
   val tocMaxLevel: Int = raw.getInt("global.tocMaxLevel")
   val tocMergeFirst: Boolean = raw.getBoolean("global.tocMergeFirst")
   val excludeResources: FileMatcher = new FileMatcher(raw.getStringList("global.excludeResources").asScala.toVector)

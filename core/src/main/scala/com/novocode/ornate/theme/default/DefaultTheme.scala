@@ -16,6 +16,7 @@ import org.commonmark.renderer.html.{HtmlNodeRendererContext, HtmlNodeRendererFa
 import org.commonmark.node.{Block, Document, Node}
 
 import scala.collection.JavaConverters._
+import scala.io.Codec
 
 class DefaultTheme(global: Global) extends HtmlTheme(global) {
   lazy val fontAwesome: Map[String, String] = try {
@@ -223,4 +224,20 @@ class DefaultSiteModel(theme: DefaultTheme, pms: Vector[HtmlPageModel]) extends 
     themeConfigColor("global.color.accentBackground").getOrElse(accentColor.withAlpha(accentColor.alpha * 0.15f))
   lazy val headerFooterColor: Color = themeConfigColor("global.color.headerFooter").get
   lazy val headerFooterBackground: Color = themeConfigColor("global.color.headerFooterBackground").get
+
+  lazy val extraCSS: String = {
+    val css1 = themeConfig("global.cssFile").map { path =>
+      val f = theme.global.getFile(path)
+      try {
+        val s = f.contentAsString(Codec.UTF8)
+        if(s.nonEmpty && !s.endsWith("\n")) s + "\n" else s
+      } catch { case ex: Exception =>
+        theme.logger.error("Error loading CSS file \""+path+"\" (resolved to \""+f+"\")", ex)
+      }
+    }.getOrElse("")
+    val css2 = themeConfig("global.css").map { s =>
+      if(s.nonEmpty && !s.endsWith("\n")) s + "\n" else s
+    }.getOrElse("")
+    css1 + css2
+  }
 }

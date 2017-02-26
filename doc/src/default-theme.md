@@ -81,6 +81,11 @@ Some of the default theme's colors can be changed under `theme.default.global.co
 ```yaml src=../../core/src/main/resources/ornate-reference.conf#--doc-themecolors
 ```
 
+Other styles can be changed by appending custom CSS code to the generated `app.css` file. These are the defaults (under `theme.default.global`):
+
+```yaml src=../../core/src/main/resources/ornate-reference.conf#--doc-themecss
+```
+
 ## Index
 
 The default theme can generate an index page from user-defined keywords. Using the [headerAttributes](markdown.md#header_attributes) extension, you can define the keywords with the `index` key. Nested keywords are separated by commas, multiple independent keywords are separated by semicolons. For example, the following header definition contributes two index entries "Bar" and "Foo, Bar" that link to the header:

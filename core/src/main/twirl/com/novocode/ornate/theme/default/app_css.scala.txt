@@ -644,3 +644,5 @@ div.MathJax_Preview {
   .MJXc-display { page-break-inside: avoid; }
   @@page { margin-top: 2.5em; margin-bottom: 2.5em; }
 }
+
+@{m.extraCSS}
