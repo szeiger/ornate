@@ -1,10 +1,12 @@
 package com.novocode.ornate.js
 
-import com.novocode.ornate.Logging
-import play.api.libs.json.{JsArray, JsObject, JsString}
-import play.libs.Json
-
 import scala.collection.mutable
+
+import com.novocode.ornate.Logging
+import play.api.libs.json.JsArray
+import play.api.libs.json.JsObject
+import play.api.libs.json.JsString
+import play.api.libs.json.Json
 
 object ElasticlunrSearch extends Logging { self =>
   private val nashorn: NashornSupport = new NashornSupport { def logger = self.logger }
