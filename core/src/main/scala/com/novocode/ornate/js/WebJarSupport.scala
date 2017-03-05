@@ -1,13 +1,13 @@
 package com.novocode.ornate.js
 
+import scala.collection.JavaConverters._
+import scala.io.Codec
+
 import java.util.regex.Pattern
 
 import better.files._
 import org.slf4j.Logger
 import org.webjars.WebJarAssetLocator
-
-import scala.collection.JavaConverters._
-import scala.io.Codec
 
 trait WebJarSupport {
   import WebJarSupport._

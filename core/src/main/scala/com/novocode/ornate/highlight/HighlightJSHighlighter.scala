@@ -1,15 +1,19 @@
 package com.novocode.ornate.highlight
 
+import scala.collection.mutable
+
 import java.net.URI
 
-import com.novocode.ornate.js.{JSMap, NashornSupport, WebJarSupport}
 import com.novocode.ornate._
-import com.novocode.ornate.config.ConfigExtensionMethods.configExtensionMethods
 import com.novocode.ornate.config.ConfiguredObject
-import org.commonmark.node.{FencedCodeBlock, IndentedCodeBlock, Node}
+import com.novocode.ornate.config.ConfigExtensionMethods.configExtensionMethods
+import com.novocode.ornate.js.JSMap
+import com.novocode.ornate.js.NashornSupport
+import com.novocode.ornate.js.WebJarSupport
+import org.commonmark.node.FencedCodeBlock
+import org.commonmark.node.IndentedCodeBlock
+import org.commonmark.node.Node
 import play.twirl.api.HtmlFormat
-
-import scala.collection.mutable
 
 /** A Highlighter based on highlight.js */
 class HighlightJSHighlighter(co: ConfiguredObject) extends Highlighter(co) with NashornSupport with Logging {

@@ -1,34 +1,49 @@
 package com.novocode.ornate.theme
 
-import java.net.{URI, URL}
-import java.text.Collator
-import java.util.{Collections, Comparator, Locale}
+import scala.StringBuilder
+import scala.collection.mutable
+import scala.collection.JavaConverters._
+import scala.concurrent.Await
+import scala.concurrent.Future
+import scala.concurrent.duration.Duration
+import scala.io.Codec
 
+import java.net.URI
+import java.net.URL
+import java.text.Collator
+import java.util.Collections
+import java.util.Comparator
+import java.util.Locale
+
+import better.files._
 import better.files.File.OpenOptions
 import com.novocode.ornate._
-import com.novocode.ornate.commonmark.NodeExtensionMethods._
-import com.novocode.ornate.commonmark.HtmlNodeRendererContextExtensionMethods._
-import better.files._
 import com.novocode.ornate.URIExtensionMethods._
 import com.novocode.ornate.commonmark._
-import com.novocode.ornate.config.ConfigExtensionMethods.configExtensionMethods
+import com.novocode.ornate.commonmark.HtmlNodeRendererContextExtensionMethods._
+import com.novocode.ornate.commonmark.NodeExtensionMethods._
 import com.novocode.ornate.config.Global
-import com.novocode.ornate.highlight.{HighlightResult, Highlit, HighlitBlock, HighlitInline}
-import com.novocode.ornate.js.{CSSO, ElasticlunrSearch, WebJarSupport}
-import com.typesafe.config.{ConfigObject, ConfigRenderOptions, ConfigValue}
+import com.novocode.ornate.config.ConfigExtensionMethods.configExtensionMethods
+import com.novocode.ornate.highlight.HighlightResult
+import com.novocode.ornate.highlight.Highlit
+import com.novocode.ornate.highlight.HighlitBlock
+import com.novocode.ornate.highlight.HighlitInline
+import com.novocode.ornate.js.CSSO
+import com.novocode.ornate.js.ElasticlunrSearch
+import com.novocode.ornate.js.WebJarSupport
+import com.typesafe.config.ConfigObject
+import com.typesafe.config.ConfigRenderOptions
+import com.typesafe.config.ConfigValue
+import org.commonmark.node._
 import org.commonmark.renderer.NodeRenderer
+import org.commonmark.renderer.html.HtmlNodeRendererContext
+import org.commonmark.renderer.html.HtmlNodeRendererFactory
 import org.commonmark.renderer.html.HtmlRenderer
 import org.commonmark.renderer.html.HtmlRenderer.HtmlRendererExtension
-import org.commonmark.renderer.html.{HtmlNodeRendererContext, HtmlNodeRendererFactory}
-import org.commonmark.node._
-import play.twirl.api.{Html, HtmlFormat, Template1, TxtFormat}
-
-import scala.StringBuilder
-import scala.collection.JavaConverters._
-import scala.collection.mutable
-import scala.concurrent.duration.Duration
-import scala.concurrent.{Await, Future}
-import scala.io.Codec
+import play.twirl.api.Html
+import play.twirl.api.HtmlFormat
+import play.twirl.api.Template1
+import play.twirl.api.TxtFormat
 
 /** Base class for Twirl-based HTML themes */
 class HtmlTheme(global: Global) extends Theme(global) { self =>
@@ -355,7 +370,7 @@ class HtmlTheme(global: Global) extends Theme(global) { self =>
     }
 
     val siteModel = createSiteModel(pageModels)
-    implicit val utf8Codec = Codec.UTF8
+    implicit val utf8Codec: Codec = Codec.UTF8
     siteModel.siteResources.valuesIterator.filter(_.sourceURI.getScheme != "site").foreach { rs =>
       val file = targetFile(rs.targetURI)
       logger.debug(s"Copying theme resource ${rs.resolvedSourceURI} to file $file")
@@ -420,7 +435,7 @@ class HtmlTheme(global: Global) extends Theme(global) { self =>
           idx.add(title, body, excerpt, keywords, link)
         }
       }
-      implicit val codec = Codec.UTF8
+      implicit val codec: Codec = Codec.UTF8
       searchIndexFile.write("window._searchIndex = "+idx.toJSON+";")
     }
   }

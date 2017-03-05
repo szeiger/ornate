@@ -1,15 +1,14 @@
 package com.novocode.ornate.commonmark
 
+import scala.collection.mutable.ArrayBuffer
+
 import java.net.URI
 import java.util.Locale
 
-import com.novocode.ornate._
 import NodeExtensionMethods._
+import com.novocode.ornate._
 import com.novocode.ornate.config.UserConfig
-
 import org.commonmark.node._
-
-import scala.collection.mutable.ArrayBuffer
 
 /** Replace "config", "toctree" and "index" images and image paragraphs, and convert other matched images from
   * `Image` to `SpecialImage` nodes. */

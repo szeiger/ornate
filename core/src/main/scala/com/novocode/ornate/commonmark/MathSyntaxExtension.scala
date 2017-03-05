@@ -1,19 +1,25 @@
 package com.novocode.ornate.commonmark
 
-import com.novocode.ornate.EmojiParserExtension.{EmojiImage, EmojiUnicode, PlainText}
-import com.novocode.ornate.{Extension, Logging}
+import scala.collection.mutable
+import scala.xml.XML
+
+import com.novocode.ornate.Extension
+import com.novocode.ornate.Logging
+import com.novocode.ornate.EmojiParserExtension.EmojiImage
+import com.novocode.ornate.EmojiParserExtension.EmojiUnicode
+import com.novocode.ornate.EmojiParserExtension.PlainText
 import com.novocode.ornate.commonmark.NodeExtensionMethods._
 import com.novocode.ornate.config.ConfiguredObject
 import com.novocode.ornate.config.ConfigExtensionMethods.configExtensionMethods
 import com.typesafe.config.Config
 import org.commonmark.node._
+import org.commonmark.parser.InlineParser
+import org.commonmark.parser.Parser
+import org.commonmark.parser.PostProcessor
 import org.commonmark.parser.block._
-import org.commonmark.parser.delimiter.{DelimiterProcessor, DelimiterRun}
-import org.commonmark.parser.{InlineParser, Parser, PostProcessor}
+import org.commonmark.parser.delimiter.DelimiterProcessor
+import org.commonmark.parser.delimiter.DelimiterRun
 import play.twirl.api.HtmlFormat
-
-import scala.collection.mutable
-import scala.xml.XML
 
 /** Parse inline and block math notation. */
 class MathSyntaxExtension(co: ConfiguredObject) extends Extension {

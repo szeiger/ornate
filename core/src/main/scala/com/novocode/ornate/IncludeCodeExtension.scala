@@ -1,22 +1,22 @@
 package com.novocode.ornate
 
-import java.io.{BufferedReader, FileNotFoundException, InputStreamReader}
-import java.net.{URI, URLDecoder}
+import scala.collection.mutable.ArrayBuffer
+import scala.io.Codec
+
+import java.io.BufferedReader
+import java.io.FileNotFoundException
+import java.io.InputStreamReader
+import java.net.URI
 import java.util.regex.Pattern
 
 import URIExtensionMethods._
-import com.novocode.ornate.commonmark.Attributed
 import com.novocode.ornate.commonmark.AttributedFencedCodeBlock
-import com.novocode.ornate.commonmark.NodeExtensionMethods
-import NodeExtensionMethods._
-import com.novocode.ornate.config.{ConfiguredObject, Global}
+import com.novocode.ornate.config.ConfiguredObject
+import com.novocode.ornate.config.Global
 import com.novocode.ornate.config.ConfigExtensionMethods.configExtensionMethods
 import com.typesafe.config.ConfigValueType
 import org.commonmark.node.AbstractVisitor
 import org.commonmark.node.FencedCodeBlock
-
-import scala.collection.mutable.ArrayBuffer
-import scala.io.Codec
 
 /** Include code snippets from external files in fenced code blocks. */
 class IncludeCodeExtension(co: ConfiguredObject) extends Extension with Logging {

@@ -1,11 +1,11 @@
 package com.novocode.ornate.config
 
+import scala.collection.JavaConverters._
+
 import java.util.Properties
 
 import com.typesafe.config._
 import play.api.libs.json.Json
-
-import scala.collection.JavaConverters._
 
 /** Extension methods to make Typesafe Config easier to use */
 class ConfigExtensionMethods(val c: Config) extends AnyVal {

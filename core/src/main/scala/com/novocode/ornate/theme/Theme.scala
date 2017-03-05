@@ -1,15 +1,18 @@
 package com.novocode.ornate.theme
 
-import java.io.FileNotFoundException
-import java.net.{URI, URL}
-
 import scala.collection.mutable
-import com.novocode.ornate._
-import com.novocode.ornate.commonmark.{AttributeFencedCodeBlocksProcessor, SpecialImageProcessor}
-import com.novocode.ornate.config.ConfigExtensionMethods.configExtensionMethods
-import com.novocode.ornate.config.Global
-import com.novocode.ornate.js.WebJarSupport
+
+import java.io.FileNotFoundException
+import java.net.URI
+import java.net.URL
+
 import better.files._
+import com.novocode.ornate._
+import com.novocode.ornate.commonmark.AttributeFencedCodeBlocksProcessor
+import com.novocode.ornate.commonmark.SpecialImageProcessor
+import com.novocode.ornate.config.Global
+import com.novocode.ornate.config.ConfigExtensionMethods.configExtensionMethods
+import com.novocode.ornate.js.WebJarSupport
 
 /** Base class for themes. */
 abstract class Theme(val global: Global) extends Logging {

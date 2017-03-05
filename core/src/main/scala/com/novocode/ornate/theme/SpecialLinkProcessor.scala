@@ -2,9 +2,12 @@ package com.novocode.ornate.theme
 
 import java.net.URI
 
-import com.novocode.ornate.URIExtensionMethods._
 import com.novocode.ornate._
-import org.commonmark.node.{AbstractVisitor, Image, Link, Text}
+import com.novocode.ornate.URIExtensionMethods._
+import org.commonmark.node.AbstractVisitor
+import org.commonmark.node.Image
+import org.commonmark.node.Link
+import org.commonmark.node.Text
 
 /** Resolve links and image targets to the proper destination. */
 class SpecialLinkProcessor(imageResources: PageResources, lookup: SpecialLinkProcessor.Lookup, suffix: String, indexPage: Option[String], resourcePaths: Set[String]) extends PageProcessor with Logging {

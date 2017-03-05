@@ -1,9 +1,7 @@
 package com.novocode.ornate
 
-import javax.script.ScriptContext
-
-import com.novocode.ornate.js.{JSMap, NashornSupport}
-import org.junit.Assert._
+import com.novocode.ornate.js.JSMap
+import com.novocode.ornate.js.NashornSupport
 import org.junit.Test
 
 class NashornTest {

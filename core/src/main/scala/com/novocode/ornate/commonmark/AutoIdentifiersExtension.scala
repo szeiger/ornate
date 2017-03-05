@@ -2,7 +2,8 @@ package com.novocode.ornate.commonmark
 
 import com.novocode.ornate._
 import com.novocode.ornate.config.Global
-import org.commonmark.node.{AbstractVisitor, Heading}
+import org.commonmark.node.AbstractVisitor
+import org.commonmark.node.Heading
 
 /** Give all headings an ID so they can be linked to from the TOC and other places.
   * Otherwise only explicitly attributed headings get an ID. */

@@ -4,7 +4,8 @@ import java.util.Properties
 
 import better.files._
 import com.novocode.ornate.config.Global
-import com.typesafe.config.{ConfigFactory, Config}
+import com.typesafe.config.Config
+import com.typesafe.config.ConfigFactory
 
 object Main extends Logging {
   def printUsage: Unit = {

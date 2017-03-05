@@ -1,7 +1,7 @@
-@(p: com.novocode.ornate.theme.default.DefaultPageModel)(content: Html)(footer: Html = HtmlFormat.empty)
+@(p: com.novocode.ornate.theme.default.DefaultPageModel)(content: Html)(footer: Html = play.twirl.api.HtmlFormat.empty)
 @import com.novocode.ornate.theme.default.DefaultTheme
 @import com.novocode.ornate.theme.HtmlFeatures
-
+@import play.twirl.api.HtmlFormat
 @import com.novocode.ornate.Section
 @pageNav(section: Section) = {
   <li>

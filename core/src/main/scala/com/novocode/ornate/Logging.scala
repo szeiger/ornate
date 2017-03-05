@@ -1,6 +1,7 @@
 package com.novocode.ornate
 
-import org.slf4j.{Logger, LoggerFactory}
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
 
 trait Logging {
   val logger: Logger = {

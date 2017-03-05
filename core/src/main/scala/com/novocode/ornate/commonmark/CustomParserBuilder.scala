@@ -1,19 +1,24 @@
 package com.novocode.ornate.commonmark
 
+import scala.collection.mutable
+import scala.collection.JavaConverters._
+import scala.collection.mutable.ListBuffer
+
 import java.io.Reader
 import java.util.Arrays
 
-import scala.collection.JavaConverters._
 import org.commonmark._
 import org.commonmark.internal._
-import org.commonmark.internal.inline.{AsteriskDelimiterProcessor, UnderscoreDelimiterProcessor}
-import org.commonmark.node.{Node, Text}
-import org.commonmark.parser.{InlineParser, Parser, PostProcessor}
+import org.commonmark.internal.inline.AsteriskDelimiterProcessor
+import org.commonmark.internal.inline.UnderscoreDelimiterProcessor
+import org.commonmark.node.Node
+import org.commonmark.node.Text
+import org.commonmark.parser.InlineParser
+import org.commonmark.parser.Parser
+import org.commonmark.parser.PostProcessor
 import org.commonmark.parser.block.BlockParserFactory
-import org.commonmark.parser.delimiter.{DelimiterProcessor, DelimiterRun}
-
-import scala.collection.mutable
-import scala.collection.mutable.ListBuffer
+import org.commonmark.parser.delimiter.DelimiterProcessor
+import org.commonmark.parser.delimiter.DelimiterRun
 
 /** Allow customization of inline parsing by hooking into the parser internals. This can be
   * done cleanly once https://github.com/atlassian/commonmark-java/pull/69 is merged. */

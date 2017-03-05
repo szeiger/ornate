@@ -1,22 +1,26 @@
 package com.novocode.ornate.theme.pdf
 
-import java.io.{BufferedReader, InputStreamReader}
+import scala.collection.JavaConverters._
+
+import java.io.BufferedReader
+import java.io.InputStreamReader
 import java.net.URI
 import java.util.Collections
 
 import better.files.File
 import com.novocode.ornate._
-import com.novocode.ornate.commonmark.NodeExtensionMethods._
 import com.novocode.ornate.commonmark._
+import com.novocode.ornate.commonmark.NodeExtensionMethods._
 import com.novocode.ornate.config.Global
 import com.novocode.ornate.config.ConfigExtensionMethods.configExtensionMethods
 import com.novocode.ornate.highlight.HighlightResult
 import com.novocode.ornate.theme._
 import org.commonmark.ext.gfm.tables.TableBlock
-import org.commonmark.node.{Block, Node}
-import org.commonmark.renderer.html.{HtmlNodeRendererContext, HtmlNodeRendererFactory, HtmlRenderer}
-
-import scala.collection.JavaConverters._
+import org.commonmark.node.Block
+import org.commonmark.node.Node
+import org.commonmark.renderer.html.HtmlNodeRendererContext
+import org.commonmark.renderer.html.HtmlNodeRendererFactory
+import org.commonmark.renderer.html.HtmlRenderer
 
 class PdfTheme(global: Global) extends HtmlTheme(global) {
   def pdfTargetDir: File = super.targetDir

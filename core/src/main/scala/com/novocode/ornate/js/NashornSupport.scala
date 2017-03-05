@@ -1,10 +1,15 @@
 package com.novocode.ornate.js
 
-import java.util.{Locale, Formatter}
-import javax.script.{ScriptContext, SimpleBindings, Bindings, ScriptEngineManager}
+import java.util.Formatter
+import java.util.Locale
 
+import javax.script.Bindings
+import javax.script.ScriptContext
+import javax.script.ScriptEngineManager
+import javax.script.SimpleBindings
 import jdk.nashorn.api.scripting._
-import org.slf4j.{LoggerFactory, Logger}
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
 
 /** Some utilities for running JavaScript code on Nashorn. */
 trait NashornSupport extends WebJarSupport {

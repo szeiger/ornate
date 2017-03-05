@@ -1,10 +1,13 @@
 package com.novocode.ornate.commonmark
 
-import com.novocode.ornate.{Page, PageProcessor, Phase}
-import org.commonmark.node.{AbstractVisitor, FencedCodeBlock}
-import NodeExtensionMethods._
-
 import scala.collection.mutable
+
+import NodeExtensionMethods._
+import com.novocode.ornate.Page
+import com.novocode.ornate.PageProcessor
+import com.novocode.ornate.Phase
+import org.commonmark.node.AbstractVisitor
+import org.commonmark.node.FencedCodeBlock
 
 /** Replace FencedCodeBlocks with AttributedFencedCodeBlocks */
 object AttributeFencedCodeBlocksProcessor extends PageProcessor {
