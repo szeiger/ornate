@@ -5,7 +5,6 @@ import scala.collection.mutable.ArrayBuffer
 import java.net.URI
 
 import com.novocode.ornate.commonmark.Attributed
-import com.novocode.ornate.commonmark.NodeExtensionMethods._
 import com.novocode.ornate.config.ConfiguredObject
 import com.novocode.ornate.js.WebJarSupport
 import com.typesafe.config.Config

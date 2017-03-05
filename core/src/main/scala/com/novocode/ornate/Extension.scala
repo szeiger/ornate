@@ -1,8 +1,6 @@
 package com.novocode.ornate
 
 import com.novocode.ornate.config.ConfiguredObject
-import com.novocode.ornate.config.Global
-import com.novocode.ornate.config.ReferenceConfig
 import com.typesafe.config.Config
 import org.commonmark.parser.Parser.ParserExtension
 import org.commonmark.renderer.html.HtmlRenderer.HtmlRendererExtension

@@ -7,14 +7,10 @@ import java.io.BufferedReader
 import java.io.FileNotFoundException
 import java.io.InputStreamReader
 import java.net.URI
-import java.net.URLDecoder
 import java.util.regex.Pattern
 
 import URIExtensionMethods._
-import com.novocode.ornate.commonmark.Attributed
 import com.novocode.ornate.commonmark.AttributedFencedCodeBlock
-import com.novocode.ornate.commonmark.NodeExtensionMethods
-import com.novocode.ornate.commonmark.NodeExtensionMethods._
 import com.novocode.ornate.config.ConfiguredObject
 import com.novocode.ornate.config.Global
 import com.novocode.ornate.config.ConfigExtensionMethods.configExtensionMethods
