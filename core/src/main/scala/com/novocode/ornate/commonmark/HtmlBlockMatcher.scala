@@ -1,11 +1,13 @@
 package com.novocode.ornate.commonmark
 
+import scala.xml.XML
+
 import java.net.URI
 import java.util.Locale
 
-import org.commonmark.node.{Paragraph, Image, HtmlBlock}
-
-import scala.xml.XML
+import org.commonmark.node.HtmlBlock
+import org.commonmark.node.Image
+import org.commonmark.node.Paragraph
 
 class HtmlBlockMatcher(elName: String) {
   case class Result(attrs: Map[String, String])

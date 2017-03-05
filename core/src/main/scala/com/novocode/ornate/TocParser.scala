@@ -1,13 +1,12 @@
 package com.novocode.ornate
 
+import java.net.URI
 import java.util.Locale
 
 import com.novocode.ornate.config.UserConfig
 import com.novocode.ornate.config.ConfigExtensionMethods.configExtensionMethods
-
-import java.net.URI
-
-import com.typesafe.config.{ConfigObject, ConfigValue}
+import com.typesafe.config.ConfigObject
+import com.typesafe.config.ConfigValue
 
 object TocParser extends Logging {
   def parse(config: UserConfig, pages: Vector[Page]): Vector[TocEntry] = {

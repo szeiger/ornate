@@ -1,7 +1,9 @@
 package com.novocode.ornate
 
 import scala.collection.mutable
+
 import java.util.regex.Pattern
+
 import better.files._
 
 /** Pattern matcher for gitignore-style patterns */

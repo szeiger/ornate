@@ -1,8 +1,8 @@
 package com.novocode.ornate.commonmark
 
-import org.commonmark.node._
-
 import scala.util.control.ControlThrowable
+
+import org.commonmark.node._
 
 object NodeUtil {
   import NodeExtensionMethods._

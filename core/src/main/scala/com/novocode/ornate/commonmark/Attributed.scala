@@ -1,6 +1,8 @@
 package com.novocode.ornate.commonmark
 
-import scala.collection.mutable.{ListBuffer, StringBuilder, HashMap}
+import scala.collection.mutable.HashMap
+import scala.collection.mutable.ListBuffer
+import scala.collection.mutable.StringBuilder
 
 trait Attributed {
   var id: String = null

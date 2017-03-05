@@ -1,10 +1,11 @@
 package com.novocode.ornate.theme
 
-import com.novocode.ornate.{FileMatcher, Site, Page}
+import better.files._
+import com.novocode.ornate.FileMatcher
+import com.novocode.ornate.Page
+import com.novocode.ornate.Site
 import com.novocode.ornate.config.Global
 import com.novocode.ornate.config.ConfigExtensionMethods.configExtensionMethods
-
-import better.files._
 
 /** A theme that cleans the target directory. */
 class Clean(global: Global) extends Theme(global) {

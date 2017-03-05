@@ -1,21 +1,23 @@
 package com.novocode.ornate
 
-import java.io.ByteArrayOutputStream
-import java.math.BigInteger
-import java.security.MessageDigest
-
-import com.google.javascript.jscomp.CompilationLevel
-import com.googlecode.htmlcompressor.compressor.{ClosureJavaScriptCompressor, Compressor, HtmlCompressor}
-import com.novocode.ornate.js.CSSO
-
 import scala.annotation.tailrec
 import scala.collection.JavaConverters._
-import java.net.{URI, URL, URLEncoder}
+import scala.io.Codec
+
+import java.io.ByteArrayOutputStream
+import java.math.BigInteger
+import java.net.URI
+import java.net.URL
+import java.net.URLEncoder
+import java.security.MessageDigest
 import java.util.Locale
 
 import better.files._
-
-import scala.io.Codec
+import com.google.javascript.jscomp.CompilationLevel
+import com.googlecode.htmlcompressor.compressor.ClosureJavaScriptCompressor
+import com.googlecode.htmlcompressor.compressor.Compressor
+import com.googlecode.htmlcompressor.compressor.HtmlCompressor
+import com.novocode.ornate.js.CSSO
 
 object Util {
   import URIExtensionMethods._

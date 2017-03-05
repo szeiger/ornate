@@ -1,15 +1,20 @@
 package com.novocode.ornate.commonmark
 
+import scala.reflect.ClassTag
+
 import NodeExtensionMethods.nodeToNodeExtensionMethods
-import com.novocode.ornate.{Extension, Page, Site}
-import com.novocode.ornate.config.{ConfiguredObject, Global}
+import com.novocode.ornate.Extension
+import com.novocode.ornate.Page
+import com.novocode.ornate.Site
+import com.novocode.ornate.config.ConfiguredObject
+import com.novocode.ornate.config.Global
 import com.typesafe.config.Config
 import org.commonmark.node._
 import org.commonmark.parser.Parser
-import org.commonmark.parser.delimiter.{DelimiterProcessor, DelimiterRun}
-import org.commonmark.renderer.html.{HtmlNodeRendererContext, HtmlRenderer}
-
-import scala.reflect.ClassTag
+import org.commonmark.parser.delimiter.DelimiterProcessor
+import org.commonmark.parser.delimiter.DelimiterRun
+import org.commonmark.renderer.html.HtmlNodeRendererContext
+import org.commonmark.renderer.html.HtmlRenderer
 
 /** Parse superscript notation, delimited by `^`, with no other markup or unescaped whitespace in between. */
 class SuperscriptExtension(co: ConfiguredObject) extends SuperscriptSubscriptExtension[Superscript] {

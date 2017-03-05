@@ -1,21 +1,28 @@
 package com.novocode.ornate
 
-import java.net.URI
-
-import com.novocode.ornate.commonmark.{AttributedHeading, CustomParser, CustomParserBuilder, NodeUtil}
-import com.novocode.ornate.commonmark.NodeExtensionMethods._
-import com.novocode.ornate.config.ConfigExtensionMethods.configExtensionMethods
-import com.novocode.ornate.config.{Global, ReferenceConfig}
-import com.typesafe.config.{Config, ConfigException}
-import org.commonmark.node.{Document, Heading, Node}
-import org.commonmark.parser.Parser
-import better.files._
-
 import scala.annotation.tailrec
-import scala.collection.JavaConverters._
 import scala.collection.mutable
+import scala.collection.JavaConverters._
 import scala.collection.mutable.ArrayBuffer
 import scala.io.Codec
+
+import java.net.URI
+
+import better.files._
+import com.novocode.ornate.commonmark.AttributedHeading
+import com.novocode.ornate.commonmark.CustomParser
+import com.novocode.ornate.commonmark.CustomParserBuilder
+import com.novocode.ornate.commonmark.NodeUtil
+import com.novocode.ornate.commonmark.NodeExtensionMethods._
+import com.novocode.ornate.config.Global
+import com.novocode.ornate.config.ReferenceConfig
+import com.novocode.ornate.config.ConfigExtensionMethods.configExtensionMethods
+import com.typesafe.config.Config
+import com.typesafe.config.ConfigException
+import org.commonmark.node.Document
+import org.commonmark.node.Heading
+import org.commonmark.node.Node
+import org.commonmark.parser.Parser
 
 object PageParser extends Logging {
   def parseSources(global: Global): Vector[Page] = {

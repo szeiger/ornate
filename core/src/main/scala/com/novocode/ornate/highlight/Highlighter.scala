@@ -2,10 +2,14 @@ package com.novocode.ornate.highlight
 
 import java.net.URI
 
+import com.novocode.ornate.Page
+import com.novocode.ornate.PageProcessor
+import com.novocode.ornate.Phase
+import com.novocode.ornate.Util
 import com.novocode.ornate.commonmark.AttributeFencedCodeBlocksProcessor
 import com.novocode.ornate.commonmark.NodeExtensionMethods.nodeToNodeExtensionMethods
-import com.novocode.ornate.{Page, PageProcessor, Phase, Util}
-import com.novocode.ornate.config.{ConfiguredObject, Global}
+import com.novocode.ornate.config.ConfiguredObject
+import com.novocode.ornate.config.Global
 import com.novocode.ornate.config.ConfigExtensionMethods.configExtensionMethods
 import org.commonmark.node._
 import play.twirl.api.HtmlFormat

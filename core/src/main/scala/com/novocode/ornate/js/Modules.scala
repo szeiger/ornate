@@ -1,17 +1,19 @@
 package com.novocode.ornate.js
 
-import com.novocode.ornate.Logging
-import org.slf4j.LoggerFactory
-
 import scala.collection.mutable
 import scala.collection.JavaConverters._
+import scala.util.control.NonFatal
 
 import java.util.{ArrayList => JArrayList}
-import javax.script.{Bindings, ScriptContext, SimpleBindings}
-import jdk.nashorn.api.scripting.{NashornScriptEngine, ScriptObjectMirror}
-import jdk.nashorn.internal.runtime.ECMAException
 
-import scala.util.control.NonFatal
+import com.novocode.ornate.Logging
+import javax.script.Bindings
+import javax.script.ScriptContext
+import javax.script.SimpleBindings
+import jdk.nashorn.api.scripting.NashornScriptEngine
+import jdk.nashorn.api.scripting.ScriptObjectMirror
+import jdk.nashorn.internal.runtime.ECMAException
+import org.slf4j.LoggerFactory
 
 class Modules(engine: NashornScriptEngine) {
   val logger = LoggerFactory.getLogger(classOf[Modules])

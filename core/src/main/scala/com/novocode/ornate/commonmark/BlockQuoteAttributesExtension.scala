@@ -1,13 +1,14 @@
 package com.novocode.ornate.commonmark
 
+import scala.collection.mutable.ListBuffer
+
 import java.util.regex.Pattern
 
 import org.commonmark.Extension
-import org.commonmark.node.{Block, BlockQuote}
+import org.commonmark.node.Block
+import org.commonmark.node.BlockQuote
 import org.commonmark.parser._
 import org.commonmark.parser.block._
-
-import scala.collection.mutable.ListBuffer
 
 object BlockQuoteAttributesExtension {
   def create: Extension = new BlockQuoteAttributesExtension

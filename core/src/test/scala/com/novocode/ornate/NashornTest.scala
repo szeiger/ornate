@@ -1,10 +1,10 @@
 package com.novocode.ornate
 
+import com.novocode.ornate.js.JSMap
+import com.novocode.ornate.js.NashornSupport
 import javax.script.ScriptContext
-
-import com.novocode.ornate.js.{JSMap, NashornSupport}
-import org.junit.Assert._
 import org.junit.Test
+import org.junit.Assert._
 
 class NashornTest {
   def createNashorn: NashornSupport = new NashornSupport with Logging {

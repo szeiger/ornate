@@ -1,9 +1,11 @@
 package com.novocode.ornate.commonmark
 
+import NodeExtensionMethods._
 import com.novocode.ornate._
 import com.novocode.ornate.config.Global
-import org.commonmark.node.{AbstractVisitor, CustomBlock, FencedCodeBlock}
-import NodeExtensionMethods._
+import org.commonmark.node.AbstractVisitor
+import org.commonmark.node.CustomBlock
+import org.commonmark.node.FencedCodeBlock
 
 /** Merge adjacent fenced code blocks into tabs. */
 class MergeTabsExtension extends Extension {

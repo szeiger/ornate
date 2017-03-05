@@ -1,9 +1,10 @@
 package com.novocode.ornate
 
 import com.novocode.ornate.commonmark.AttributedFencedCodeBlock
-import com.novocode.ornate.config.ConfiguredObject
-import org.commonmark.node.{AbstractVisitor, FencedCodeBlock}
 import com.novocode.ornate.commonmark.NodeExtensionMethods.nodeToNodeExtensionMethods
+import com.novocode.ornate.config.ConfiguredObject
+import org.commonmark.node.AbstractVisitor
+import org.commonmark.node.FencedCodeBlock
 
 /** Expand Markdown source from a fenced code block into the document. */
 class RenderMarkdownExtension(co: ConfiguredObject) extends Extension {

@@ -1,6 +1,8 @@
 package com.novocode.ornate
 
-import com.novocode.ornate.js.{ElasticlunrSearch, JSMap, NashornSupport}
+import com.novocode.ornate.js.ElasticlunrSearch
+import com.novocode.ornate.js.JSMap
+import com.novocode.ornate.js.NashornSupport
 import org.junit.Test
 
 class ElasticlunrTest {

@@ -1,22 +1,27 @@
 package com.novocode.ornate.theme.default
 
-import java.net.{URI, URLDecoder}
+import scala.collection.JavaConverters._
+import scala.io.Codec
+
+import java.net.URI
+import java.net.URLDecoder
 import java.util.Collections
 
+import com.novocode.ornate._
 import com.novocode.ornate.commonmark._
-import com.novocode.ornate.commonmark.NodeExtensionMethods._
 import com.novocode.ornate.commonmark.HtmlNodeRendererContextExtensionMethods._
+import com.novocode.ornate.commonmark.NodeExtensionMethods._
 import com.novocode.ornate.config.Global
 import com.novocode.ornate.highlight.HighlightResult
-import com.novocode.ornate._
 import com.novocode.ornate.js.WebJarSupport
 import com.novocode.ornate.theme._
 import org.commonmark.ext.gfm.tables.TableBlock
-import org.commonmark.renderer.html.{HtmlNodeRendererContext, HtmlNodeRendererFactory, HtmlRenderer}
-import org.commonmark.node.{Block, Document, Node}
-
-import scala.collection.JavaConverters._
-import scala.io.Codec
+import org.commonmark.node.Block
+import org.commonmark.node.Document
+import org.commonmark.node.Node
+import org.commonmark.renderer.html.HtmlNodeRendererContext
+import org.commonmark.renderer.html.HtmlNodeRendererFactory
+import org.commonmark.renderer.html.HtmlRenderer
 
 class DefaultTheme(global: Global) extends HtmlTheme(global) {
   lazy val fontAwesome: Map[String, String] = try {

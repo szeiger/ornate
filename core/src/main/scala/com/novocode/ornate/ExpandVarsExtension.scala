@@ -1,13 +1,17 @@
 package com.novocode.ornate
 
+import scala.collection.mutable
+
 import com.novocode.ornate.commonmark.Attributed
 import com.novocode.ornate.commonmark.AttributedFencedCodeBlock
 import com.novocode.ornate.commonmark.NodeExtensionMethods
-import NodeExtensionMethods._
+import com.novocode.ornate.commonmark.NodeExtensionMethods._
 import com.novocode.ornate.config.ConfiguredObject
-import org.commonmark.node.{AbstractVisitor, Code, FencedCodeBlock, IndentedCodeBlock, Text}
-
-import scala.collection.mutable
+import org.commonmark.node.AbstractVisitor
+import org.commonmark.node.Code
+import org.commonmark.node.FencedCodeBlock
+import org.commonmark.node.IndentedCodeBlock
+import org.commonmark.node.Text
 
 /** Expand variables in text content and fenced code blocks. */
 class ExpandVarsExtension(co: ConfiguredObject) extends Extension {

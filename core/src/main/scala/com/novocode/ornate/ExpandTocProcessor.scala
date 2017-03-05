@@ -1,14 +1,16 @@
 package com.novocode.ornate
 
+import scala.collection.mutable.ArrayBuffer
+
 import java.net.URI
 
+import URIExtensionMethods.uriToUriExtensionMethods
+import com.novocode.ornate.commonmark.AttributedHeading
+import com.novocode.ornate.commonmark.IndexBlock
+import com.novocode.ornate.commonmark.TocBlock
 import com.novocode.ornate.commonmark.IndexBlock.IndexEntry
-import com.novocode.ornate.commonmark.{AttributedHeading, IndexBlock, TocBlock}
 import com.novocode.ornate.commonmark.NodeExtensionMethods.nodeToNodeExtensionMethods
 import org.commonmark.node._
-import URIExtensionMethods.uriToUriExtensionMethods
-
-import scala.collection.mutable.ArrayBuffer
 
 /** Expand `TocBlock` nodes and add the computed index to `IndexBlock` nodes */
 class ExpandTocProcessor(site: Site) extends PageProcessor with Logging {

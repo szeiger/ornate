@@ -1,11 +1,11 @@
 package com.novocode.ornate.commonmark
 
+import scala.collection.mutable.ArrayBuffer
+
 import NodeExtensionMethods.nodeToNodeExtensionMethods
 import com.novocode.ornate._
 import com.novocode.ornate.config.ConfiguredObject
 import org.commonmark.node._
-
-import scala.collection.mutable.ArrayBuffer
 
 /** Replace ASCII quotes by proper Unicode quotes in text content. */
 class SmartQuotesExtension(co: ConfiguredObject) extends Extension {

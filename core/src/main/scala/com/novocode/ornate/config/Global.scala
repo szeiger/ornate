@@ -1,23 +1,30 @@
 package com.novocode.ornate.config
 
-import java.net.{URI, URLEncoder}
-import java.util.concurrent.{ThreadFactory, ThreadPoolExecutor, LinkedBlockingQueue, TimeUnit}
-
-import com.novocode.ornate._
-import com.novocode.ornate.theme.Theme
-import com.novocode.ornate.config.ConfigExtensionMethods.configExtensionMethods
-import org.commonmark.renderer.html.HtmlRenderer.HtmlRendererExtension
-import org.commonmark.parser.Parser.ParserExtension
-
-import scala.collection.JavaConverters._
-import better.files._
-import com.typesafe.config.{Config, ConfigFactory, ConfigValue}
-
-import scala.collection.generic.CanBuildFrom
 import scala.collection.mutable
+import scala.collection.JavaConverters._
+import scala.collection.generic.CanBuildFrom
 import scala.collection.mutable.ListBuffer
+import scala.concurrent.Await
+import scala.concurrent.ExecutionContext
+import scala.concurrent.Future
 import scala.concurrent.duration.Duration
-import scala.concurrent.{Await, ExecutionContext, Future}
+
+import java.net.URI
+import java.net.URLEncoder
+import java.util.concurrent.LinkedBlockingQueue
+import java.util.concurrent.ThreadFactory
+import java.util.concurrent.ThreadPoolExecutor
+import java.util.concurrent.TimeUnit
+
+import better.files._
+import com.novocode.ornate._
+import com.novocode.ornate.config.ConfigExtensionMethods.configExtensionMethods
+import com.novocode.ornate.theme.Theme
+import com.typesafe.config.Config
+import com.typesafe.config.ConfigFactory
+import com.typesafe.config.ConfigValue
+import org.commonmark.parser.Parser.ParserExtension
+import org.commonmark.renderer.html.HtmlRenderer.HtmlRendererExtension
 
 class Global(startDir: File, confFile: Option[File], overrides: Config = ConfigFactory.empty()) extends Logging {
   val (referenceConfig: ReferenceConfig, userConfig: UserConfig) = {
@@ -89,7 +96,7 @@ class Global(startDir: File, confFile: Option[File], overrides: Config = ConfigF
 
   /** Run a mapping function in parallel using the configured `executionContext` */
   def parMap[T, R](coll: Traversable[T])(f: T => R): Vector[R] = {
-    implicit val ec = executionContext
+    implicit val ec: ExecutionContext = executionContext
     val fs: Vector[Future[R]] = coll.map(x => Future(f(x)))(collection.breakOut)
     fs.foreach(f => Await.ready(f, Duration.Inf))
     fs.map(f => f.value.get.get)

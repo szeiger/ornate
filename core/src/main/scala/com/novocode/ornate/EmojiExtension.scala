@@ -1,5 +1,7 @@
 package com.novocode.ornate
 
+import scala.collection.mutable.ArrayBuffer
+
 import java.net.URI
 
 import com.novocode.ornate.commonmark.Attributed
@@ -7,11 +9,16 @@ import com.novocode.ornate.commonmark.NodeExtensionMethods._
 import com.novocode.ornate.config.ConfiguredObject
 import com.novocode.ornate.js.WebJarSupport
 import com.typesafe.config.Config
-import org.commonmark.node.{AbstractVisitor, CustomNode, Node, Text}
-import org.commonmark.parser.{Parser, PostProcessor}
-import play.api.libs.json.{JsArray, JsObject, JsString, Json}
-
-import scala.collection.mutable.ArrayBuffer
+import org.commonmark.node.AbstractVisitor
+import org.commonmark.node.CustomNode
+import org.commonmark.node.Node
+import org.commonmark.node.Text
+import org.commonmark.parser.Parser
+import org.commonmark.parser.PostProcessor
+import play.api.libs.json.JsArray
+import play.api.libs.json.JsObject
+import play.api.libs.json.JsString
+import play.api.libs.json.Json
 
 /** Replace emoji names with images. */
 class EmojiExtension(co: ConfiguredObject) extends Extension {

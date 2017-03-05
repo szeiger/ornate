@@ -1,7 +1,6 @@
 package com.novocode.ornate.commonmark
 
 import NodeExtensionMethods._
-
 import org.commonmark.node._
 
 class NodeExtensionMethods(private val node: Node) extends AnyVal {

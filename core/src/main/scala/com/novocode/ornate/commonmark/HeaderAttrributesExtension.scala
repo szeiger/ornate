@@ -1,13 +1,13 @@
 package com.novocode.ornate.commonmark
 
+import scala.collection.mutable.ListBuffer
+
 import java.util.regex.Pattern
 
 import org.commonmark.Extension
 import org.commonmark.node.Heading
 import org.commonmark.parser._
 import org.commonmark.parser.block._
-
-import scala.collection.mutable.ListBuffer
 
 object HeaderAttributesExtension {
   def create: Extension = new HeaderAttributesExtension

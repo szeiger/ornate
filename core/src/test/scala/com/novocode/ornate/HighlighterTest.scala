@@ -2,12 +2,14 @@ package com.novocode.ornate
 
 import java.net.URI
 
-import com.novocode.ornate.highlight.{HighlightJSExtension, HighlightJSHighlighter, HighlightResult}
+import better.files._
 import com.novocode.ornate.config.Global
+import com.novocode.ornate.highlight.HighlightJSExtension
+import com.novocode.ornate.highlight.HighlightJSHighlighter
+import com.novocode.ornate.highlight.HighlightResult
+import org.commonmark.node.FencedCodeBlock
 import org.junit.Test
 import org.junit.Assert._
-import better.files._
-import org.commonmark.node.FencedCodeBlock
 import play.twirl.api.HtmlFormat
 
 class HighlighterTest {
