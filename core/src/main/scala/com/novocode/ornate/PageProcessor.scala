@@ -1,6 +1,8 @@
 package com.novocode.ornate
 
 
+
+
 abstract class PageProcessor extends (Page => Unit) {
   def runAt: Phase
 }

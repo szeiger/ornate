@@ -6,9 +6,6 @@ import better.files._
 import com.novocode.ornate.config.Global
 import org.junit.Test
 import org.junit.Assert._
-import play.api.libs.json.JsArray
-import play.api.libs.json.JsObject
-import play.api.libs.json.JsString
 
 class EmojiTest {
   val global = new Global(file"../doc", None)
