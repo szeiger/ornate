@@ -27,7 +27,7 @@ object OrnatePlugin extends AutoPlugin {
     ornateSourceDir := ornateBaseDir.value.map(_ / "site"),
     ornateResourceDir := ornateSourceDir.value,
     ornateTargetDir := Some(target.value / "site"),
-    ornateConfig := sourceDirectory.value / "ornate.conf",
+    ornateConfig := ornateBaseDir.value.getOrElse(sourceDirectory.value) / "ornate.conf",
     ornateSettings := Map.empty,
     ornate := ornateTask.value,
     scalaVersion in Ornate := BuildInfo.scalaVersion,
