@@ -52,11 +52,17 @@ abstract class Theme(val global: Global) extends Logging {
   def render(site: Site): Unit
 
   /** Get all source pages and synthetic pages */
-  def buildAllPages: Vector[Page] = PageParser.parseSources(global) ++ synthesizePages
+  def buildAllPages: Vector[Page] = {
+    val synth = syntheticPageURIs
+    val parsed = PageParser.parseSources(global, synth.map { case (n, u) => (u, n) }.toMap)
+    val parsedURIs = parsed.map(_.uri).toSet
+    val synthesized = synthesizePages(synth.filterNot { case (_, u) => parsedURIs.contains(u) })
+    parsed ++ synthesized
+  }
 
   /** Synthesize configured synthetic pages pre-TOC. Not all requested pages have to be
     * created but only the ones that are returned will be available for resolving the TOC. */
-  def synthesizePages: Vector[Page] = Vector.empty
+  def synthesizePages(missingSyntheticPages: Vector[(String, URI)]): Vector[Page] = Vector.empty
 
   /** Get synthetic page names and the mapped URIs for pages that should be created by the theme.
     * Any pages that have to be created before resolving the TOC should be part of this. */

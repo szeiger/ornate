@@ -28,8 +28,8 @@ class DefaultTheme(global: Global) extends HtmlTheme(global) {
     Map.empty
   }
 
-  override def synthesizePages: Vector[Page] = {
-    syntheticPageURIs.flatMap {
+  override def synthesizePages(missingSyntheticPages: Vector[(String, URI)]): Vector[Page] = {
+    missingSyntheticPages.flatMap {
       case ("toc", u) =>
         logger.debug(s"Creating TOC page $u")
         Some(PageParser.parseContent(None, Some("toc"), global.userConfig, u, ".md",

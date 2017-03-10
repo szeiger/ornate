@@ -18,13 +18,13 @@ import scala.collection.mutable.ArrayBuffer
 import scala.io.Codec
 
 object PageParser extends Logging {
-  def parseSources(global: Global): Vector[Page] = {
+  def parseSources(global: Global, syntheticNames: Map[URI, String]): Vector[Page] = {
     val sources = global.findSources
     logger.info(s"Parsing ${sources.length} source files")
     logTime("Parsing took") {
       global.parMap(sources) { case (f, suffix, uri) =>
         logger.debug(s"Parsing $f as $uri")
-        try Some(parseWithFrontMatter(Some(f.uri), None, global.userConfig, uri, suffix, f.contentAsString(Codec.UTF8)))
+        try Some(parseWithFrontMatter(Some(f.uri), syntheticNames.get(uri), global.userConfig, uri, suffix, f.contentAsString(Codec.UTF8)))
         catch { case ex: Exception =>
           logger.error(s"Error parsing $f -- skipping file", ex)
           None
