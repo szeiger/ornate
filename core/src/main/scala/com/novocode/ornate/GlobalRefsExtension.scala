@@ -41,6 +41,6 @@ class GlobalRefsExtension(co: ConfiguredObject) extends Extension with Logging {
 
   override def preProcessors(pageConfig: Config): Seq[PreProcessor] = Seq(new PreProcessor {
     val prelude = preludeConfig(pageConfig)
-    def apply(s: String): String = if(prelude.isEmpty) s else prelude + s
+    def apply(s: String): String = if(prelude.isEmpty) s else prelude + "\n" + s
   })
 }
