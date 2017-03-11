@@ -16,6 +16,7 @@
     <logger name="com.novocode.ornate.ExpandTocProcessor"               level="info" />
     <logger name="com.novocode.ornate.GlobalRefsExtension"              level="info" />
     <logger name="com.novocode.ornate.ScaladocLinksExtension"           level="info" />
+    <logger name="com.novocode.ornate.ExternalLinksExtension"           level="info" />
     <logger name="com.novocode.ornate.IncludeCodeExtension"             level="info" />
     <logger name="com.novocode.ornate.commonmark.SpecialImageProcessor" level="info" />
     <logger name="com.novocode.ornate.commonmark.MergeTabsProcessor"    level="info" />

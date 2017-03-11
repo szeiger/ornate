@@ -318,6 +318,27 @@ This gets rendered as:
 
 When the link text is left empty or is identical to the link target (which is the case when using the `<scheme:scheme-specific-part>` link syntax), it is automatically derived from the link target.
 
+## `externalLinks`
+
+Similar to [`scaladocLinks`](#scaladoclinks) this extension processes custom URI schemes in links but it has configurable patterns for link targets and link texts. The extension is enabled by default but no schemes are configured. This manual uses the following configuration to link to Ornate issues on github:
+
+```yaml src=../../doc/ornate.conf#--doc-externalLinks
+```
+
+Each key in the configuration adds a URI scheme. The value is a config object with a `uri` setting that defines the pattern for the link target and an optional `text` setting that defines a pattern for the link text. Link texts are only generated if `text` is defined and a link does not already have a text. All occurences of `[all]` in the patterns are replaced by the scheme-specific part of the link target.
+
+Example source:
+
+```text
+- [Issue 2](issue:2)
+- [](issue:2)
+```
+
+This gets rendered as:
+
+- [Issue 2](issue:2)
+- [](issue:2)
+
 ## `mathSyntax`
 
 This extensions enables common notation for inline and display (block) math. See [mathSyntax extension](math.md#mathSyntax) for details.
