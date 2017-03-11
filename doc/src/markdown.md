@@ -201,7 +201,7 @@ In plain text you can also use objects with [config](images.md#config) URIs inst
 
 ## `emoji` {#emoji}
 
-The `emoji` extension translates Emoji names to the appropriate Unicode representations or images.
+The `emoji` extension translates [Emoji names](http://emoji.codes/) to the appropriate Unicode representations or images.
 
 Example source:
 
