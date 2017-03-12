@@ -153,11 +153,11 @@ class HtmlTheme(global: Global) extends Theme(global) { self =>
   def renderSpecialImageBlock(pc: HtmlPageContext)(n: SpecialImageBlock, c: HtmlNodeRendererContext): Unit = ()
 
   def renderIndexBlock(pc: HtmlPageContext)(n: IndexBlock, c: HtmlNodeRendererContext): Unit = {
+    val locale = Locale.US
     val wr = c.getWriter
-    val grouped = n.index.groupBy(_.text.codePointAt(0)).toVector
+    val grouped = n.index.groupBy(s => s.text.toUpperCase(locale).codePointAt(0)).toVector
     val (alphanumeric, symbolic) = grouped.partition { case (cp, _) => Character.isAlphabetic(cp) || Character.isDigit(cp) }
 
-    val locale = Locale.US
     val coll = Collator.getInstance(locale)
     coll.setStrength(Collator.PRIMARY)
     val collOrd: Ordering[String] = Ordering.comparatorToOrdering(coll.asInstanceOf[Comparator[String]])
