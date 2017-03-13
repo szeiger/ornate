@@ -52,7 +52,7 @@ class PdfTheme(global: Global) extends HtmlTheme(global) {
     }
   }
 
-  override def renderAttributedHeading(n: AttributedHeading, c: HtmlNodeRendererContext): Unit = if(n.id ne null) {
+  override def renderAttributedHeading(pc: HtmlPageContext)(n: AttributedHeading, c: HtmlNodeRendererContext): Unit = if(n.id ne null) {
     val wr = c.getWriter
     val htag = s"h${n.getLevel}"
     wr.line
@@ -61,7 +61,7 @@ class PdfTheme(global: Global) extends HtmlTheme(global) {
     n.children.toVector.foreach(c.render)
     wr.tag('/' + htag)
     wr.line
-  } else super.renderAttributedHeading(n, c)
+  } else super.renderAttributedHeading(pc)(n, c)
 
   // Disabled for now -- Mermaid support is broken with wkhtmltopdf 0.12
   override def renderMermaid(n: AttributedFencedCodeBlock, c: HtmlNodeRendererContext, pc: HtmlPageContext): Unit = {

@@ -50,7 +50,7 @@ class HtmlTheme(global: Global) extends Theme(global) { self =>
     uri.getPath.split('/').filter(_.nonEmpty).foldLeft(targetDir) { case (f, s) => f / s }
 
   /** Render a heading with an ID. It can be overridden in subclasses as needed. */
-  def renderAttributedHeading(n: AttributedHeading, c: HtmlNodeRendererContext): Unit = {
+  def renderAttributedHeading(pc: HtmlPageContext)(n: AttributedHeading, c: HtmlNodeRendererContext): Unit = {
     val htag = s"h${n.getLevel}"
     val attrs = c.extendAttributes(n, Collections.emptyMap[String, String])
     if(n.id ne null) attrs.put("id", n.id)
@@ -275,7 +275,7 @@ class HtmlTheme(global: Global) extends Theme(global) { self =>
   def renderers(pc: HtmlPageContext): Seq[HtmlNodeRendererFactory] = Seq(
     SimpleHtmlNodeRenderer(renderEmoji(pc) _),
     SimpleHtmlNodeRenderer(renderAttributedBlockQuote _),
-    SimpleHtmlNodeRenderer(renderAttributedHeading _),
+    SimpleHtmlNodeRenderer(renderAttributedHeading(pc) _),
     SimpleHtmlNodeRenderer(renderTabView(pc) _),
     SimpleHtmlNodeRenderer(renderInlineMath(pc) _),
     SimpleHtmlNodeRenderer(renderMathBlock(pc) _),
@@ -488,6 +488,7 @@ class HtmlPageContext(val siteContext: HtmlSiteContext, val page: Page) {
   private lazy val pageTC = siteContext.theme.global.userConfig.theme.getConfig(page.config)
   def pageConfig(path: String): Option[String] = page.config.getStringOpt(path)
   def themeConfig(path: String): Option[String] = pageTC.getStringOpt(path)
+  def themeConfigInt(path: String): Option[Int] = pageTC.getIntOpt(path)
   def themeConfigStringList(path: String): Option[Seq[String]] = pageTC.getStringListOpt(path)
   def themeConfigValueList(path: String): Option[Seq[ConfigValue]] = pageTC.getListOpt(path)
   def themeConfigBoolean(path: String): Option[Boolean] = pageTC.getBooleanOpt(path)

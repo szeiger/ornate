@@ -3,15 +3,17 @@
 @import com.novocode.ornate.theme.HtmlFeatures
 
 @import com.novocode.ornate.Section
-@pageNav(section: Section) = {
-  <li>
-    @for(t <- section.getTitle) {
-      @if(section.getID.isDefined) { <a href="#@section.getID.get">@t</a> } else { <span>@t</span> }
-    }
-    @if(section.children.nonEmpty) {
-      <ul class="vertical menu"> @for(ch <- section.children) { @pageNav(ch) } </ul>
-    }
-  </li>
+@pageNav(section: Section, maxLevel: Int) = {
+  @if(section.level <= maxLevel) {
+    <li>
+      @for(t <- section.getTitle) {
+        @if(section.getID.isDefined) { <a href="#@section.getID.get">@t</a> } else { <span>@t</span> }
+      }
+      @if(section.children.filter(_.level <= maxLevel).nonEmpty) {
+        <ul class="vertical menu"> @for(ch <- section.children) { @pageNav(ch, maxLevel) } </ul>
+      }
+    </li>
+  }
 }
 
 @import com.novocode.ornate.ExpandTocProcessor.TocItem
@@ -130,7 +132,7 @@
                   <nav class="a_pagenav" data-sticky data-sticky-on="large" data-anchor="_sections">
                     @for(s <- p.stringHtml("pageNav")) { <header>@s</header> }
                     <ul class="vertical menu" data-magellan>
-                      @for(s <- p.pc.sections) { @pageNav(s) }
+                      @for(s <- p.pc.sections) { @pageNav(s, p.pc.pageNavMaxLevel) }
                     </ul>
                   </nav>
                 </div>

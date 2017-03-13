@@ -89,17 +89,20 @@ class DefaultTheme(global: Global) extends HtmlTheme(global) {
     case _ =>
   }
 
-  override def renderAttributedHeading(n: AttributedHeading, c: HtmlNodeRendererContext): Unit = if(n.id ne null) {
+  override def renderAttributedHeading(pc: HtmlPageContext)(n: AttributedHeading, c: HtmlNodeRendererContext): Unit = if(n.id ne null) {
     val wr = c.getWriter
     val htag = s"h${n.getLevel}"
     wr.line
-    val attrs = Map[String, String]("id" -> n.id, "class" -> "a_section", "data-magellan-target" -> n.id)
+    val baseAttrs = Map[String, String]("id" -> n.id, "class" -> "a_section")
+    val attrs =
+      if(n.getLevel <= pc.asInstanceOf[DefaultPageContext].pageNavMaxLevel) baseAttrs + ("data-magellan-target" -> n.id)
+      else baseAttrs
     wr.tag(htag, c.extendAttributes(n, attrs.asJava))
     c.renderChildren(n)
     wr.raw(s"""<a class="a_hlink" href="#${n.id}"></a>""")
     wr.tag('/' + htag)
     wr.line
-  } else super.renderAttributedHeading(n, c)
+  } else super.renderAttributedHeading(pc)(n, c)
 
   override def renderMermaid(n: AttributedFencedCodeBlock, c: HtmlNodeRendererContext, pc: HtmlPageContext): Unit = {
     pc.features.request(HtmlFeatures.JavaScript)
@@ -181,8 +184,11 @@ class DefaultTheme(global: Global) extends HtmlTheme(global) {
   override def renderers(pc: HtmlPageContext): Seq[HtmlNodeRendererFactory] =
     SimpleHtmlNodeRenderer(renderTableBlock _) +: super.renderers(pc)
 
-  override def createPageModel(pc: HtmlPageContext, renderer: HtmlRenderer): HtmlPageModel =
-    new DefaultPageModel(pc, renderer)
+  override def createPageContext(siteContext: HtmlSiteContext, page: Page): DefaultPageContext =
+    new DefaultPageContext(siteContext, page)
+
+  override def createPageModel(pc: HtmlPageContext, renderer: HtmlRenderer): DefaultPageModel =
+    new DefaultPageModel(pc.asInstanceOf[DefaultPageContext], renderer)
 
   override def createSiteModel(pms: Vector[HtmlPageModel]): HtmlSiteModel = new DefaultSiteModel(this, pms)
 }
@@ -191,7 +197,11 @@ object DefaultTheme {
   case object MultiVersion extends HtmlFeatures.Feature
 }
 
-class DefaultPageModel(pc: HtmlPageContext, renderer: HtmlRenderer) extends HtmlPageModel(pc, renderer) {
+class DefaultPageContext(siteContext: HtmlSiteContext, page: Page) extends HtmlPageContext(siteContext, page) {
+  lazy val pageNavMaxLevel: Int = themeConfigInt("pageNavMaxLevel").getOrElse(siteContext.theme.global.userConfig.tocMaxLevel)
+}
+
+class DefaultPageModel(override val pc: DefaultPageContext, renderer: HtmlRenderer) extends HtmlPageModel(pc, renderer) {
   protected def navBar(opt: String): Option[Seq[NavLink]] = pc.themeConfigStringList(opt).flatMap { defined =>
     val links = defined.flatMap(id => navLinks.get(id).filter(_.hasText))
     if(links.exists(_.target.isDefined)) {
