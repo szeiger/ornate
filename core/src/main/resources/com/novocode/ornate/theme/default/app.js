@@ -50,7 +50,6 @@ $(window).load(function() {
         new Foundation.Dropdown(pane, { vOffset: 0 });
         pane.on("show.zf.dropdown", function() { toggle.addClass("a_expanded"); });
         pane.on("hide.zf.dropdown", function() { toggle.removeClass("a_expanded"); });
-        this.href = "#";
         toggle.addClass("a_vnav2_toggle");
       });
       var siteRoot = helperA.href;
