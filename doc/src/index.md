@@ -12,6 +12,23 @@
 
 ## Release Notes
 
+### v0.4
+
+- Math notation in fenced code blocks
+- Printer-friendly style for default theme
+- Multi-threaded parsing and rendering
+- [Subscript and superscript extensions](markdown.md#subscript-and-superscript)
+- [Smart quotes](markdown.md#smartquotes) and [smart punctuation](markdown.md#smartpunctuation)
+- Automatic ordering of extensions
+- Configurable top and bottom navigation bars
+- [Foundation Icons anf Font Awesome support](images.md#theme-specific-uri-schemes)
+- [Easy customization of default theme (colors, `link` elements, CSS)](default-theme.md#customization)
+- [Index support](default-theme.md#index)
+- [Automatic multi-version navigation](default-theme.md#multi-version-sites)
+- [Render included Markdown snippets](markdown.md#rendermarkdown)
+- [External non-scaladoc links](markdown.md#externallinks)
+- Bug fixes and minor features
+
 ### v0.3
 
 - [Math support via MathJax](math.md)
