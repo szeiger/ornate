@@ -6,6 +6,8 @@ import sbt._
 import Keys._
 
 object OrnatePlugin extends AutoPlugin {
+  override def requires = plugins.IvyPlugin
+
   object autoImport {
     //#--doc-plugin
     val ornateBaseDir     = settingKey[Option[File]]("Base directory for Ornate")
@@ -20,8 +22,6 @@ object OrnatePlugin extends AutoPlugin {
   }
   import autoImport._
 
-  override lazy val projectConfigurations = Seq(Ornate)
-
   override lazy val projectSettings = inConfig(Ornate)(Defaults.configSettings) ++ Seq(
     ornateBaseDir := Some(sourceDirectory.value),
     ornateSourceDir := ornateBaseDir.value.map(_ / "site"),
@@ -31,9 +31,10 @@ object OrnatePlugin extends AutoPlugin {
     ornateSettings := Map.empty,
     ornate := ornateTask.value,
     scalaVersion in Ornate := BuildInfo.scalaVersion,
+    ivyConfigurations += Ornate,
     libraryDependencies ++= Seq(
-      BuildInfo.organization % (BuildInfo.name+"_2.11") % BuildInfo.version % Ornate.name,
-      "org.scala-lang" % "scala-library" % BuildInfo.scalaVersion % Ornate.name
+      BuildInfo.organization % (BuildInfo.name+"_2.11") % BuildInfo.version % Ornate,
+      "org.scala-lang" % "scala-library" % BuildInfo.scalaVersion % Ornate
     )
   )
   lazy val ornateTask = Def.task {
