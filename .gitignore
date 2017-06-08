@@ -10,3 +10,7 @@ target/
 .history
 .DS_Store
 /tmp/
+/admin/bintray-credentials
+/admin/secring.asc
+/secrets.tar
+/publish-settings.sbt
