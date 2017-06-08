@@ -1,6 +1,6 @@
 # Introduction
 
-*Ornate* is a tool for building multi-page HTML sites from Markdown sources. The design goals are:
+*Ornate* is a tool for building multi-page HTML sites (like this one) from Markdown sources. The design goals are:
 
 - Runs on the JVM; No installation required: Resolve the versioned dependencies in your build process for reproducible documentation builds with no external dependencies.
 - Based on [CommonMark], a standardized version of [Markdown].
@@ -11,6 +11,11 @@
 - Clean, modern [default theme](default-theme.md) using responsive design for a good user experience on all devices from mobile phones to desktop PCs.
 
 ## Release Notes
+
+### v0.5
+
+- Fix sbt scoping ([](issue:9))
+- Avoid conflicts with [sbt-site](https://github.com/sbt/sbt-site) ([](issue:6))
 
 ### v0.4
 
