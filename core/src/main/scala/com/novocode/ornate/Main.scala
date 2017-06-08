@@ -20,16 +20,20 @@ object Main extends Logging {
 
   //#main
   def main(args: Array[String]): Unit = {
-    val res = runToStatus(args)
+    val res = runToStatus(args)(0).asInstanceOf[Int]
     if(res != 0) System.exit(res)
   }
   //#main
 
-  // Like `main` but returns the status instead of calling `System.exit`. This is used by the sbt plugin.
-  def runToStatus(args: Array[String]): Int = {
+  /** Like `main` but returns the status instead of calling `System.exit`. This is used by the sbt plugin.
+    * The return value is an array containing the status code as a `java.lang.Integer` and the target dir
+    * as a `String` (can be `null` if running fails before the target dir is known).
+    */
+  def runToStatus(args: Array[String]): Array[AnyRef] = {
     var baseDirName: Option[String] = None
     var configFileName: Option[String] = None
     var badOption: Boolean = false
+    var targetDir: String = null
     val props = new Properties()
     args.foreach { arg =>
       if(arg.startsWith("-D") && arg.contains("=")) {
@@ -43,14 +47,16 @@ object Main extends Logging {
     }
     if(args.isEmpty || badOption || configFileName.isEmpty) {
       printUsage
-      1
+      Array[AnyRef](Integer.valueOf(1), targetDir)
     } else {
       val configFile = File(configFileName.get)
       val baseDir = baseDirName.map(s => File(s)).getOrElse(configFile.parent)
       val overrides = ConfigFactory.parseProperties(props).withFallback(ConfigFactory.systemProperties())
       val global = new Global(baseDir, Some(configFile), overrides)
+      targetDir = global.userConfig.targetDir.path.toString
       global.theme.build
-      if(ErrorRecognitionAppender.rearm()) 1 else 0
+      val status = if(ErrorRecognitionAppender.rearm()) 1 else 0
+      Array[AnyRef](Integer.valueOf(status), targetDir)
     }
   }
 }

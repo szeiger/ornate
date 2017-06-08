@@ -1,2 +1,2 @@
 > ornate
-$ exists target/site/index.html
+$ exists target/doc/index.html

@@ -15,12 +15,12 @@ A minimum project definition in `build.sbt` which enables the plugin looks like 
 ```scala src=../../plugin/src/sbt-test/ornate/simple/build.sbt
 ```
 
-You can run Ornate from sbt with the `ornate` task. By default it looks for a config file `src/ornate.conf`, source and resources under `src/site`, and it builds the site to `target/site`. These settings can be changed directly through the sbt configuration:
+You can run Ornate from sbt with the `ornate` task. By default it looks for a config file `src/ornate.conf`, source and resources under `src/doc`, and it builds the site to `target/doc`. These settings can be changed directly through the sbt configuration:
 
 ```scala src=../../plugin/src/main/scala/com/novocode/ornate/sbtplugin/OrnatePlugin.scala#--doc-plugin
 ```
 
-Only the location of the config file is required. The base / source / resource / target directories are set by default, in which case they override any settings made in the config file.
+Only the location of the config file is required. The base / source / resource / target directories are set by default, so they override any settings made in the config file. You can explicitly set them to `None` to make the settings from the config file take effect instead.
 
 ## Command Line
 
@@ -56,4 +56,4 @@ Cleaning the target directory is performed with a special theme, `com.novocode.o
 ```yaml src=../../core/src/main/resources/ornate-reference.conf#--doc-clean-theme
 ```
 
-When using the sbt plugin, the generated site is placed under `target/site` by default, so it can be deleted along with all other generated resources with sbt's standard `clean` task.
+When using the sbt plugin, the generated site is placed under `target/doc` by default, so it can be deleted along with all other generated resources with sbt's standard `clean` task.

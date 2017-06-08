@@ -16,17 +16,17 @@ object OrnatePlugin extends AutoPlugin {
     val ornateTargetDir   = settingKey[Option[File]]("Target directory for the Ornate-generated site")
     val ornateConfig      = settingKey[File]("Config file for Ornate")
     val ornateSettings    = settingKey[Map[String, String]]("Extra settings for Ornate")
-    val ornate = taskKey[Unit]("Run Ornate to generate the site")
-    lazy val Ornate = config("ornate").hide // provides the classpath for Ornate
+    val ornate            = taskKey[File]("Run Ornate to generate the site, returning the target directory")
+    lazy val Ornate       = config("ornate").hide // provides the classpath for Ornate
     //#--doc-plugin
   }
   import autoImport._
 
   override lazy val projectSettings = inConfig(Ornate)(Defaults.configSettings) ++ Seq(
     ornateBaseDir := Some(sourceDirectory.value),
-    ornateSourceDir := ornateBaseDir.value.map(_ / "site"),
+    ornateSourceDir := ornateBaseDir.value.map(_ / "doc"),
     ornateResourceDir := ornateSourceDir.value,
-    ornateTargetDir := Some(target.value / "site"),
+    ornateTargetDir := Some(target.value / "doc"),
     ornateConfig := ornateBaseDir.value.getOrElse(sourceDirectory.value) / "ornate.conf",
     ornateSettings := Map.empty,
     ornate := ornateTask.value,
@@ -60,8 +60,12 @@ object OrnatePlugin extends AutoPlugin {
       Thread.currentThread.setContextClassLoader(loader)
       val cl = loader.loadClass("com.novocode.ornate.Main")
       val runToStatus = cl.getMethod("runToStatus", classOf[Array[String]])
-      val res = runToStatus.invoke(null, args.toArray).asInstanceOf[Int]
-      if(res != 0) throw new RuntimeException("Ornate run failed with status code "+res)
+      val res = runToStatus.invoke(null, args.toArray).asInstanceOf[Array[AnyRef]]
+      val status = res(0).asInstanceOf[Int]
+      val outDir = res(1).asInstanceOf[String]
+      if(status != 0) throw new RuntimeException("Ornate run failed with status code "+res)
+      if(outDir ne null) file(outDir)
+      else ornateTargetDir.value.getOrElse(null)
     } finally {
       Thread.currentThread.setContextClassLoader(old)
       loader.close()
