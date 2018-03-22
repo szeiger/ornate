@@ -1,3 +1,4 @@
+@this()
 @(m: com.novocode.ornate.theme.default.DefaultSiteModel)
 
 body {

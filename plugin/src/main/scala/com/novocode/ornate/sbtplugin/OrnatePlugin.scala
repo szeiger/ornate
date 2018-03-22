@@ -33,7 +33,7 @@ object OrnatePlugin extends AutoPlugin {
     scalaVersion in Ornate := BuildInfo.scalaVersion,
     ivyConfigurations += Ornate,
     libraryDependencies ++= Seq(
-      BuildInfo.organization % (BuildInfo.name+"_2.11") % BuildInfo.version % Ornate,
+      BuildInfo.organization %% BuildInfo.name % BuildInfo.version % Ornate,
       "org.scala-lang" % "scala-library" % BuildInfo.scalaVersion % Ornate
     )
   )
