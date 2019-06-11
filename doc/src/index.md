@@ -12,6 +12,10 @@
 
 ## Release Notes
 
+### v0.6
+
+- Update to Scala 2.12 and sbt 1.x
+
 ### v0.5
 
 - Fix sbt scoping ([](issue:9))

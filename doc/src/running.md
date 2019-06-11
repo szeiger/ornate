@@ -4,6 +4,8 @@ Ornate is available in [JCenter](https://bintray.com/bintray/jcenter) and [Maven
 
 ## SBT Plugin
 
+Ornate 0.6+ supports sbt 1.x. Older versions of Ornate support sbt 0.13.
+
 First you need to add Ornate's sbt plugin to `project/plugins.sbt`:
 
 ```scala expandVars=true
