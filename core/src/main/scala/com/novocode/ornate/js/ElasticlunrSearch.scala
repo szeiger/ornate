@@ -1,8 +1,7 @@
 package com.novocode.ornate.js
 
 import com.novocode.ornate.Logging
-import play.api.libs.json.{JsArray, JsObject, JsString}
-import play.libs.Json
+import play.api.libs.json.{JsArray, JsString}
 
 import scala.collection.mutable
 

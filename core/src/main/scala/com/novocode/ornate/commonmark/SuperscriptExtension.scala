@@ -31,7 +31,7 @@ abstract class SuperscriptSubscriptExtension[T <: Node : ClassTag] extends Exten
   def tag: String
   val ext = Seq(new Parser.ParserExtension {
     override def extend(builder: Parser.Builder): Unit =
-      builder.customDelimiterProcessor(new SuperscriptSubscriptDelimiterProcessor(delim)(create))
+      builder.customDelimiterProcessor(new SuperscriptSubscriptDelimiterProcessor(delim)(() => SuperscriptSubscriptExtension.this.create()))
   })
   override def parserExtensions(pageConfig: Config) = ext
   override val htmlRendererExtensions: Seq[HtmlRenderer.HtmlRendererExtension] = Seq(

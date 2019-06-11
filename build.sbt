@@ -4,11 +4,11 @@ val makeSite = TaskKey[Unit]("makeSite")
 lazy val root = project.in(file("."))
   .aggregate(core, plugin)
   .dependsOn(core)
-  .disablePlugins(BintrayPlugin)
+  .disablePlugins(BintrayPlugin, ScriptedPlugin)
   .settings(inThisBuild(Seq(
     organization := "com.novocode",
     version := "0.5-SNAPSHOT",
-    scalaVersion := "2.11.8",
+    scalaVersion := "2.12.8",
     scalacOptions ++= Seq("-deprecation", "-unchecked"),
     homepage := Some(url("https://szeiger.github.io/ornate-doc/")),
     scmInfo := Some(ScmInfo(url("https://github.com/szeiger/ornate"), "git@github.com:szeiger/ornate.git")),
@@ -20,12 +20,12 @@ lazy val root = project.in(file("."))
     licenses += ("Apache-2.0", url("https://www.apache.org/licenses/LICENSE-2.0.html"))
   )))
   .settings(
-    makeDoc := (Def.taskDyn {
+    makeDoc := Def.taskDyn {
       val v = version.value
       val tag = if(v.endsWith("-SNAPSHOT")) "master" else "v"+v
       val args = s""" com.novocode.ornate.Main "-Dversion=$v" "-Dtag=$tag" doc/ornate.conf"""
       (runMain in Compile).toTask(args)
-    }).value,
+    }.value,
     publishArtifact := false,
     publish := {},
     publishLocal := {},
@@ -44,6 +44,7 @@ val commonMarkVersion = "0.7.1"
 
 lazy val core = project.in(file("core"))
   .enablePlugins(SbtTwirl)
+  .disablePlugins(ScriptedPlugin)
   .settings(
     name := "ornate",
     libraryDependencies ++= Seq(
@@ -55,8 +56,8 @@ lazy val core = project.in(file("core"))
       "com.typesafe" % "config" % "1.3.0",
       "org.slf4j" % "slf4j-api" % "1.7.18",
       "org.scala-lang.modules" %% "scala-xml" % "1.0.5",
-      "com.github.pathikrit" %% "better-files" % "2.16.0",
-      "com.typesafe.play" %% "play-json" % "2.5.5",
+      "com.github.pathikrit" %% "better-files" % "2.17.1",
+      "com.typesafe.play" %% "play-json" % "2.6.9",
       "org.webjars" % "webjars-locator-core" % "0.31",
       "org.webjars.npm" % "highlight.js" % "9.6.0",
       "org.webjars.npm" % "emojione" % "2.2.6",
@@ -83,10 +84,8 @@ lazy val plugin = project.in(file("plugin"))
   .settings(
     name := "sbt-ornate",
     sbtPlugin := true,
-    scalaVersion := "2.10.6",
-    buildInfoKeys := Seq[BuildInfoKey](organization, (name in core), version, (scalaVersion in core)),
+    buildInfoKeys := Seq[BuildInfoKey](organization, name in core, version, scalaVersion in core),
     buildInfoPackage := "com.novocode.ornate.sbtplugin",
-    scriptedSettings,
     scriptedLaunchOpts ++= Seq("-Xmx1024M", "-Dplugin.version=" + version.value),
     scriptedBufferLog := false,
     scriptedDependencies := { val _ = ((publishLocal in core).value, publishLocal.value) },
