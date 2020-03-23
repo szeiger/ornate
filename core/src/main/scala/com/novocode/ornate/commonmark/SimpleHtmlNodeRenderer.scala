@@ -4,7 +4,7 @@ import org.commonmark.renderer.NodeRenderer
 import org.commonmark.renderer.html.{HtmlNodeRendererContext, HtmlNodeRendererFactory}
 import org.commonmark.node.Node
 
-import scala.collection.JavaConverters._
+import scala.jdk.CollectionConverters._
 import scala.reflect.ClassTag
 
 case class SimpleHtmlNodeRenderer[T <: Node : ClassTag, U](f: (T, HtmlNodeRendererContext) => U) extends HtmlNodeRendererFactory {

@@ -2,7 +2,7 @@ package com.novocode.ornate.js
 
 import jdk.nashorn.api.scripting.JSObject
 
-import scala.collection.JavaConverters._
+import scala.jdk.CollectionConverters._
 
 trait JSResultConverter[T] extends (AnyRef => T)
 trait JSMap {

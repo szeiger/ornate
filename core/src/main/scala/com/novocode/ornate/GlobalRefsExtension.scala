@@ -4,7 +4,7 @@ import com.novocode.ornate.config.ConfiguredObject
 import com.novocode.ornate.config.ConfigExtensionMethods.configExtensionMethods
 import com.typesafe.config.{ConfigObject, Config}
 
-import scala.collection.JavaConverters._
+import scala.jdk.CollectionConverters._
 
 /** Prepend global reference definitions to all pages */
 class GlobalRefsExtension(co: ConfiguredObject) extends Extension with Logging {

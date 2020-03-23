@@ -1,6 +1,7 @@
 package com.novocode.ornate.theme
 
 import java.net.{URI, URL}
+import java.nio.charset.StandardCharsets
 import java.text.Collator
 import java.util.{Collections, Comparator, Locale}
 
@@ -24,7 +25,7 @@ import org.commonmark.node._
 import play.twirl.api.{Html, HtmlFormat, Template1, TxtFormat}
 
 import scala.StringBuilder
-import scala.collection.JavaConverters._
+import scala.jdk.CollectionConverters._
 import scala.collection.mutable
 import scala.concurrent.duration.Duration
 import scala.concurrent.{Await, Future}
@@ -60,7 +61,7 @@ class HtmlTheme(global: Global) extends Theme(global) { self =>
     wr.line
     wr.tag(htag, attrs)
     c.renderChildren(n)
-    wr.tag('/' + htag)
+    wr.tag('/'.toString + htag)
     wr.line
   }
 
@@ -331,7 +332,7 @@ class HtmlTheme(global: Global) extends Theme(global) { self =>
           val minifyInlineJS = minifyJS && !pc.features.isRequested(HtmlFeatures.MathJax) // HtmlCompressor cannot handle non-JavaScript <script> tags
           val min =
             if(minifyHTML) Util.htmlCompressorMinimize(formatted, minimizeCss = minifyCSS, minimizeJs = minifyInlineJS) else formatted+'\n'
-          file.write(min)(codec = Codec.UTF8)
+          file.write(min)(charset = StandardCharsets.UTF_8)
           Some(pm)
         } catch { case ex: Exception =>
           logger.error(s"Error rendering page ${p.uri} to $file", ex)
@@ -444,7 +445,7 @@ class HtmlTheme(global: Global) extends Theme(global) { self =>
   })
 }
 
-class HtmlFeatures(parents: Traversable[HtmlFeatures]) {
+class HtmlFeatures(parents: Iterable[HtmlFeatures]) {
   import HtmlFeatures._
 
   val requestedFeatures: mutable.Set[Feature] = mutable.Set[Feature]() ++= parents.flatMap(_.requestedFeatures)

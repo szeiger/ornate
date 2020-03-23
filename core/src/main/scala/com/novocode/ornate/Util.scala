@@ -9,8 +9,9 @@ import com.googlecode.htmlcompressor.compressor.{ClosureJavaScriptCompressor, Co
 import com.novocode.ornate.js.CSSO
 
 import scala.annotation.tailrec
-import scala.collection.JavaConverters._
+import scala.jdk.CollectionConverters._
 import java.net.{URI, URL, URLEncoder}
+import java.nio.charset.StandardCharsets
 import java.util.Locale
 
 import better.files._
@@ -106,7 +107,7 @@ object Util {
 
   def readLines(source: URL): Vector[String] = {
     val in = source.openStream()
-    try in.lines(Codec.UTF8).to[Vector] finally in.close
+    try in.lines(StandardCharsets.UTF_8).toVector finally in.close
   }
 
   def closureMinimize(source: String, name: String = "<eval>"): String = {

@@ -219,7 +219,7 @@ class MathSyntaxParserExtension(co: ConfiguredObject, pageConfig: Config) extend
     }
     if(start != -1) b.append(s.substring(start-delim)) // unterminated sequence
     if(b.nonEmpty) res += b.result()
-    res
+    res.toSeq
   }
 }
 

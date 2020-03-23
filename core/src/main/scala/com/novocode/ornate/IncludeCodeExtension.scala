@@ -142,7 +142,7 @@ class IncludeCodeExtension(co: ConfiguredObject) extends Extension with Logging 
           } else if(inBlock && !remove.exists(p => p.matcher(s).matches())) blockBuf += s
         }
         if(inBlock) endBlock(0)
-        if(found) Some(Snippet(buf.mkString("\n"), Some(linenos))) else None
+        if(found) Some(Snippet(buf.mkString("\n"), Some(linenos.toSeq))) else None
       }
     }
   }

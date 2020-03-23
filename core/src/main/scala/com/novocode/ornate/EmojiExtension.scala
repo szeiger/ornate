@@ -43,7 +43,7 @@ class EmojiParserExtension(co: ConfiguredObject) extends Parser.ParserExtension 
         case Some("") => None
         case o => o
       }
-      val e = EmojiData(names, unicode +: unicodeAlt.toVector)
+      val e = EmojiData(names.toSeq, unicode +: unicodeAlt.toVector)
       e.names.map(n => (n, e))
     }.toMap
   }
@@ -95,7 +95,7 @@ class EmojiParserExtension(co: ConfiguredObject) extends Parser.ParserExtension 
       }
       i += 1
     }
-    if(buf eq null) Vector.empty else buf
+    if(buf eq null) Vector.empty else buf.toIndexedSeq
   }
 
   def replaceEmojis(s: String): Option[IndexedSeq[Replacement]] = {
@@ -121,7 +121,7 @@ class EmojiParserExtension(co: ConfiguredObject) extends Parser.ParserExtension 
           buf += data
         }
         if(len > copied) buf += PlainText(s.substring(copied, len))
-        Some(buf)
+        Some(buf.toIndexedSeq)
       }
     }
   }

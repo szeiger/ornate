@@ -1,6 +1,7 @@
 package com.novocode.ornate
 
 import java.net.URI
+import java.nio.charset.StandardCharsets
 
 import com.novocode.ornate.commonmark.{AttributedHeading, CustomParser, CustomParserBuilder, NodeUtil}
 import com.novocode.ornate.commonmark.NodeExtensionMethods._
@@ -12,7 +13,7 @@ import org.commonmark.parser.Parser
 import better.files._
 
 import scala.annotation.tailrec
-import scala.collection.JavaConverters._
+import scala.jdk.CollectionConverters._
 import scala.collection.mutable
 import scala.collection.mutable.ArrayBuffer
 import scala.io.Codec
@@ -24,7 +25,7 @@ object PageParser extends Logging {
     logTime("Parsing took") {
       global.parMap(sources) { case (f, suffix, uri) =>
         logger.debug(s"Parsing $f as $uri")
-        try Some(parseWithFrontMatter(Some(f.uri), syntheticNames.get(uri), global.userConfig, uri, suffix, f.contentAsString(Codec.UTF8)))
+        try Some(parseWithFrontMatter(Some(f.uri), syntheticNames.get(uri), global.userConfig, uri, suffix, f.contentAsString(StandardCharsets.UTF_8)))
         catch { case ex: Exception =>
           logger.error(s"Error parsing $f -- skipping file", ex)
           None
@@ -35,7 +36,7 @@ object PageParser extends Logging {
 
   def parseWithFrontMatter(sourceFileURI: Option[URI], syntheticName: Option[String],
                            globalConfig: ReferenceConfig, uri: URI, suffix: String, text: String): Page = {
-    val lines = text.lines
+    val lines = text.linesIterator
     val (front, content) = if(lines.hasNext && lines.next.trim == "---") {
       var foundEnd = false
       val front = lines.takeWhile { s =>

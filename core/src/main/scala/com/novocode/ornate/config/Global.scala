@@ -9,7 +9,7 @@ import com.novocode.ornate.config.ConfigExtensionMethods.configExtensionMethods
 import org.commonmark.renderer.html.HtmlRenderer.HtmlRendererExtension
 import org.commonmark.parser.Parser.ParserExtension
 
-import scala.collection.JavaConverters._
+import scala.jdk.CollectionConverters._
 import better.files._
 import com.typesafe.config.{Config, ConfigFactory, ConfigValue}
 
@@ -88,9 +88,9 @@ class Global(startDir: File, confFile: Option[File], overrides: Config = ConfigF
   }
 
   /** Run a mapping function in parallel using the configured `executionContext` */
-  def parMap[T, R](coll: Traversable[T])(f: T => R): Vector[R] = {
+  def parMap[T, R](coll: Iterable[T])(f: T => R): Vector[R] = {
     implicit val ec = executionContext
-    val fs: Vector[Future[R]] = coll.map(x => Future(f(x)))(collection.breakOut)
+    val fs: Vector[Future[R]] = coll.map(x => Future(f(x))).toVector
     fs.foreach(f => Await.ready(f, Duration.Inf))
     fs.map(f => f.value.get.get)
   }
@@ -99,7 +99,7 @@ class Global(startDir: File, confFile: Option[File], overrides: Config = ConfigF
   def findSources: Vector[(File, String, URI)] = {
     val dir = userConfig.sourceDir
     val suffix = ".md"
-    dir.collectChildren(f => f.isRegularFile && f.name.endsWith(suffix)).map { f =>
+    dir.collectChildren(f => f.isRegularFile && f.name.endsWith(suffix)).toSeq.map { f =>
       (f, suffix, Util.sourceFileURI(dir, f))
     }.toVector
   }
@@ -127,7 +127,7 @@ class ReferenceConfig(val raw: Config, global: Global) {
   def objectKind(prefix: String): ConfiguredObjectKind = cachedObjectKinds.synchronized {
     cachedObjectKinds.getOrElseUpdate(prefix, {
       val m = raw.getConfigMapOr(s"global.${prefix}Aliases").mapValues(_.unwrapped.toString)
-      new ConfiguredObjectKind(prefix, m, raw, global)
+      new ConfiguredObjectKind(prefix, m.toMap, raw, global)
     })
   }
 }
