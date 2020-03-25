@@ -5,7 +5,7 @@ import java.util.Properties
 import com.typesafe.config._
 import play.api.libs.json.Json
 
-import scala.collection.JavaConverters._
+import scala.jdk.CollectionConverters._
 
 /** Extension methods to make Typesafe Config easier to use */
 class ConfigExtensionMethods(val c: Config) extends AnyVal {
@@ -13,8 +13,8 @@ class ConfigExtensionMethods(val c: Config) extends AnyVal {
   def getIntOr(path: String, default: => Int = 0) = if(c.hasPath(path)) c.getInt(path) else default
   def getStringOr(path: String, default: => String = null) = if(c.hasPath(path)) c.getString(path) else default
   def getConfigOr(path: String, default: => Config = ConfigFactory.empty()) = if(c.hasPath(path)) c.getConfig(path) else default
-  def getStringListOr(path: String, default: => Seq[String] = Vector.empty): Seq[String] = if(c.hasPath(path)) c.getStringList(path).asScala else default
-  def getConfigListOr(path: String, default: => Seq[Config] = Vector.empty): Seq[Config] = if(c.hasPath(path)) c.getConfigList(path).asScala else default
+  def getStringListOr(path: String, default: => Seq[String] = Vector.empty): Seq[String] = if(c.hasPath(path)) c.getStringList(path).asScala.toSeq else default
+  def getConfigListOr(path: String, default: => Seq[Config] = Vector.empty): Seq[Config] = if(c.hasPath(path)) c.getConfigList(path).asScala.toSeq else default
   def getConfigMapOr(path: String, default: => Map[String, ConfigValue] = Map.empty): Map[String, ConfigValue] =
     if(c.hasPath(path)) c.getObject(path).entrySet().asScala.iterator.map(e => (e.getKey, e.getValue)).toMap else default
 
@@ -23,7 +23,7 @@ class ConfigExtensionMethods(val c: Config) extends AnyVal {
   def getIntOpt(path: String): Option[Int] = if(c.hasPath(path)) Some(c.getInt(path)) else None
   def getStringOpt(path: String) = Option(getStringOr(path))
   def getConfigOpt(path: String): Option[Config] = Option(getConfigOr(path, null))
-  def getListOpt(path: String): Option[Seq[ConfigValue]] = if(c.hasPath(path)) Some(c.getList(path).asScala) else None
+  def getListOpt(path: String): Option[Seq[ConfigValue]] = if(c.hasPath(path)) Some(c.getList(path).asScala.toSeq) else None
   def getStringListOpt(path: String): Option[Seq[String]] = Option(getStringListOr(path, null))
 
   def getStringOrStringList(path: String, default: => Vector[String] = Vector.empty): Vector[String] =

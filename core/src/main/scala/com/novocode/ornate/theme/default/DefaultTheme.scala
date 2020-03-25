@@ -1,6 +1,7 @@
 package com.novocode.ornate.theme.default
 
 import java.net.{URI, URLDecoder}
+import java.nio.charset.StandardCharsets
 import java.util.Collections
 
 import com.novocode.ornate.commonmark._
@@ -15,7 +16,7 @@ import org.commonmark.ext.gfm.tables.TableBlock
 import org.commonmark.renderer.html.{HtmlNodeRendererContext, HtmlNodeRendererFactory, HtmlRenderer}
 import org.commonmark.node.{Block, Document, Node}
 
-import scala.collection.JavaConverters._
+import scala.jdk.CollectionConverters._
 import scala.io.Codec
 
 class DefaultTheme(global: Global) extends HtmlTheme(global) {
@@ -239,7 +240,7 @@ class DefaultSiteModel(theme: DefaultTheme, pms: Vector[HtmlPageModel]) extends 
     val css1 = themeConfig("global.cssFile").map { path =>
       val f = theme.global.getFile(path)
       try {
-        val s = f.contentAsString(Codec.UTF8)
+        val s = f.contentAsString(StandardCharsets.UTF_8)
         if(s.nonEmpty && !s.endsWith("\n")) s + "\n" else s
       } catch { case ex: Exception =>
         theme.logger.error("Error loading CSS file \""+path+"\" (resolved to \""+f+"\")", ex)

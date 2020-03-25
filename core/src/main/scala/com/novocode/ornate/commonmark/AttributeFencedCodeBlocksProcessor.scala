@@ -83,7 +83,7 @@ class AttributedFencedCodeBlock extends FencedCodeBlock with Attributed {
         i = s.indexOf(pre, start)
       }
       if(s.length > 0) res += Left(s)
-      res
+      res.toSeq
     }
   }
 }

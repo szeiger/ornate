@@ -5,7 +5,7 @@ import com.novocode.ornate.config.ConfiguredObject
 import com.typesafe.config.{Config, ConfigObject}
 import org.commonmark.node.{AbstractVisitor, Link, Text}
 
-import scala.collection.JavaConverters._
+import scala.jdk.CollectionConverters._
 
 /** Translate scaladoc links */
 class ScaladocLinksExtension(co: ConfiguredObject) extends Extension with Logging {

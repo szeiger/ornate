@@ -6,7 +6,7 @@ import com.novocode.ornate.config.ConfigExtensionMethods.configExtensionMethods
 import com.typesafe.config.{Config, ConfigObject}
 import org.commonmark.node.{AbstractVisitor, Link, Text}
 
-import scala.collection.JavaConverters._
+import scala.jdk.CollectionConverters._
 
 /** Translate generic external links */
 class ExternalLinksExtension(co: ConfiguredObject) extends Extension with Logging {

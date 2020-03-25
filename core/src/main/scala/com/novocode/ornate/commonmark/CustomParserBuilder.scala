@@ -3,7 +3,7 @@ package com.novocode.ornate.commonmark
 import java.io.Reader
 import java.util.Arrays
 
-import scala.collection.JavaConverters._
+import scala.jdk.CollectionConverters._
 import org.commonmark._
 import org.commonmark.internal._
 import org.commonmark.internal.inline.{AsteriskDelimiterProcessor, UnderscoreDelimiterProcessor}

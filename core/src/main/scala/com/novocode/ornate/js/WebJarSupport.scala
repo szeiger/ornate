@@ -1,15 +1,17 @@
 package com.novocode.ornate.js
 
+import java.nio.charset.StandardCharsets
 import java.util.regex.Pattern
 
 import better.files._
+import org.apache.commons.compress.utils.IOUtils
 import org.slf4j.Logger
 import org.webjars.WebJarAssetLocator
 
-import scala.collection.JavaConverters._
+import scala.jdk.CollectionConverters._
 import scala.io.Codec
 
-trait WebJarSupport {
+trait WebJarSupport extends Implicits {
   import WebJarSupport._
 
   def logger: Logger
@@ -17,7 +19,7 @@ trait WebJarSupport {
   def loadAsset(webjar: String, exactPath: String): Option[String] = getFullPathExact(webjar, exactPath).map { path =>
     logger.debug(s"Loading WebJar asset: $webjar/$exactPath")
     val in = getClass.getClassLoader.getResourceAsStream(path)
-    try in.content(Codec.UTF8).mkString finally in.close()
+    try new String(IOUtils.toByteArray(in), StandardCharsets.UTF_8) finally in.close()
   }
 }
 

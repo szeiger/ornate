@@ -16,7 +16,7 @@ import org.commonmark.ext.gfm.tables.TableBlock
 import org.commonmark.node.{Block, Node}
 import org.commonmark.renderer.html.{HtmlNodeRendererContext, HtmlNodeRendererFactory, HtmlRenderer}
 
-import scala.collection.JavaConverters._
+import scala.jdk.CollectionConverters._
 
 class PdfTheme(global: Global) extends HtmlTheme(global) {
   def pdfTargetDir: File = super.targetDir
